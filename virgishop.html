@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0ea5e9">
+  <meta name="description" content="Sistema POS e Inventario VirgiShop">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="VirgiShop">
+  <title>VirgiShop POS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] } } }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *{font-family:'Inter',sans-serif}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:#f1f5f9}
+    ::-webkit-scrollbar-thumb{background:#bae6fd;border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:#7dd3fc}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .nav-item.active{background:rgba(255,255,255,0.2)}
+    .chart-container{position:relative;height:240px}
+    .fade-in{animation:fadeIn .18s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+    .modal-backdrop{backdrop-filter:blur(3px)}
+    .badge-ok{background:#dcfce7;color:#166534}
+    .badge-low{background:#fef9c3;color:#854d0e}
+    .badge-out{background:#fee2e2;color:#991b1b}
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    @media(max-width:1023px){
+      #tab-inventario.active{display:block!important}
+      #tab-reportes.active{display:block!important}
+      .product-card{padding:.2rem!important;height:3.5rem!important}
+      .product-card .pname{font-size:.65rem!important}
+      .product-card .psku{font-size:.55rem!important}
+      .product-card .pprice{font-size:.65rem!important}
+      .cart-item{padding:.25rem!important}
+      .kpi-value{font-size:1.25rem!important}
+      .inv-btn{font-size:.72rem!important;padding:.2rem .45rem!important}
+      #product-grid-container{max-height:25vh;overflow-y:auto}
+    }
+    @media print{
+      #sidebar,#mobile-header,.no-print{display:none!important}
+      .tab-content{display:block!important}
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+<!-- Tailwind safelist (hidden) -->
+<div class="hidden bg-green-100 text-green-800 bg-yellow-100 text-yellow-800 bg-red-100 text-red-800
+  bg-blue-100 text-blue-800 bg-purple-100 text-purple-800 bg-emerald-100 text-emerald-800
+  bg-sky-50 bg-sky-100 bg-sky-200 bg-sky-500 bg-sky-600 bg-sky-700 bg-sky-800
+  text-sky-600 text-sky-700 border-sky-200 border-sky-300
+  col-span-1 col-span-2 col-span-3 col-span-4 col-span-5
+  grid-cols-3 grid-cols-4 grid-cols-5 grid-cols-2
+  text-emerald-300 text-amber-300 text-emerald-600
+  bg-emerald-500 bg-red-500 bg-amber-500 bg-purple-600
+  from-sky-500 to-blue-600 from-sky-600 to-blue-700
+  shadow-sky-200 shadow-sky-300"></div>
+
+<!-- ===================== SIDEBAR DESKTOP ===================== -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-sky-700 to-blue-900 text-white shadow-xl z-40 hidden lg:flex flex-col">
+  <div class="p-5 border-b border-sky-600/60">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-md">
+        <i class="fa-solid fa-shop text-sky-600 text-xl"></i>
+      </div>
+      <div>
+        <h1 id="sidebar-store-name" class="font-bold text-lg leading-tight">VirgiShop</h1>
+        <p class="text-sky-300 text-xs">Sistema POS</p>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+    <button onclick="showTab('dashboard')" id="nav-dashboard"
+      class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-chart-pie w-5 text-center"></i><span>Dashboard</span>
+    </button>
+    <button onclick="showTab('inventario')" id="nav-inventario"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-boxes-stacked w-5 text-center"></i><span>Inventario</span>
+    </button>
+    <button onclick="showTab('ventas')" id="nav-ventas"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-cash-register w-5 text-center"></i><span>Punto de Venta</span>
+    </button>
+    <button onclick="showTab('reportes')" id="nav-reportes"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Reportes</span>
+    </button>
+  </nav>
+  <div class="p-3 border-t border-sky-600/60">
+    <div class="mb-2 p-3 bg-white/10 rounded-xl">
+      <div class="text-xs text-sky-300 mb-1 font-medium">Tasa BCV</div>
+      <div class="flex items-baseline gap-1.5">
+        <span id="sidebar-rate-value" class="font-bold text-white text-base">--</span>
+        <span class="text-sky-300 text-xs">VES/USD</span>
+      </div>
+      <div id="sidebar-rate-status" class="text-xs text-sky-300 mt-0.5">Cargando...</div>
+    </div>
+    <button onclick="openSettings()"
+      class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-gear w-5 text-center"></i><span>Configuración</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ===================== HEADER MÓVIL ===================== -->
+<header id="mobile-header" class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-sky-700 to-blue-900 text-white shadow-lg">
+  <div class="flex items-center px-3 py-2 gap-2">
+    <button onclick="toggleMobileMenu()" class="p-1.5 rounded-lg hover:bg-white/20 transition-all flex-shrink-0">
+      <i id="menu-icon" class="fa-solid fa-bars text-sm"></i>
+    </button>
+    <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+      <i class="fa-solid fa-shop text-sky-600 text-xs"></i>
+    </div>
+    <span id="mobile-title" class="font-semibold text-sm flex-1 truncate">Dashboard</span>
+    <div class="flex-shrink-0 bg-white/10 rounded-lg px-1.5 py-0.5 text-center leading-tight">
+      <div class="text-sky-200 text-[0.5rem]">BCV</div>
+      <div id="mobile-rate-value" class="font-bold text-white text-[0.55rem] max-w-[56px] truncate">--</div>
+    </div>
+    <button onclick="openSettings()" class="p-1.5 rounded-lg hover:bg-white/20 transition-all flex-shrink-0">
+      <i class="fa-solid fa-gear text-xs"></i>
+    </button>
+  </div>
+</header>
+
+<!-- Overlay menú móvil -->
+<div id="menu-overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden" onclick="closeMobileMenu()"></div>
+
+<!-- Menú desplegable móvil -->
+<nav id="mobile-menu" class="fixed top-[3.1rem] left-0 right-0 z-50 bg-sky-800 text-white shadow-xl hidden lg:hidden">
+  <div class="py-1 divide-y divide-sky-700/50">
+    <button onclick="showTab('dashboard');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="dashboard">
+      <i class="fa-solid fa-chart-pie w-4 text-center text-xs"></i><span>Dashboard</span>
+    </button>
+    <button onclick="showTab('inventario');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="inventario">
+      <i class="fa-solid fa-boxes-stacked w-4 text-center text-xs"></i><span>Inventario</span>
+    </button>
+    <button onclick="showTab('ventas');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="ventas">
+      <i class="fa-solid fa-cash-register w-4 text-center text-xs"></i><span>Punto de Venta</span>
+    </button>
+    <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
+      <i class="fa-solid fa-chart-line w-4 text-center text-xs"></i><span>Reportes</span>
+    </button>
+    <div class="px-4 py-2">
+      <span class="text-xs text-sky-300">BCV: <strong id="mobile-menu-rate" class="text-white">--</strong> VES/USD</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main class="lg:ml-64 min-h-screen pt-12 lg:pt-0">
+  <div class="p-3 lg:p-6">
+
+    <!-- ======== TAB: DASHBOARD ======== -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="mb-5">
+        <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Dashboard</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Resumen general del negocio</p>
+      </div>
+
+      <!-- KPIs -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-sky-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-sky-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-box text-sky-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full font-medium">Productos</span>
+          </div>
+          <div id="kpi-products" class="kpi-value text-2xl font-bold text-slate-800">0</div>
+          <div class="text-slate-500 text-xs mt-0.5">Productos únicos</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-cubes text-blue-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Stock</span>
+          </div>
+          <div id="kpi-stock" class="kpi-value text-2xl font-bold text-slate-800">0</div>
+          <div class="text-slate-500 text-xs mt-0.5">Unidades totales</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-receipt text-emerald-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">Ventas</span>
+          </div>
+          <div id="kpi-sales" class="kpi-value text-2xl font-bold text-slate-800">0</div>
+          <div class="text-slate-500 text-xs mt-0.5">Ventas realizadas</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-violet-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-violet-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-dollar-sign text-violet-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full font-medium">Ingresos</span>
+          </div>
+          <div id="kpi-revenue" class="kpi-value text-2xl font-bold text-slate-800">$0.00</div>
+          <div class="text-slate-500 text-xs mt-0.5">Ingresos totales USD</div>
+        </div>
+      </div>
+
+      <!-- Gráfico + Alertas -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-slate-700 text-sm">Ventas</h3>
+            <div class="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+              <button id="chart-weekly-btn" onclick="setChartMode('weekly')"
+                class="px-2.5 py-1 text-xs font-medium rounded-md bg-white text-sky-600 shadow-sm transition-all">Semanal</button>
+              <button id="chart-monthly-btn" onclick="setChartMode('monthly')"
+                class="px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 transition-all">Mensual</button>
+            </div>
+          </div>
+          <div class="chart-container"><canvas id="sales-chart"></canvas></div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <h3 class="font-semibold text-slate-700 text-sm mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>Alertas de Stock
+          </h3>
+          <div id="stock-alerts" class="space-y-2 max-h-56 overflow-y-auto">
+            <p class="text-slate-400 text-sm text-center py-4">Sin alertas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== TAB: INVENTARIO ======== -->
+    <div id="tab-inventario" class="tab-content">
+      <div class="mb-3">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-3">
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Inventario</h2>
+          <div class="flex flex-wrap gap-1.5" id="inv-action-buttons"></div>
+        </div>
+        <!-- Toggle productos/combos -->
+        <div class="flex items-center gap-0 border-b border-slate-200">
+          <button id="inv-tab-products" onclick="setInvView('products')"
+            class="px-4 py-2 text-sm font-medium text-sky-600 border-b-2 border-sky-600 -mb-px transition-all">
+            <i class="fa-solid fa-box mr-1.5 text-xs"></i>Productos
+          </button>
+          <button id="inv-tab-combos" onclick="setInvView('combos')"
+            class="px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent -mb-px hover:text-sky-600 transition-all">
+            <i class="fa-solid fa-layer-group mr-1.5 text-xs"></i>Combos
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra búsqueda -->
+      <div id="inv-search-bar" class="mb-3 flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="inv-search" placeholder="Buscar por nombre o SKU..." oninput="onInvSearch(this.value)"
+            class="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 focus:ring-2 focus:ring-sky-100 outline-none transition-all">
+        </div>
+        <select id="inv-category-filter" onchange="onInvCategoryFilter(this.value)"
+          class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none min-w-0">
+          <option value="">Todas las categorías</option>
+        </select>
+      </div>
+
+      <!-- Tabla Productos -->
+      <div id="inv-products-section" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-sky-50 border-b border-sky-100">
+              <tr>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">SKU</th>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Nombre</th>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Categoría</th>
+                <th class="text-right px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">P.Costo</th>
+                <th class="text-right px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Utilidad</th>
+                <th class="text-right px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">P.Venta</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Stock</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden sm:table-cell">Estado</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Acc.</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+        <div class="px-3 py-2.5 bg-sky-50 border-t border-sky-100 text-xs text-slate-600 flex flex-wrap gap-4">
+          <span>Productos: <strong id="footer-count">0</strong></span>
+          <span>Costo total: <strong id="footer-cost">$0.00</strong></span>
+          <span>Unidades: <strong id="footer-units">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Tabla Combos -->
+      <div id="inv-combos-section" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-purple-50 border-b border-purple-100">
+              <tr>
+                <th class="text-left px-3 py-2.5 text-purple-700 font-semibold text-xs uppercase tracking-wide">Código</th>
+                <th class="text-left px-3 py-2.5 text-purple-700 font-semibold text-xs uppercase tracking-wide">Nombre</th>
+                <th class="text-left px-3 py-2.5 text-purple-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Productos</th>
+                <th class="text-right px-3 py-2.5 text-purple-700 font-semibold text-xs uppercase tracking-wide">Precio</th>
+                <th class="text-center px-3 py-2.5 text-purple-700 font-semibold text-xs uppercase tracking-wide">Acc.</th>
+              </tr>
+            </thead>
+            <tbody id="combos-table-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== TAB: VENTAS POS ======== -->
+    <div id="tab-ventas" class="tab-content">
+      <div class="flex flex-col lg:flex-row gap-3 min-h-0">
+        <!-- Izquierda: Grid productos -->
+        <div class="flex-1 min-w-0">
+          <div class="mb-2 flex items-center gap-2">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="pos-search" placeholder="Buscar producto..." oninput="onPosSearch(this.value)"
+                class="w-full pl-7 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+            </div>
+            <select id="pos-category" onchange="onPosCategoryFilter(this.value)"
+              class="px-2 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div id="product-grid-container" class="overflow-y-auto">
+            <div id="product-grid" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5"></div>
+          </div>
+        </div>
+        <!-- Derecha: Carrito -->
+        <div class="lg:w-80 xl:w-96 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-100">
+          <div class="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-cart-shopping text-sky-500"></i>Carrito
+            </h3>
+            <button onclick="clearCart()" class="text-xs text-red-400 hover:text-red-600 transition-all">
+              <i class="fa-solid fa-trash-can mr-0.5"></i>Limpiar
+            </button>
+          </div>
+          <div id="cart-items" class="flex-1 overflow-y-auto max-h-48 lg:max-h-72 divide-y divide-slate-50 p-1.5">
+            <p class="text-slate-400 text-xs text-center py-6">Carrito vacío</p>
+          </div>
+          <div class="border-t border-slate-100 p-3">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-400">Subtotal</span>
+              <span id="cart-subtotal" class="font-medium">$0.00</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold mb-3">
+              <span class="text-slate-700">Total</span>
+              <span id="cart-total" class="text-sky-600">$0.00</span>
+            </div>
+            <!-- Método de pago -->
+            <div class="mb-2">
+              <label class="text-xs font-medium text-slate-500 mb-1 block">Método de pago</label>
+              <select id="payment-method" onchange="onPaymentMethodChange()"
+                class="w-full px-2.5 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+                <option value="Efectivo">💵 Efectivo</option>
+                <option value="Transferencia">📲 Transferencia</option>
+                <option value="Pago Mixto">🔀 Pago Mixto</option>
+              </select>
+            </div>
+            <!-- Pago mixto -->
+            <div id="mixed-payment-section" class="hidden mb-2 p-2.5 bg-sky-50 rounded-xl border border-sky-100">
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                  <label class="text-[0.65rem] text-slate-500 mb-1 block">Efectivo USD ($)</label>
+                  <input type="number" id="cash-usd" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
+                    class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                </div>
+                <div>
+                  <label class="text-[0.65rem] text-slate-500 mb-1 block">Efectivo VES (Bs)</label>
+                  <input type="number" id="cash-ves" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
+                    class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                </div>
+                <div>
+                  <label class="text-[0.65rem] text-slate-500 mb-1 block">Transf. USD ($)</label>
+                  <input type="number" id="transfer-usd" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
+                    class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                </div>
+                <div>
+                  <label class="text-[0.65rem] text-slate-500 mb-1 block">Transf. VES (Bs)</label>
+                  <input type="number" id="transfer-ves" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
+                    class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                </div>
+              </div>
+              <button onclick="completeMixedPayment()"
+                class="w-full text-xs py-1.5 bg-sky-100 text-sky-700 rounded-lg font-medium hover:bg-sky-200 transition-all">
+                <i class="fa-solid fa-calculator mr-1"></i>Completar faltante en VES
+              </button>
+              <div id="mixed-balance" class="text-xs text-center mt-1.5 text-slate-500"></div>
+            </div>
+            <!-- Tasa BCV -->
+            <div class="mb-2 flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
+              <i class="fa-solid fa-coins text-amber-500 text-xs"></i>
+              <span class="text-xs text-slate-400">Tasa:</span>
+              <input type="number" id="pos-exchange-rate" step="0.01" placeholder="--" oninput="updateTotalVESDisplay()"
+                class="flex-1 text-xs border-0 bg-transparent focus:outline-none font-semibold text-slate-700 w-16 min-w-0">
+              <span class="text-xs text-slate-400 flex-shrink-0">VES/USD</span>
+            </div>
+            <div id="total-ves-display" class="text-xs text-slate-400 text-center mb-2"></div>
+            <!-- Botón pagar -->
+            <button onclick="openCheckout()"
+              class="w-full py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-sky-200 hover:from-sky-600 hover:to-blue-700 hover:shadow-sky-300 transition-all">
+              <i class="fa-solid fa-credit-card mr-2"></i>Procesar Pago
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== TAB: REPORTES ======== -->
+    <div id="tab-reportes" class="tab-content">
+      <div class="mb-3">
+        <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Reportes</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Historial y análisis del negocio</p>
+      </div>
+
+      <!-- Historial de ventas -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-4">
+        <div class="p-3 border-b border-slate-100">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-history text-sky-500"></i>Historial de Ventas
+            </h3>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <input type="date" id="report-from" onchange="filterReports()"
+                class="text-xs px-2 py-1.5 border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+              <span class="text-slate-400 text-xs">–</span>
+              <input type="date" id="report-to" onchange="filterReports()"
+                class="text-xs px-2 py-1.5 border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+              <button onclick="clearReportFilter()" title="Limpiar filtro"
+                class="text-xs px-2 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all text-slate-500">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <button onclick="exportSalesCSV()"
+                class="text-xs px-2.5 py-1.5 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 font-medium transition-all">
+                <i class="fa-solid fa-download mr-1"></i>CSV
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th class="text-left px-3 py-2 text-slate-600 font-medium text-xs">Fecha</th>
+                <th class="text-left px-3 py-2 text-slate-600 font-medium text-xs hidden sm:table-cell">Método</th>
+                <th class="text-right px-3 py-2 text-slate-600 font-medium text-xs">Total USD</th>
+                <th class="text-right px-3 py-2 text-slate-600 font-medium text-xs hidden lg:table-cell">Total VES</th>
+                <th class="text-center px-3 py-2 text-slate-600 font-medium text-xs">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="sales-history-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+        <div class="px-3 py-2 bg-slate-50 border-t border-slate-100 flex justify-between text-xs">
+          <span class="text-slate-500">Registros: <strong id="report-count">0</strong></span>
+          <span class="text-slate-700 font-bold">Total: <strong id="report-total" class="text-sky-600">$0.00</strong></span>
+        </div>
+      </div>
+
+      <!-- Reporte inventario -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-3 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-warehouse text-sky-500"></i>Reporte de Inventario
+          </h3>
+          <button onclick="exportInventoryCSV()"
+            class="text-xs px-2.5 py-1.5 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 font-medium transition-all">
+            <i class="fa-solid fa-download mr-1"></i>CSV
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th class="text-left px-3 py-2 text-slate-600 font-medium text-xs">Categoría</th>
+                <th class="text-right px-3 py-2 text-slate-600 font-medium text-xs">Productos</th>
+                <th class="text-right px-3 py-2 text-slate-600 font-medium text-xs">Costo Total</th>
+                <th class="text-right px-3 py-2 text-slate-600 font-medium text-xs hidden lg:table-cell">Utilidad Prom.</th>
+                <th class="text-right px-3 py-2 text-slate-600 font-medium text-xs">P.Venta Prom.</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-report-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- /p-3 lg:p-6 -->
+</main>
+
+<!-- ===================== MODAL: PRODUCTO ===================== -->
+<div id="modal-product" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-product')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-product-title" class="font-bold text-base text-slate-800">Nuevo Producto</h3>
+        <button onclick="closeModal('modal-product')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="product-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Nombre <span class="text-red-500">*</span></label>
+            <input type="text" id="product-name" placeholder="Nombre del producto"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 focus:ring-2 focus:ring-sky-100 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">SKU <span class="text-red-500">*</span></label>
+            <input type="text" id="product-sku" placeholder="Ej: PROD001"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all uppercase">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Categoría</label>
+          <input type="text" id="product-category" placeholder="Ej: Electrónica, Ropa..." list="category-list"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          <datalist id="category-list"></datalist>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Costo ($)</label>
+            <input type="number" id="product-cost" placeholder="0.00" min="0" step="0.01" oninput="calcSellPrice()"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">% Utilidad</label>
+            <input type="number" id="product-profit" placeholder="0" min="0" step="0.1" oninput="calcSellPrice()"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta ($)</label>
+            <input type="number" id="product-price" placeholder="0.00" min="0" step="0.01"
+              class="w-full px-3 py-2 text-sm border border-sky-300 rounded-xl bg-sky-50 focus:border-sky-500 outline-none font-semibold text-sky-700">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Stock actual</label>
+            <input type="number" id="product-stock" placeholder="0" min="0" step="1"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Stock mínimo</label>
+            <input type="number" id="product-min-stock" placeholder="5" min="0" step="1"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+        </div>
+        <!-- Oferta por volumen -->
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-100">
+          <div class="flex items-center gap-2 mb-2">
+            <input type="checkbox" id="product-offer-enabled" onchange="toggleOfferSection()"
+              class="rounded text-amber-500 focus:ring-amber-400">
+            <label for="product-offer-enabled" class="text-sm font-medium text-slate-700 cursor-pointer">
+              <i class="fa-solid fa-tag text-amber-500 mr-1 text-xs"></i>Oferta por volumen
+            </label>
+          </div>
+          <div id="offer-section" class="hidden grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-500 mb-1 block">Cantidad mínima</label>
+              <input type="number" id="product-offer-qty" placeholder="3" min="2"
+                class="w-full px-3 py-2 text-sm border border-amber-200 rounded-xl focus:border-amber-400 outline-none bg-white">
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 mb-1 block">Precio del lote ($)</label>
+              <input type="number" id="product-offer-price" placeholder="0.00" min="0" step="0.01"
+                class="w-full px-3 py-2 text-sm border border-amber-200 rounded-xl focus:border-amber-400 outline-none bg-white">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-product')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveProduct()"
+          class="px-5 py-2 text-sm bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl font-medium hover:from-sky-600 hover:to-blue-700 transition-all shadow-sm">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: COMBO ===================== -->
+<div id="modal-combo" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-combo')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-combo-title" class="font-bold text-base text-slate-800">Nuevo Combo</h3>
+        <button onclick="closeModal('modal-combo')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="combo-id">
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Código</label>
+          <div class="flex gap-2 items-center">
+            <input type="text" id="combo-code" placeholder="C00001"
+              class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none font-mono uppercase" readonly>
+            <label class="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer flex-shrink-0">
+              <input type="checkbox" id="combo-manual-code" onchange="toggleComboCode()" class="rounded text-sky-500">
+              Manual
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Nombre <span class="text-red-500">*</span></label>
+          <input type="text" id="combo-name" placeholder="Nombre del combo"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Precio del Combo ($)</label>
+          <input type="number" id="combo-price" placeholder="0.00" min="0" step="0.01"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-2 block">
+            <i class="fa-solid fa-boxes-stacked mr-1 text-purple-500"></i>Productos del Combo
+          </label>
+          <div id="combo-items-list" class="space-y-2 mb-2"></div>
+          <button onclick="addComboItem()"
+            class="w-full py-2 text-xs border-2 border-dashed border-sky-200 text-sky-500 rounded-xl hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition-all font-medium">
+            <i class="fa-solid fa-plus mr-1"></i>Agregar producto
+          </button>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-combo')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveCombo()"
+          class="px-5 py-2 text-sm bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-xl font-medium hover:from-purple-600 hover:to-purple-800 transition-all shadow-sm">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: RECIBO ===================== -->
+<div id="modal-receipt" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-receipt')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-receipt text-sky-500 mr-2"></i>Recibo</h3>
+        <button onclick="closeModal('modal-receipt')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div id="receipt-content" class="p-4"></div>
+      <div class="p-3 border-t border-slate-100 flex gap-2 sticky bottom-0 bg-white rounded-b-2xl no-print">
+        <button onclick="window.print()"
+          class="flex-1 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-600">
+          <i class="fa-solid fa-print mr-1.5"></i>Imprimir
+        </button>
+        <button id="whatsapp-btn" onclick="sendWhatsApp(currentReceiptSale)"
+          class="flex-1 py-2 text-sm bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all font-medium">
+          <i class="fa-brands fa-whatsapp mr-1.5"></i>WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CONFIGURACIÓN ===================== -->
+<div id="modal-settings" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-settings')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100">
+        <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-gear text-sky-500 mr-2"></i>Configuración</h3>
+        <button onclick="closeModal('modal-settings')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-4">
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Nombre del Negocio</label>
+          <input type="text" id="setting-store-name" placeholder="VirgiShop"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">
+            <i class="fa-brands fa-whatsapp text-green-500 mr-1"></i>Número WhatsApp
+          </label>
+          <div class="flex">
+            <span class="px-3 py-2 text-sm bg-green-50 border border-r-0 border-slate-200 rounded-l-xl text-green-600 font-semibold flex items-center flex-shrink-0">+</span>
+            <input type="tel" id="setting-whatsapp" placeholder="584121234567"
+              class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-r-xl focus:border-green-400 outline-none transition-all min-w-0">
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Código de país + número. Ej: 584121234567</p>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 flex items-center justify-between">
+            <span>Tasa BCV (VES/USD)</span>
+            <button onclick="fetchExchangeRate()" class="text-sky-500 hover:text-sky-700 text-xs transition-all font-normal">
+              <i class="fa-solid fa-arrows-rotate mr-0.5"></i>Actualizar
+            </button>
+          </label>
+          <input type="number" id="setting-exchange-rate" placeholder="36.50" step="0.01"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          <p class="text-xs text-slate-400 mt-1">Se actualiza automáticamente desde la API del BCV.</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100">
+        <button onclick="closeModal('modal-settings')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveSettings()"
+          class="px-5 py-2 text-sm bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl font-medium hover:from-sky-600 hover:to-blue-700 transition-all shadow-sm">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- Input importar -->
+<input type="file" id="import-file-input" accept=".csv,.json" class="hidden" onchange="handleImportFile(this)">
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+'use strict';
+
+// ===================================================================
+// ESTADO GLOBAL
+// ===================================================================
+const DB_KEY = 'virgishop_v1';
+
+let db = {
+  products: [],
+  sales: [],
+  combos: [],
+  settings: {
+    whatsapp: '',
+    storeName: 'VirgiShop',
+    exchangeRate: 0
+  }
+};
+
+let currentTab = 'dashboard';
+let invView = 'products';
+let invSearch = '';
+let invCategory = '';
+let posSearch = '';
+let posCategoryFilter = '';
+let cart = [];
+let chartMode = 'weekly';
+let salesChart = null;
+let currentReceiptSale = null;
+let comboItemsData = [];
+
+// ===================================================================
+// PERSISTENCIA
+// ===================================================================
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      db.products = parsed.products || [];
+      db.sales = parsed.sales || [];
+      db.combos = parsed.combos || [];
+      db.settings = Object.assign({}, db.settings, parsed.settings || {});
+    }
+  } catch (e) { console.error('loadDB:', e); }
+}
+
+function saveDB() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+  catch (e) { showToast('Error al guardar datos', 'error'); }
+}
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+}
+
+function generateComboCode() {
+  const nums = db.combos.map(c => {
+    const m = (c.code || '').match(/^C(\d+)$/i);
+    return m ? parseInt(m[1]) : 0;
+  });
+  const max = nums.length ? Math.max(...nums) : 0;
+  return 'C' + String(max + 1).padStart(5, '0');
+}
+
+// ===================================================================
+// UTILIDADES
+// ===================================================================
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function fmt(n) { return '$' + parseFloat(n || 0).toFixed(2); }
+
+function fmtVES(n, rate) {
+  const r = rate || db.settings.exchangeRate || 0;
+  if (!r) return '';
+  return 'Bs. ' + (n * r).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ===================================================================
+// TOASTS
+// ===================================================================
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  const colors = { success:'bg-emerald-500', error:'bg-red-500', warning:'bg-amber-500', info:'bg-sky-500' };
+  const icons  = { success:'fa-check-circle', error:'fa-circle-xmark', warning:'fa-triangle-exclamation', info:'fa-circle-info' };
+  el.className = `pointer-events-auto ${colors[type]||colors.success} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 fade-in`;
+  el.innerHTML = `<i class="fa-solid ${icons[type]||icons.success}"></i><span>${escHtml(msg)}</span>`;
+  c.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 3000);
+}
+
+// ===================================================================
+// ROUTING
+// ===================================================================
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', reportes:'Reportes' };
+
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'bg-white/20'));
+  const navEl = document.getElementById('nav-' + tab);
+  if (navEl) { navEl.classList.add('active'); navEl.classList.add('bg-white/20'); }
+
+  document.getElementById('mobile-title').textContent = tabNames[tab] || tab;
+
+  switch (tab) {
+    case 'dashboard':  renderDashboard();  break;
+    case 'inventario': renderInventario(); break;
+    case 'ventas':     renderPOS();        break;
+    case 'reportes':   renderReportes();   break;
+  }
+}
+
+// ===================================================================
+// MENÚ MÓVIL
+// ===================================================================
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const overlay = document.getElementById('menu-overlay');
+  const icon = document.getElementById('menu-icon');
+  const open = !menu.classList.contains('hidden');
+  if (open) {
+    menu.classList.add('hidden'); overlay.classList.add('hidden');
+    icon.className = 'fa-solid fa-bars text-sm';
+  } else {
+    menu.classList.remove('hidden'); overlay.classList.remove('hidden');
+    icon.className = 'fa-solid fa-xmark text-sm';
+  }
+}
+function closeMobileMenu() {
+  document.getElementById('mobile-menu').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('menu-icon').className = 'fa-solid fa-bars text-sm';
+}
+
+// ===================================================================
+// MODALES
+// ===================================================================
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// ===================================================================
+// DASHBOARD
+// ===================================================================
+function renderDashboard() {
+  document.getElementById('kpi-products').textContent = db.products.length;
+  document.getElementById('kpi-stock').textContent = db.products.reduce((s, p) => s + (p.stock || 0), 0);
+  document.getElementById('kpi-sales').textContent = db.sales.length;
+  document.getElementById('kpi-revenue').textContent = fmt(db.sales.reduce((s, v) => s + (v.total || 0), 0));
+
+  // Alertas stock
+  const alertsEl = document.getElementById('stock-alerts');
+  const low = db.products.filter(p => (p.stock || 0) <= (p.minStock || 0));
+  if (!low.length) {
+    alertsEl.innerHTML = '<p class="text-slate-400 text-xs text-center py-4"><i class="fa-solid fa-check-circle text-emerald-400 mr-1"></i>Sin alertas de stock</p>';
+  } else {
+    alertsEl.innerHTML = low.map(p => {
+      const isOut = p.stock === 0;
+      const cls = isOut ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-700';
+      const icon = isOut ? 'fa-circle-xmark text-red-500' : 'fa-triangle-exclamation text-amber-500';
+      return `<div class="p-2 rounded-xl border ${cls}">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid ${icon} text-xs"></i>
+          <span class="text-xs font-semibold truncate flex-1">${escHtml(p.name)}</span>
+          <span class="text-xs font-bold ml-auto flex-shrink-0">${p.stock || 0} uds</span>
+        </div>
+        <div class="text-[0.65rem] opacity-70 mt-0.5 pl-5">${isOut ? 'Sin stock' : 'Mínimo: '+p.minStock}</div>
+      </div>`;
+    }).join('');
+  }
+  renderChart();
+}
+
+function setChartMode(mode) {
+  chartMode = mode;
+  const wb = document.getElementById('chart-weekly-btn');
+  const mb = document.getElementById('chart-monthly-btn');
+  const activeClass = 'px-2.5 py-1 text-xs font-medium rounded-md bg-white text-sky-600 shadow-sm transition-all';
+  const inactiveClass = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 transition-all';
+  wb.className = mode === 'weekly' ? activeClass : inactiveClass;
+  mb.className = mode === 'monthly' ? activeClass : inactiveClass;
+  renderChart();
+}
+
+function renderChart() {
+  const ctx = document.getElementById('sales-chart').getContext('2d');
+  const now = new Date();
+  let labels = [], data = [];
+
+  if (chartMode === 'weekly') {
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const str = d.toISOString().split('T')[0];
+      labels.push(d.toLocaleDateString('es-VE', { weekday:'short', day:'numeric' }));
+      data.push(db.sales.filter(s => (s.date||'').startsWith(str)).reduce((s,v)=>s+(v.total||0),0));
+    }
+  } else {
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const prefix = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      labels.push(d.toLocaleDateString('es-VE', { month:'short', year:'2-digit' }));
+      data.push(db.sales.filter(s => (s.date||'').startsWith(prefix)).reduce((s,v)=>s+(v.total||0),0));
+    }
+  }
+
+  if (salesChart) salesChart.destroy();
+  salesChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'USD',
+        data,
+        backgroundColor: 'rgba(14,165,233,.12)',
+        borderColor: 'rgba(14,165,233,.8)',
+        borderWidth: 2,
+        borderRadius: 5,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => '$'+ctx.parsed.y.toFixed(2) } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,.04)' },
+          ticks: { callback: v => '$'+v, font: { size: 10 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ===================================================================
+// INVENTARIO
+// ===================================================================
+function setInvView(view) {
+  invView = view;
+  const ps = document.getElementById('inv-products-section');
+  const cs = document.getElementById('inv-combos-section');
+  const sb = document.getElementById('inv-search-bar');
+  const tp = document.getElementById('inv-tab-products');
+  const tc = document.getElementById('inv-tab-combos');
+  const activeP  = 'px-4 py-2 text-sm font-medium text-sky-600 border-b-2 border-sky-600 -mb-px transition-all';
+  const inactP   = 'px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent -mb-px hover:text-sky-600 transition-all';
+  const activeC  = 'px-4 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 -mb-px transition-all';
+
+  if (view === 'products') {
+    ps.classList.remove('hidden'); cs.classList.add('hidden'); sb.classList.remove('hidden');
+    tp.className = activeP; tc.className = inactP;
+  } else {
+    ps.classList.add('hidden'); cs.classList.remove('hidden'); sb.classList.add('hidden');
+    tp.className = inactP; tc.className = activeC;
+  }
+  renderInventario();
+}
+
+function onInvSearch(val) { invSearch = val.toLowerCase(); renderProductsTable(); }
+function onInvCategoryFilter(val) { invCategory = val; renderProductsTable(); }
+
+function renderInventario() {
+  renderInvActionButtons();
+  updateCategoryLists();
+  if (invView === 'products') renderProductsTable();
+  else renderCombosTable();
+}
+
+function renderInvActionButtons() {
+  const c = document.getElementById('inv-action-buttons');
+  if (invView === 'products') {
+    c.innerHTML = `
+      <button onclick="document.getElementById('import-file-input').click()"
+        class="inv-btn flex items-center gap-1 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all font-medium text-slate-700">
+        <i class="fa-solid fa-file-import text-sky-500"></i>Importar
+      </button>
+      <button onclick="exportProductsCSV()"
+        class="inv-btn flex items-center gap-1 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all font-medium text-slate-700">
+        <i class="fa-solid fa-file-export text-sky-500"></i>Exportar
+      </button>
+      <button onclick="openProductModal(null)"
+        class="inv-btn flex items-center gap-1 px-2.5 py-1.5 text-xs bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl hover:from-sky-600 hover:to-blue-700 transition-all font-medium shadow-sm">
+        <i class="fa-solid fa-plus"></i>Nuevo Producto
+      </button>`;
+  } else {
+    c.innerHTML = `
+      <button onclick="openComboModal(null)"
+        class="inv-btn flex items-center gap-1 px-2.5 py-1.5 text-xs bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-xl hover:from-purple-600 hover:to-purple-800 transition-all font-medium shadow-sm">
+        <i class="fa-solid fa-plus"></i>Nuevo Combo
+      </button>`;
+  }
+}
+
+function updateCategoryLists() {
+  const cats = [...new Set(db.products.map(p => p.category).filter(Boolean))].sort();
+
+  // Filter select inventario
+  const flt = document.getElementById('inv-category-filter');
+  if (flt) {
+    const cur = flt.value;
+    flt.innerHTML = '<option value="">Todas las categorías</option>' +
+      cats.map(c => `<option value="${escHtml(c)}"${c===cur?' selected':''}>${escHtml(c)}</option>`).join('');
+  }
+  // Filter select POS
+  const posEl = document.getElementById('pos-category');
+  if (posEl) {
+    posEl.innerHTML = '<option value="">Todas</option>' +
+      cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  }
+  // Datalist modal
+  const dl = document.getElementById('category-list');
+  if (dl) dl.innerHTML = cats.map(c => `<option value="${escHtml(c)}">`).join('');
+}
+
+function renderProductsTable() {
+  let rows = [...db.products];
+  if (invSearch) rows = rows.filter(p =>
+    (p.name||'').toLowerCase().includes(invSearch) || (p.sku||'').toLowerCase().includes(invSearch));
+  if (invCategory) rows = rows.filter(p => p.category === invCategory);
+
+  const body = document.getElementById('products-table-body');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400">
+      <i class="fa-solid fa-box-open text-3xl mb-2 block opacity-30"></i>
+      ${db.products.length ? 'Sin resultados' : 'Sin productos. ¡Agrega el primero!'}
+    </td></tr>`;
+  } else {
+    body.innerHTML = rows.map(p => {
+      const [cls, lbl] = p.stock === 0 ? ['badge-out','Sin stock'] :
+                         p.stock <= (p.minStock||0) ? ['badge-low','Stock bajo'] :
+                         ['badge-ok','Disponible'];
+      return `<tr class="hover:bg-sky-50/40 transition-all">
+        <td class="px-3 py-2.5 font-mono text-xs text-slate-500">${escHtml(p.sku)}</td>
+        <td class="px-3 py-2.5">
+          <div class="text-sm font-medium text-slate-800 leading-tight">${escHtml(p.name)}</div>
+          ${p.offerEnabled ? `<span class="text-[0.6rem] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full font-semibold">Oferta ×${p.offerQty}</span>` : ''}
+        </td>
+        <td class="px-3 py-2.5 hidden lg:table-cell">
+          <span class="text-xs bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full">${escHtml(p.category||'—')}</span>
+        </td>
+        <td class="px-3 py-2.5 text-right text-xs text-slate-400 hidden lg:table-cell">${fmt(p.costPrice)}</td>
+        <td class="px-3 py-2.5 text-right hidden lg:table-cell"><span class="text-xs font-medium text-emerald-600">${parseFloat(p.profitPercent||0).toFixed(1)}%</span></td>
+        <td class="px-3 py-2.5 text-right font-semibold text-slate-800">${fmt(p.price)}</td>
+        <td class="px-3 py-2.5 text-center font-bold text-sm ${p.stock===0?'text-red-500':p.stock<=(p.minStock||0)?'text-amber-600':'text-slate-700'}">${p.stock||0}</td>
+        <td class="px-3 py-2.5 text-center hidden sm:table-cell"><span class="text-xs px-2 py-0.5 rounded-full ${cls}">${lbl}</span></td>
+        <td class="px-3 py-2.5 text-center">
+          <div class="flex items-center justify-center gap-1">
+            <button onclick="openProductModal('${p.id}')" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+            <button onclick="deleteProduct('${p.id}')" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  const totalCost  = rows.reduce((s,p) => s + (p.costPrice||0)*(p.stock||0), 0);
+  const totalUnits = rows.reduce((s,p) => s + (p.stock||0), 0);
+  document.getElementById('footer-count').textContent = rows.length;
+  document.getElementById('footer-cost').textContent  = fmt(totalCost);
+  document.getElementById('footer-units').textContent = totalUnits;
+}
+
+function renderCombosTable() {
+  const body = document.getElementById('combos-table-body');
+  if (!db.combos.length) {
+    body.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-400">
+      <i class="fa-solid fa-layer-group text-3xl mb-2 block opacity-30"></i>Sin combos. ¡Crea el primero!
+    </td></tr>`;
+    return;
+  }
+  body.innerHTML = db.combos.map(combo => {
+    const items = (combo.items||[]).map(ci => {
+      const p = db.products.find(x => x.id === ci.productId);
+      return p ? `${escHtml(p.name)} ×${ci.qty}` : '?';
+    }).join(', ');
+    return `<tr class="hover:bg-purple-50/40 transition-all">
+      <td class="px-3 py-2.5 font-mono text-sm font-bold text-purple-700">${escHtml(combo.code)}</td>
+      <td class="px-3 py-2.5 font-medium text-slate-800 text-sm">${escHtml(combo.name)}</td>
+      <td class="px-3 py-2.5 hidden lg:table-cell text-xs text-slate-500 max-w-xs truncate">${items}</td>
+      <td class="px-3 py-2.5 text-right font-semibold">${fmt(combo.price)}</td>
+      <td class="px-3 py-2.5 text-center">
+        <div class="flex items-center justify-center gap-1">
+          <button onclick="openComboModal('${combo.id}')" class="p-1.5 rounded-lg hover:bg-purple-50 text-purple-500 hover:text-purple-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+          <button onclick="deleteCombo('${combo.id}')" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================================================================
+// MODAL PRODUCTO
+// ===================================================================
+function openProductModal(id) {
+  const p = id ? db.products.find(x => x.id === id) : null;
+  document.getElementById('modal-product-title').textContent = p ? 'Editar Producto' : 'Nuevo Producto';
+  document.getElementById('product-id').value        = p?.id || '';
+  document.getElementById('product-name').value      = p?.name || '';
+  document.getElementById('product-sku').value       = p?.sku || '';
+  document.getElementById('product-category').value  = p?.category || '';
+  document.getElementById('product-cost').value      = p?.costPrice || '';
+  document.getElementById('product-profit').value    = p?.profitPercent || '';
+  document.getElementById('product-price').value     = p?.price || '';
+  document.getElementById('product-stock').value     = p?.stock ?? '';
+  document.getElementById('product-min-stock').value = p?.minStock ?? 5;
+  document.getElementById('product-offer-enabled').checked = p?.offerEnabled || false;
+  document.getElementById('product-offer-qty').value   = p?.offerQty || '';
+  document.getElementById('product-offer-price').value = p?.offerPrice || '';
+  toggleOfferSection();
+  openModal('modal-product');
+}
+
+function calcSellPrice() {
+  const cost   = parseFloat(document.getElementById('product-cost').value) || 0;
+  const profit = parseFloat(document.getElementById('product-profit').value) || 0;
+  document.getElementById('product-price').value = (cost * (1 + profit / 100)).toFixed(2);
+}
+
+function toggleOfferSection() {
+  const enabled = document.getElementById('product-offer-enabled').checked;
+  const sec = document.getElementById('offer-section');
+  sec.classList.toggle('hidden', !enabled);
+  sec.classList.toggle('grid', enabled);
+}
+
+function saveProduct() {
+  const id   = document.getElementById('product-id').value;
+  const name = document.getElementById('product-name').value.trim();
+  const sku  = document.getElementById('product-sku').value.trim().toUpperCase();
+  if (!name) { showToast('El nombre es requerido', 'error'); return; }
+  if (!sku)  { showToast('El SKU es requerido', 'error'); return; }
+  if (db.products.some(p => p.sku === sku && p.id !== id)) { showToast('SKU ya existe', 'error'); return; }
+
+  const prod = {
+    id: id || generateId(), sku, name,
+    category:     document.getElementById('product-category').value.trim(),
+    costPrice:    parseFloat(document.getElementById('product-cost').value)       || 0,
+    profitPercent:parseFloat(document.getElementById('product-profit').value)     || 0,
+    price:        parseFloat(document.getElementById('product-price').value)      || 0,
+    stock:        parseInt(document.getElementById('product-stock').value)        || 0,
+    minStock:     parseInt(document.getElementById('product-min-stock').value)    || 0,
+    offerEnabled: document.getElementById('product-offer-enabled').checked,
+    offerQty:     parseInt(document.getElementById('product-offer-qty').value)    || 0,
+    offerPrice:   parseFloat(document.getElementById('product-offer-price').value)|| 0
+  };
+
+  if (id) {
+    const idx = db.products.findIndex(p => p.id === id);
+    if (idx !== -1) db.products[idx] = prod;
+  } else {
+    db.products.push(prod);
+  }
+  saveDB();
+  closeModal('modal-product');
+  renderInventario();
+  showToast(id ? 'Producto actualizado' : 'Producto creado');
+}
+
+function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto?')) return;
+  db.products = db.products.filter(p => p.id !== id);
+  saveDB();
+  renderInventario();
+  showToast('Producto eliminado', 'warning');
+}
+
+// ===================================================================
+// MODAL COMBO
+// ===================================================================
+function openComboModal(id) {
+  const combo = id ? db.combos.find(c => c.id === id) : null;
+  document.getElementById('modal-combo-title').textContent = combo ? 'Editar Combo' : 'Nuevo Combo';
+  document.getElementById('combo-id').value    = combo?.id || '';
+  document.getElementById('combo-name').value  = combo?.name || '';
+  document.getElementById('combo-price').value = combo?.price || '';
+
+  const codeInput  = document.getElementById('combo-code');
+  const manualChk  = document.getElementById('combo-manual-code');
+  if (combo) {
+    codeInput.value = combo.code || '';
+    manualChk.checked = true;
+    codeInput.readOnly = false;
+  } else {
+    codeInput.value = generateComboCode();
+    manualChk.checked = false;
+    codeInput.readOnly = true;
+  }
+
+  comboItemsData = (combo?.items || [{ productId:'', qty:1 }]).map(i => ({...i}));
+  renderComboItemsList();
+  openModal('modal-combo');
+}
+
+function toggleComboCode() {
+  const manual = document.getElementById('combo-manual-code').checked;
+  const input  = document.getElementById('combo-code');
+  input.readOnly = !manual;
+  if (!manual) input.value = generateComboCode();
+}
+
+function renderComboItemsList() {
+  const c = document.getElementById('combo-items-list');
+  const opts = db.products.map(p =>
+    `<option value="${p.id}">${escHtml(p.name)} (${escHtml(p.sku)})</option>`
+  ).join('');
+
+  c.innerHTML = comboItemsData.map((item, i) => `
+    <div class="flex gap-2 items-center">
+      <select class="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none min-w-0"
+        onchange="comboItemsData[${i}].productId=this.value">
+        <option value="">Seleccionar producto...</option>
+        ${opts.replace(`value="${item.productId}"`,`value="${item.productId}" selected`)}
+      </select>
+      <input type="number" min="1" value="${item.qty||1}" placeholder="×"
+        class="w-14 px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none text-center flex-shrink-0"
+        onchange="comboItemsData[${i}].qty=parseInt(this.value)||1">
+      <button onclick="removeComboItem(${i})"
+        class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all flex-shrink-0">
+        <i class="fa-solid fa-times text-xs"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function addComboItem() {
+  comboItemsData.push({ productId:'', qty:1 });
+  renderComboItemsList();
+}
+
+function removeComboItem(idx) {
+  comboItemsData.splice(idx, 1);
+  renderComboItemsList();
+}
+
+function saveCombo() {
+  const id    = document.getElementById('combo-id').value;
+  const code  = document.getElementById('combo-code').value.trim().toUpperCase();
+  const name  = document.getElementById('combo-name').value.trim();
+  const price = parseFloat(document.getElementById('combo-price').value) || 0;
+
+  if (!name) { showToast('El nombre es requerido', 'error'); return; }
+  if (!code) { showToast('El código es requerido', 'error'); return; }
+  if (db.combos.some(c => c.code === code && c.id !== id)) { showToast('Código ya existe', 'error'); return; }
+
+  const items = comboItemsData.filter(i => i.productId && i.qty > 0);
+  if (!items.length) { showToast('Agrega al menos un producto', 'error'); return; }
+
+  const combo = { id: id || generateId(), code, name, price, items };
+  if (id) {
+    const idx = db.combos.findIndex(c => c.id === id);
+    if (idx !== -1) db.combos[idx] = combo;
+  } else {
+    db.combos.push(combo);
+  }
+  saveDB();
+  closeModal('modal-combo');
+  renderInventario();
+  showToast(id ? 'Combo actualizado' : 'Combo creado');
+}
+
+function deleteCombo(id) {
+  if (!confirm('¿Eliminar este combo?')) return;
+  db.combos = db.combos.filter(c => c.id !== id);
+  saveDB();
+  renderCombosTable();
+  showToast('Combo eliminado', 'warning');
+}
+
+// ===================================================================
+// IMPORT / EXPORT
+// ===================================================================
+function exportProductsCSV() {
+  const h = ['id','sku','name','category','costPrice','profitPercent','price','stock','minStock','offerEnabled','offerQty','offerPrice'];
+  const rows = db.products.map(p => h.map(k => JSON.stringify(p[k]??'')).join(','));
+  downloadFile([h.join(','),...rows].join('\n'), 'productos_virgishop.csv', 'text/csv');
+}
+
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let products;
+      if (file.name.endsWith('.json')) {
+        const d = JSON.parse(e.target.result);
+        products = Array.isArray(d) ? d : (d.products || []);
+      } else {
+        const lines = e.target.result.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+        products = lines.slice(1).map(line => {
+          const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g,''));
+          const obj = {};
+          headers.forEach((h, i) => {
+            const v = vals[i] || '';
+            const numFields = ['costPrice','profitPercent','price','stock','minStock','offerQty','offerPrice'];
+            obj[h] = numFields.includes(h) ? parseFloat(v)||0 : h==='offerEnabled' ? v==='true' : v;
+          });
+          return obj;
+        });
+      }
+      importProducts(products);
+    } catch(err) { showToast('Error al importar: '+err.message, 'error'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function importProducts(products) {
+  let added=0, updated=0, skipped=0;
+  products.forEach(p => {
+    if (!p.name) { skipped++; return; }
+    if (!p.id) p.id = generateId();
+    const ex = db.products.find(x => x.sku && x.sku === p.sku);
+    if (ex) { Object.assign(ex, p); updated++; }
+    else {
+      if (p.sku && db.products.some(x => x.sku === p.sku)) p.sku += '_'+Date.now();
+      db.products.push(p); added++;
+    }
+  });
+  saveDB();
+  renderInventario();
+  showToast(`Importados: ${added} nuevos, ${updated} actualizados, ${skipped} omitidos`);
+}
+
+function downloadFile(content, name, type) {
+  const blob = new Blob([content], { type });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===================================================================
+// POS
+// ===================================================================
+function onPosSearch(val)       { posSearch = val.toLowerCase(); renderProductGrid(); }
+function onPosCategoryFilter(v) { posCategoryFilter = v;         renderProductGrid(); }
+
+function renderPOS() {
+  updateCategoryLists();
+  renderProductGrid();
+  renderCart();
+  const rate = db.settings.exchangeRate;
+  if (rate) {
+    const inp = document.getElementById('pos-exchange-rate');
+    if (inp) inp.value = parseFloat(rate).toFixed(2);
+  }
+  updateTotalVESDisplay();
+}
+
+function updateTotalVESDisplay() {
+  const rate  = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
+  const total = cart.reduce((s, i) => s + calcLineTotal(i), 0);
+  const el    = document.getElementById('total-ves-display');
+  if (el) el.textContent = (rate && total) ? `≈ Bs. ${(total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}` : '';
+}
+
+function renderProductGrid() {
+  const grid = document.getElementById('product-grid');
+  const items = [];
+
+  db.products.forEach(p => {
+    if ((p.stock||0) < 1) return;
+    if (posSearch && !(p.name||'').toLowerCase().includes(posSearch) && !(p.sku||'').toLowerCase().includes(posSearch)) return;
+    if (posCategoryFilter && p.category !== posCategoryFilter) return;
+    items.push({ type:'product', data:p });
+  });
+
+  db.combos.forEach(c => {
+    if (posSearch && !(c.name||'').toLowerCase().includes(posSearch) && !(c.code||'').toLowerCase().includes(posSearch)) return;
+    items.push({ type:'combo', data:c });
+  });
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="col-span-3 text-center py-8 text-slate-400 text-xs">
+      <i class="fa-solid fa-magnifying-glass text-2xl mb-2 block opacity-30"></i>Sin productos
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(item => {
+    if (item.type === 'product') {
+      const p = item.data;
+      const offer = p.offerEnabled && (p.offerQty||0) > 1;
+      return `<div class="product-card bg-white rounded-xl border border-slate-100 p-2 cursor-pointer hover:border-sky-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
+        onclick="addToCart('${p.id}',false)">
+        ${offer ? `<span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-red-500 text-white px-1 py-px rounded-full font-bold leading-tight">OFERTA</span>` : ''}
+        <div class="psku text-[0.55rem] text-slate-400 font-mono leading-none">${escHtml(p.sku)}</div>
+        <div class="pname text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(p.name)}</div>
+        <div class="flex items-end justify-between mt-0.5">
+          <span class="pprice text-xs font-bold text-sky-600">${fmt(p.price)}</span>
+          <span class="text-[0.55rem] text-slate-400">${p.stock}</span>
+        </div>
+      </div>`;
+    } else {
+      const c = item.data;
+      return `<div class="product-card bg-white rounded-xl border border-purple-100 p-2 cursor-pointer hover:border-purple-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
+        onclick="addToCart('${c.id}',true)">
+        <span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-purple-600 text-white px-1 py-px rounded-full font-bold leading-tight">COMBO</span>
+        <div class="psku text-[0.55rem] text-purple-500 font-mono leading-none">${escHtml(c.code)}</div>
+        <div class="pname text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(c.name)}</div>
+        <div class="mt-0.5"><span class="pprice text-xs font-bold text-purple-600">${fmt(c.price)}</span></div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function addToCart(id, isCombo) {
+  let newItem;
+  if (isCombo) {
+    const combo = db.combos.find(c => c.id === id);
+    if (!combo) return;
+    const existing = cart.find(c => c.productId === id && c.isCombo);
+    if (existing) { updateCartQty(cart.indexOf(existing), 1); return; }
+    newItem = {
+      id: generateId(), productId: combo.id, name: combo.name, sku: combo.code,
+      unitPrice: combo.price, qty: 1, isCombo: true, comboItems: combo.items||[],
+      offerApplied: false, offerEnabled: false, offerQty: 0, offerPrice: 0
+    };
+  } else {
+    const prod = db.products.find(p => p.id === id);
+    if (!prod || (prod.stock||0) < 1) { showToast('Sin stock disponible', 'warning'); return; }
+    const existing = cart.find(c => c.productId === id && !c.isCombo);
+    if (existing) { updateCartQty(cart.indexOf(existing), 1); return; }
+    newItem = {
+      id: generateId(), productId: prod.id, name: prod.name, sku: prod.sku,
+      unitPrice: prod.price, qty: 1, isCombo: false, comboItems: [],
+      offerEnabled: prod.offerEnabled||false, offerQty: prod.offerQty||0, offerPrice: prod.offerPrice||0,
+      offerApplied: false
+    };
+  }
+  newItem.lineTotal = calcLineTotal(newItem);
+  cart.push(newItem);
+  renderCart();
+  updateTotalVESDisplay();
+}
+
+function calcLineTotal(item) {
+  if (!item.isCombo && item.offerEnabled && item.qty >= (item.offerQty||Infinity)) {
+    const lots = Math.floor(item.qty / item.offerQty);
+    const rem  = item.qty % item.offerQty;
+    return lots * item.offerPrice + rem * item.unitPrice;
+  }
+  return item.qty * item.unitPrice;
+}
+
+function updateCartQty(idx, delta) {
+  const item = cart[idx];
+  if (!item) return;
+  const newQty = item.qty + delta;
+  if (newQty < 1) { removeFromCart(idx); return; }
+  if (!item.isCombo) {
+    const prod = db.products.find(p => p.id === item.productId);
+    if (prod && newQty > (prod.stock||0)) {
+      showToast(`Solo ${prod.stock} en stock`, 'warning'); return;
+    }
+  }
+  item.qty = newQty;
+  item.offerApplied = !item.isCombo && item.offerEnabled && item.qty >= (item.offerQty||Infinity);
+  item.lineTotal = calcLineTotal(item);
+  renderCart();
+  updateTotalVESDisplay();
+}
+
+function removeFromCart(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+  updateTotalVESDisplay();
+}
+
+function clearCart() {
+  if (!cart.length || !confirm('¿Limpiar el carrito?')) return;
+  cart = [];
+  renderCart();
+  updateTotalVESDisplay();
+}
+
+function renderCart() {
+  const c = document.getElementById('cart-items');
+  if (!cart.length) {
+    c.innerHTML = '<p class="text-slate-400 text-xs text-center py-6"><i class="fa-solid fa-cart-shopping text-2xl mb-1 block text-slate-200"></i>Carrito vacío</p>';
+    document.getElementById('cart-subtotal').textContent = '$0.00';
+    document.getElementById('cart-total').textContent    = '$0.00';
+    return;
+  }
+  let total = 0;
+  const rate = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 0;
+  c.innerHTML = cart.map((item, idx) => {
+    const lt = calcLineTotal(item);
+    total += lt;
+    const refText = rate ? `Ref: 1 USD = ${rate.toFixed(2)} VES | ${(lt * rate).toFixed(2)} VES` : '';
+    return `<div class="cart-item flex items-center gap-1.5 p-1.5 hover:bg-slate-50 rounded-lg transition-all">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1 flex-wrap">
+          ${item.isCombo ? `<span class="text-[0.5rem] bg-purple-100 text-purple-700 px-1 rounded font-bold">COMBO</span>` : ''}
+          ${item.offerApplied ? `<span class="text-[0.5rem] bg-amber-100 text-amber-700 px-1 rounded font-bold">OFERTA</span>` : ''}
+        </div>
+        <div class="text-xs font-medium text-slate-700 truncate">${escHtml(item.name)}</div>
+        <div class="text-[0.6rem] text-slate-400">${fmt(item.unitPrice)} c/u</div>
+        <div class="text-[0.55rem] font-medium text-sky-600">${refText}</div>
+      </div>
+      <div class="flex items-center gap-0.5 flex-shrink-0">
+        <button onclick="updateCartQty(${idx},-1)" class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-600 transition-all">
+          <i class="fa-solid fa-minus" style="font-size:.5rem"></i>
+        </button>
+        <span class="w-5 text-center text-xs font-bold text-slate-700">${item.qty}</span>
+        <button onclick="updateCartQty(${idx},1)" class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-green-100 hover:text-green-600 text-slate-600 transition-all">
+          <i class="fa-solid fa-plus" style="font-size:.5rem"></i>
+        </button>
+      </div>
+      <div class="text-xs font-bold text-slate-800 w-12 text-right flex-shrink-0">${fmt(lt)}</div>
+      <button onclick="removeFromCart(${idx})" class="text-red-300 hover:text-red-500 transition-all flex-shrink-0">
+        <i class="fa-solid fa-times text-xs"></i>
+      </button>
+    </div>`;
+  }).join('');
+  document.getElementById('cart-subtotal').textContent = fmt(total);
+  document.getElementById('cart-total').textContent    = fmt(total);
+}
+
+function onPaymentMethodChange() {
+  const method = document.getElementById('payment-method').value;
+  document.getElementById('mixed-payment-section').classList.toggle('hidden', method !== 'Pago Mixto');
+}
+
+function calcMixedBalance() {
+  const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
+  const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
+  const cUsd     = parseFloat(document.getElementById('cash-usd').value) || 0;
+  const cVes     = parseFloat(document.getElementById('cash-ves').value) || 0;
+  const tUsd     = parseFloat(document.getElementById('transfer-usd').value) || 0;
+  const tVes     = parseFloat(document.getElementById('transfer-ves').value) || 0;
+  
+  const totalPaidUsd = cUsd + tUsd + (cVes / rate) + (tVes / rate);
+  const balanceUsd = total - totalPaidUsd;
+  
+  const el = document.getElementById('mixed-balance');
+  if (balanceUsd > 0.005) {
+    el.textContent = `Faltante: ${fmt(balanceUsd)} (${(balanceUsd * rate).toFixed(2)} VES)`;
+    el.className='text-xs text-center mt-1.5 text-red-500 font-medium';
+  } else if (balanceUsd < -0.005) {
+    el.textContent = `Vuelto: ${fmt(Math.abs(balanceUsd))} (${(Math.abs(balanceUsd) * rate).toFixed(2)} VES)`;
+    el.className='text-xs text-center mt-1.5 text-emerald-600 font-medium';
+  } else {
+    el.textContent = '✓ Monto exacto';
+    el.className='text-xs text-center mt-1.5 text-emerald-600 font-medium';
+  }
+}
+
+function completeMixedPayment() {
+  const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
+  const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
+  const cUsd     = parseFloat(document.getElementById('cash-usd').value) || 0;
+  const cVes     = parseFloat(document.getElementById('cash-ves').value) || 0;
+  const tUsd     = parseFloat(document.getElementById('transfer-usd').value) || 0;
+  const tVes     = parseFloat(document.getElementById('transfer-ves').value) || 0;
+  
+  const totalPaidUsd = cUsd + tUsd + (cVes / rate) + (tVes / rate);
+  const balanceUsd = total - totalPaidUsd;
+  
+  if (balanceUsd > 0) {
+    document.getElementById('transfer-ves').value = (tVes + (balanceUsd * rate)).toFixed(2);
+  }
+  calcMixedBalance();
+}
+
+function openCheckout() {
+  if (!cart.length) { showToast('El carrito está vacío', 'warning'); return; }
+  processPayment();
+}
+
+function processPayment() {
+  const method   = document.getElementById('payment-method').value;
+  const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
+  const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
+  let cashAmount = 0, transferAmount = 0;
+
+  if (method === 'Pago Mixto') {
+    const mCashUsd  = parseFloat(document.getElementById('cash-usd').value) || 0;
+    const mCashVes  = parseFloat(document.getElementById('cash-ves').value) || 0;
+    const mTransUsd = parseFloat(document.getElementById('transfer-usd').value) || 0;
+    const mTransVes = parseFloat(document.getElementById('transfer-ves').value) || 0;
+    
+    cashAmount = mCashUsd + (mCashVes / rate);
+    transferAmount = mTransUsd + (mTransVes / rate);
+    
+    if (Math.abs(cashAmount + transferAmount - total) > 0.02) {
+      showToast('Los montos del pago mixto no cuadran', 'error'); return;
+    }
+  } else if (method === 'Efectivo')       { cashAmount     = total; }
+  else if (method === 'Transferencia')    { transferAmount = total; }
+
+  // Descontar stock
+  cart.forEach(item => {
+    if (!item.isCombo) {
+      const p = db.products.find(x => x.id === item.productId);
+      if (p) p.stock = Math.max(0, (p.stock||0) - item.qty);
+    } else {
+      const combo = db.combos.find(c => c.id === item.productId);
+      (combo?.items||[]).forEach(ci => {
+        const p = db.products.find(x => x.id === ci.productId);
+        if (p) p.stock = Math.max(0, (p.stock||0) - (ci.qty||1) * item.qty);
+      });
+    }
+  });
+
+  const sale = {
+    id: generateId(),
+    date: new Date().toISOString(),
+    items: cart.map(item => ({
+      productId: item.productId, name: item.name, sku: item.sku,
+      qty: item.qty, unitPrice: item.unitPrice,
+      offerApplied: item.offerApplied||false, offerQty: item.offerQty||0, offerPrice: item.offerPrice||0,
+      isCombo: item.isCombo, comboItems: item.comboItems||[],
+      lineTotal: calcLineTotal(item)
+    })),
+    subtotal: total, total, method, cashAmount, transferAmount, exchangeRate: rate
+  };
+
+  db.sales.push(sale);
+  saveDB();
+
+  cart = [];
+  renderCart();
+  renderProductGrid();
+  updateTotalVESDisplay();
+  document.getElementById('payment-method').value = 'Efectivo';
+  document.getElementById('mixed-payment-section').classList.add('hidden');
+  document.getElementById('cash-usd').value = '';
+  document.getElementById('cash-ves').value = '';
+  document.getElementById('transfer-usd').value = '';
+  document.getElementById('transfer-ves').value = '';
+
+  currentReceiptSale = sale;
+  openReceipt(sale);
+  showToast('¡Venta registrada!', 'success');
+}
+
+// ===================================================================
+// RECIBO
+// ===================================================================
+function openReceipt(sale) {
+  currentReceiptSale = sale;
+  const el        = document.getElementById('receipt-content');
+  const rate      = sale.exchangeRate;
+  const date      = new Date(sale.date).toLocaleString('es-VE');
+  const storeName = db.settings.storeName || 'VirgiShop';
+
+  const itemsHtml = sale.items.map(item => {
+    const lt = item.lineTotal ?? (item.qty * item.unitPrice);
+    return `<div class="flex items-start justify-between gap-2 py-1.5 border-b border-dashed border-slate-100">
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-medium text-slate-700">
+          ${item.isCombo ? '<span class="text-purple-600 font-bold text-[0.6rem]">[COMBO]</span> ' : ''}${escHtml(item.name)}
+        </div>
+        <div class="text-[0.65rem] text-slate-400">${item.qty} × ${fmt(item.unitPrice)}${item.offerApplied?' <span class="text-amber-600">(Oferta)</span>':''}</div>
+        ${item.isCombo ? renderComboReceiptItems(item) : ''}
+      </div>
+      <div class="text-xs font-bold text-slate-800 flex-shrink-0">${fmt(lt)}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="text-center mb-4">
+      <div class="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+        <i class="fa-solid fa-receipt text-sky-600 text-lg"></i>
+      </div>
+      <h4 class="font-bold text-slate-800">${escHtml(storeName)}</h4>
+      <p class="text-xs text-slate-400">${date}</p>
+      <p class="text-xs text-slate-400 font-mono">#${(sale.id||'').slice(0,8).toUpperCase()}</p>
+    </div>
+    <div class="mb-3">${itemsHtml}</div>
+    <div class="space-y-1.5 pt-3 border-t border-slate-200">
+      <div class="flex justify-between text-xs"><span class="text-slate-400">Subtotal</span><span>${fmt(sale.subtotal)}</span></div>
+      <div class="flex justify-between text-sm font-bold">
+        <span class="text-slate-700">Total</span><span class="text-sky-600">${fmt(sale.total)}</span>
+      </div>
+      ${rate ? `<div class="flex justify-between text-xs text-slate-400"><span>Total VES</span><span>Bs. ${(sale.total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}</span></div>` : ''}
+    </div>
+    <div class="mt-3 p-3 bg-slate-50 rounded-xl text-xs space-y-1">
+      <div class="flex justify-between"><span class="text-slate-400">Método</span><span class="font-medium">${sale.method}</span></div>
+      ${sale.method==='Pago Mixto' ? `
+        <div class="flex justify-between"><span class="text-slate-400">· Efectivo</span><span>${fmt(sale.cashAmount)}</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">· Transferencia</span><span>${fmt(sale.transferAmount)}</span></div>` : ''}
+      ${rate ? `<div class="flex justify-between"><span class="text-slate-400">Tasa BCV</span><span>${parseFloat(rate).toFixed(2)} VES/USD</span></div>` : ''}
+    </div>`;
+
+  openModal('modal-receipt');
+}
+
+function renderComboReceiptItems(item) {
+  const combo = db.combos.find(c => c.id === item.productId);
+  if (!combo?.items?.length) return '';
+  const parts = combo.items.map(ci => {
+    const p = db.products.find(x => x.id === ci.productId);
+    return p ? `• ${escHtml(p.name)} ×${(ci.qty||1)*item.qty}` : '';
+  }).filter(Boolean);
+  return parts.length ? `<div class="text-[0.6rem] text-slate-400 mt-0.5 pl-2">${parts.join(' · ')}</div>` : '';
+}
+
+function sendWhatsApp(sale) {
+  if (!sale) return;
+  const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
+  if (!phone) {
+    showToast('Configura el número de WhatsApp en ⚙ Configuración', 'warning');
+    closeModal('modal-receipt');
+    openSettings();
+    return;
+  }
+  const store = db.settings.storeName || 'VirgiShop';
+  const date  = new Date(sale.date).toLocaleString('es-VE');
+  const rate  = sale.exchangeRate;
+  let msg = `🛍️ *${store}*\n📋 Recibo #${(sale.id||'').slice(0,8).toUpperCase()}\n📅 ${date}\n`;
+  msg += `─────────────────\n`;
+  sale.items.forEach(item => {
+    const lt = item.lineTotal ?? (item.qty * item.unitPrice);
+    msg += `${item.isCombo ? '🎁' : '📦'} *${item.name}*\n`;
+    if (item.isCombo) {
+      const combo = db.combos.find(c => c.id === item.productId);
+      (combo?.items||[]).forEach(ci => {
+        const p = db.products.find(x => x.id === ci.productId);
+        if (p) msg += `   • ${p.name} ×${(ci.qty||1)*item.qty}\n`;
+      });
+    }
+    msg += `   ${item.qty} × ${fmt(item.unitPrice)}${item.offerApplied ? ` (Oferta ×${item.offerQty})` : ''} = *${fmt(lt)}*\n`;
+  });
+  msg += `─────────────────\n💵 *Total: ${fmt(sale.total)}*\n`;
+  if (rate) msg += `💱 Bs. ${(sale.total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}\n`;
+  msg += `\n💳 Pago: ${sale.method}`;
+  if (sale.method === 'Pago Mixto') {
+    msg += `\n   · Efectivo: ${fmt(sale.cashAmount)}\n   · Transferencia: ${fmt(sale.transferAmount)}`;
+  }
+  msg += `\n\n¡Gracias por su compra! 🙏`;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ===================================================================
+// REPORTES
+// ===================================================================
+function renderReportes() {
+  filterReports();
+  renderInventoryReport();
+}
+
+function filterReports() {
+  const from = document.getElementById('report-from').value;
+  const to   = document.getElementById('report-to').value;
+  let rows   = [...db.sales].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (from) rows = rows.filter(s => (s.date||'') >= from);
+  if (to)   rows = rows.filter(s => (s.date||'') <= to+'T23:59:59');
+
+  const rate = db.settings.exchangeRate;
+  const body = document.getElementById('sales-history-body');
+  const mBadge = {
+    'Efectivo':    'bg-emerald-100 text-emerald-700',
+    'Transferencia':'bg-blue-100 text-blue-700',
+    'Pago Mixto':  'bg-purple-100 text-purple-700'
+  };
+
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 text-xs">
+      <i class="fa-solid fa-receipt text-2xl mb-2 block opacity-30"></i>Sin ventas en el período
+    </td></tr>`;
+  } else {
+    body.innerHTML = rows.map(sale => {
+      const date = new Date(sale.date).toLocaleString('es-VE');
+      const sRate = sale.exchangeRate || rate;
+      const ves   = sRate ? `Bs. ${(sale.total*sRate).toLocaleString('es-VE',{minimumFractionDigits:2})}` : '—';
+      return `<tr class="hover:bg-slate-50 transition-all">
+        <td class="px-3 py-2 text-xs text-slate-600">${date}</td>
+        <td class="px-3 py-2 hidden sm:table-cell">
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium ${mBadge[sale.method]||'bg-slate-100 text-slate-600'}">${sale.method}</span>
+        </td>
+        <td class="px-3 py-2 text-right font-bold text-sky-600 text-sm">${fmt(sale.total)}</td>
+        <td class="px-3 py-2 text-right text-xs text-slate-400 hidden lg:table-cell">${ves}</td>
+        <td class="px-3 py-2 text-center">
+          <button onclick="viewSale('${sale.id}')"
+            class="text-xs px-2 py-1 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition-all">
+            <i class="fa-solid fa-eye mr-0.5"></i>Ver
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  const total = rows.reduce((s, v) => s + (v.total||0), 0);
+  document.getElementById('report-count').textContent = rows.length;
+  document.getElementById('report-total').textContent = fmt(total);
+}
+
+function viewSale(id) {
+  const sale = db.sales.find(s => s.id === id);
+  if (sale) openReceipt(sale);
+}
+
+function clearReportFilter() {
+  document.getElementById('report-from').value = '';
+  document.getElementById('report-to').value   = '';
+  filterReports();
+}
+
+function renderInventoryReport() {
+  const cats = {};
+  db.products.forEach(p => {
+    const c = p.category || 'Sin categoría';
+    if (!cats[c]) cats[c] = { count:0, cost:0, profits:[], prices:[] };
+    cats[c].count++;
+    cats[c].cost += (p.costPrice||0) * (p.stock||0);
+    cats[c].profits.push(p.profitPercent||0);
+    cats[c].prices.push(p.price||0);
+  });
+
+  const body = document.getElementById('inventory-report-body');
+  const keys = Object.keys(cats);
+  if (!keys.length) {
+    body.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-slate-400 text-xs">Sin productos</td></tr>';
+    return;
+  }
+  body.innerHTML = keys.map(cat => {
+    const d = cats[cat];
+    const avgProfit = d.profits.reduce((a,b)=>a+b,0)/d.profits.length;
+    const avgPrice  = d.prices.reduce((a,b)=>a+b,0)/d.prices.length;
+    return `<tr class="hover:bg-slate-50 transition-all">
+      <td class="px-3 py-2"><span class="text-xs font-medium bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full">${escHtml(cat)}</span></td>
+      <td class="px-3 py-2 text-right text-sm">${d.count}</td>
+      <td class="px-3 py-2 text-right text-sm font-medium">${fmt(d.cost)}</td>
+      <td class="px-3 py-2 text-right hidden lg:table-cell"><span class="text-emerald-600 font-medium text-sm">${avgProfit.toFixed(1)}%</span></td>
+      <td class="px-3 py-2 text-right text-sm font-medium">${fmt(avgPrice)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportSalesCSV() {
+  const from = document.getElementById('report-from').value;
+  const to   = document.getElementById('report-to').value;
+  let rows   = [...db.sales];
+  if (from) rows = rows.filter(s => (s.date||'') >= from);
+  if (to)   rows = rows.filter(s => (s.date||'') <= to+'T23:59:59');
+  const h = ['id','date','total','method','cashAmount','transferAmount','exchangeRate'];
+  const csv = [h.join(','), ...rows.map(s => h.map(k => JSON.stringify(s[k]??'')).join(','))].join('\n');
+  downloadFile(csv, 'ventas_virgishop.csv', 'text/csv');
+}
+
+function exportInventoryCSV() {
+  const h = ['sku','name','category','costPrice','profitPercent','price','stock','minStock'];
+  const csv = [h.join(','), ...db.products.map(p => h.map(k => JSON.stringify(p[k]??'')).join(','))].join('\n');
+  downloadFile(csv, 'inventario_virgishop.csv', 'text/csv');
+}
+
+// ===================================================================
+// TASA DE CAMBIO BCV
+// ===================================================================
+async function fetchExchangeRate() {
+  updateRateStatus('Actualizando...', false);
+  try {
+    const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const rate = data?.promedio;
+    if (rate && !isNaN(rate)) {
+      db.settings.exchangeRate = parseFloat(rate);
+      saveDB();
+      updateRateDisplay(db.settings.exchangeRate);
+      updateRateStatus('Actualizado ' + new Date().toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'}), true);
+      showToast(`Tasa BCV: ${parseFloat(rate).toFixed(2)} VES/USD`, 'success');
+    } else {
+      throw new Error('Tasa no encontrada');
+    }
+  } catch (e) {
+    console.warn('Fetch BCV:', e.message);
+    updateRateStatus(db.settings.exchangeRate ? 'Caché disponible' : 'Sin conexión', false);
+    if (db.settings.exchangeRate) updateRateDisplay(db.settings.exchangeRate);
+  }
+}
+
+function updateRateDisplay(rate) {
+  const val = rate ? parseFloat(rate).toFixed(2) : '--';
+  ['sidebar-rate-value','mobile-rate-value','mobile-menu-rate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+  const inp = document.getElementById('pos-exchange-rate');
+  if (inp && rate) inp.value = parseFloat(rate).toFixed(2);
+  const settingInp = document.getElementById('setting-exchange-rate');
+  if (settingInp && rate) settingInp.value = parseFloat(rate).toFixed(2);
+}
+
+function updateRateStatus(msg, online) {
+  const el = document.getElementById('sidebar-rate-status');
+  if (el) { el.textContent = msg; el.className = `text-xs mt-0.5 ${online ? 'text-emerald-300' : 'text-amber-300'}`; }
+}
+
+// ===================================================================
+// CONFIGURACIÓN
+// ===================================================================
+function openSettings() {
+  document.getElementById('setting-store-name').value  = db.settings.storeName || '';
+  document.getElementById('setting-whatsapp').value    = db.settings.whatsapp  || '';
+  document.getElementById('setting-exchange-rate').value = db.settings.exchangeRate ? parseFloat(db.settings.exchangeRate).toFixed(2) : '';
+  openModal('modal-settings');
+}
+
+function saveSettings() {
+  db.settings.storeName = document.getElementById('setting-store-name').value.trim() || 'VirgiShop';
+  db.settings.whatsapp  = document.getElementById('setting-whatsapp').value.replace(/\D/g,'');
+  const rate = parseFloat(document.getElementById('setting-exchange-rate').value);
+  if (rate > 0) { db.settings.exchangeRate = rate; updateRateDisplay(rate); }
+
+  // Actualizar nombre en sidebar
+  const sn = document.getElementById('sidebar-store-name');
+  if (sn) sn.textContent = db.settings.storeName;
+
+  saveDB();
+  closeModal('modal-settings');
+  showToast('Configuración guardada');
+}
+
+// ===================================================================
+// PWA
+// ===================================================================
+function registerPWA() {
+  // Manifest
+  const manifest = {
+    name: 'VirgiShop POS', short_name: 'VirgiShop',
+    description: 'Sistema POS e Inventario', start_url: './',
+    display: 'standalone', background_color: '#f0f9ff', theme_color: '#0ea5e9',
+    icons: [{ src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%230ea5e9'/%3E%3Ctext y='78' x='12' font-size='72'%3E🛍%3C/text%3E%3C/svg%3E", sizes:'192x192', type:'image/svg+xml' }]
+  };
+  const mBlob = new Blob([JSON.stringify(manifest)], { type:'application/json' });
+  const link  = document.createElement('link');
+  link.rel  = 'manifest'; link.href = URL.createObjectURL(mBlob);
+  document.head.appendChild(link);
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+const CACHE='virgishop-v1';
+self.addEventListener('install',e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE)); });
+self.addEventListener('activate',e=>{ e.waitUntil(self.clients.claim()); });
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+    if(res&&res.ok&&res.type==='basic'){const c=res.clone();caches.open(CACHE).then(ca=>ca.put(e.request,c));}
+    return res;
+  }).catch(()=>r)));
+});`;
+    const swBlob = new Blob([swCode], { type:'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+      .then(()=>console.log('SW registrado'))
+      .catch(e=>console.warn('SW error:',e));
+  }
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+loadDB();
+registerPWA();
+
+// Inicializar nombre en sidebar
+const snEl = document.getElementById('sidebar-store-name');
+if (snEl) snEl.textContent = db.settings.storeName || 'VirgiShop';
+
+// Mostrar tasa guardada
+if (db.settings.exchangeRate) {
+  updateRateDisplay(db.settings.exchangeRate);
+  updateRateStatus('Caché', true);
+}
+
+showTab('dashboard');
+fetchExchangeRate();
+</script>
+</body>
+</html>
