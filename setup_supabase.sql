@@ -3,6 +3,23 @@
 -- Ejecuta este SQL en el SQL Editor de tu dashboard Supabase
 -- ============================================================
 
+-- Tabla de usuarios (admin/operadores del POS)
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  full_name TEXT DEFAULT '',
+  role TEXT DEFAULT 'operator' CHECK (role IN ('admin', 'operator')),
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Insertar usuario admin por defecto
+INSERT INTO users (id, username, password_hash, full_name, role) VALUES
+  ('usr_001', 'herrera', 'herrera2026', 'Admin Herrera', 'admin')
+ON CONFLICT (username) DO NOTHING;
+
 -- Tabla de productos
 CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
@@ -32,6 +49,7 @@ CREATE TABLE IF NOT EXISTS sales (
   cash_amount NUMERIC DEFAULT 0,
   transfer_amount NUMERIC DEFAULT 0,
   exchange_rate NUMERIC DEFAULT 0,
+  client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -42,6 +60,34 @@ CREATE TABLE IF NOT EXISTS combos (
   name TEXT NOT NULL,
   price NUMERIC DEFAULT 0,
   items JSONB DEFAULT '[]',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabla de clientes (para futura página de pedidos)
+CREATE TABLE IF NOT EXISTS clients (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT DEFAULT '',
+  email TEXT DEFAULT '',
+  address TEXT DEFAULT '',
+  id_number TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabla de pedidos (futura página de pedidos online)
+CREATE TABLE IF NOT EXISTS orders (
+  id TEXT PRIMARY KEY,
+  client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled')),
+  items JSONB DEFAULT '[]',
+  subtotal NUMERIC DEFAULT 0,
+  total NUMERIC DEFAULT 0,
+  delivery_address TEXT DEFAULT '',
+  delivery_notes TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -59,24 +105,27 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- Habilitar RLS (Row Level Security)
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
-ALTER TABLE combos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+ALTER TABLE sales DISABLE ROW LEVEL SECURITY;
+ALTER TABLE combos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
 
--- Políticas: permitir todo a usuarios autenticados
-CREATE POLICY "Allow all for authenticated" ON products FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for authenticated" ON sales FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for authenticated" ON combos FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for authenticated" ON settings FOR ALL USING (true) WITH CHECK (true);
-
--- Habilitar Realtime (opcional, para sincronización en tiempo real)
+-- Habilitar Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE products;
 ALTER PUBLICATION supabase_realtime ADD TABLE sales;
 ALTER PUBLICATION supabase_realtime ADD TABLE combos;
+ALTER PUBLICATION supabase_realtime ADD TABLE clients;
+ALTER PUBLICATION supabase_realtime ADD TABLE orders;
 
--- Índices para búsquedas frecuentes
+-- Índices
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(date);
 CREATE INDEX IF NOT EXISTS idx_combos_code ON combos(code);
+CREATE INDEX IF NOT EXISTS idx_clients_phone ON clients(phone);
+CREATE INDEX IF NOT EXISTS idx_clients_name ON clients(name);
+CREATE INDEX IF NOT EXISTS idx_orders_client ON orders(client_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);

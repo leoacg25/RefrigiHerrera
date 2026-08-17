@@ -123,6 +123,14 @@
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Reportes</span>
     </button>
+    <button onclick="showTab('clientes')" id="nav-clientes"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-users w-5 text-center"></i><span>Clientes</span>
+    </button>
+    <button onclick="showTab('usuarios')" id="nav-usuarios"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-user-gear w-5 text-center"></i><span>Usuarios</span>
+    </button>
   </nav>
   <div class="p-3 border-t border-white/20">
     <div class="mb-2 p-3 bg-white/10 rounded-xl">
@@ -181,6 +189,12 @@
     </button>
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
       <i class="fa-solid fa-chart-line w-4 text-center text-xs"></i><span>Reportes</span>
+    </button>
+    <button onclick="showTab('clientes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="clientes">
+      <i class="fa-solid fa-users w-4 text-center text-xs"></i><span>Clientes</span>
+    </button>
+    <button onclick="showTab('usuarios');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="usuarios">
+      <i class="fa-solid fa-user-gear w-4 text-center text-xs"></i><span>Usuarios</span>
     </button>
     <div class="px-4 py-2">
       <span class="text-xs text-sky-300">BCV: <strong id="mobile-menu-rate" class="text-white">--</strong> VES/USD</span>
@@ -526,6 +540,76 @@
         </div>
       </div>
     </div>
+
+    <!-- ======== TAB: CLIENTES ======== -->
+    <div id="tab-clientes" class="tab-content">
+      <div class="mb-3">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-3">
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Clientes</h2>
+          <button onclick="openClientModal(null)"
+            class="flex items-center gap-1 px-3 py-1.5 text-xs text-white rounded-xl transition-all font-medium shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+            <i class="fa-solid fa-plus"></i>Nuevo Cliente
+          </button>
+        </div>
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="client-search" placeholder="Buscar por nombre, teléfono o cédula..." oninput="renderClientsTable()"
+            class="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 focus:ring-2 focus:ring-sky-100 outline-none transition-all">
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-sky-50 border-b border-sky-100">
+              <tr>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Nombre</th>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Teléfono</th>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Cédula/RIF</th>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Dirección</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Acc.</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+        <div class="px-3 py-2.5 bg-sky-50 border-t border-sky-100 text-xs text-slate-600">
+          <span>Total: <strong id="clients-count">0</strong> clientes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== TAB: USUARIOS ======== -->
+    <div id="tab-usuarios" class="tab-content">
+      <div class="mb-3">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-3">
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Usuarios</h2>
+          <button onclick="openUserModal(null)"
+            class="flex items-center gap-1 px-3 py-1.5 text-xs text-white rounded-xl transition-all font-medium shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+            <i class="fa-solid fa-plus"></i>Nuevo Usuario
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-sky-50 border-b border-sky-100">
+              <tr>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Usuario</th>
+                <th class="text-left px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide hidden lg:table-cell">Nombre Completo</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Rol</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Estado</th>
+                <th class="text-center px-3 py-2.5 text-sky-700 font-semibold text-xs uppercase tracking-wide">Acc.</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+        <div class="px-3 py-2.5 bg-sky-50 border-t border-sky-100 text-xs text-slate-600">
+          <span>Total: <strong id="users-count">0</strong> usuarios</span>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /p-3 lg:p-6 -->
 </main>
 
@@ -759,6 +843,120 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: CLIENTE ===================== -->
+<div id="modal-client" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-client')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-client-title" class="font-bold text-base text-slate-800">Nuevo Cliente</h3>
+        <button onclick="closeModal('modal-client')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="client-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Nombre <span class="text-red-500">*</span></label>
+            <input type="text" id="client-name" placeholder="Nombre completo"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 focus:ring-2 focus:ring-sky-100 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Cédula/RIF</label>
+            <input type="text" id="client-id-number" placeholder="V-12345678"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Teléfono</label>
+            <input type="tel" id="client-phone" placeholder="0412-1234567"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">Email</label>
+            <input type="email" id="client-email" placeholder="correo@ejemplo.com"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Dirección</label>
+          <input type="text" id="client-address" placeholder="Dirección completa"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Notas</label>
+          <textarea id="client-notes" rows="2" placeholder="Notas adicionales..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-client')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveClient()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: USUARIO ===================== -->
+<div id="modal-user" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-user')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-user-title" class="font-bold text-base text-slate-800">Nuevo Usuario</h3>
+        <button onclick="closeModal('modal-user')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="user-id">
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Usuario <span class="text-red-500">*</span></label>
+          <input type="text" id="user-username" placeholder="nombre_usuario"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 focus:ring-2 focus:ring-sky-100 outline-none transition-all uppercase">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Nombre Completo</label>
+          <input type="text" id="user-fullname" placeholder="Nombre y apellido"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Contraseña <span class="text-red-500" id="user-pass-required">*</span></label>
+          <input type="password" id="user-password" placeholder="Mínimo 6 caracteres"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          <p id="user-pass-hint" class="text-xs text-slate-400 mt-1">Dejar vacío para no cambiar</p>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Rol</label>
+          <select id="user-role"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none">
+            <option value="operator">Operador</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="user-active" checked class="rounded text-sky-500 focus:ring-sky-400">
+          <label for="user-active" class="text-sm text-slate-600 cursor-pointer">Usuario activo</label>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-user')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveUser()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
 
@@ -778,6 +976,8 @@ let db = {
   products: [],
   sales: [],
   combos: [],
+  users: [],
+  clients: [],
   settings: {
     whatsapp: '',
     storeName: 'RefrigiHerrera',
@@ -812,11 +1012,13 @@ async function initSupabase() {
 async function loadFromSupabase() {
   if (!sbReady) return;
   try {
-    const [prodRes, salesRes, comboRes, setRes] = await Promise.all([
+    const [prodRes, salesRes, comboRes, setRes, userRes, clientRes] = await Promise.all([
       sb.from('products').select('*'),
       sb.from('sales').select('*').order('date', { ascending: false }),
       sb.from('combos').select('*'),
-      sb.from('settings').select('*').eq('key', 'app').single()
+      sb.from('settings').select('*').eq('key', 'app').single(),
+      sb.from('users').select('*').order('created_at', { ascending: true }),
+      sb.from('clients').select('*').order('created_at', { ascending: false })
     ]);
     if (prodRes.data) db.products = prodRes.data.map(p => ({
       id: p.id, sku: p.sku, name: p.name, category: p.category,
@@ -827,12 +1029,20 @@ async function loadFromSupabase() {
     if (salesRes.data) db.sales = salesRes.data.map(s => ({
       id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
       total: s.total, method: s.method, cashAmount: s.cash_amount,
-      transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate
+      transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate, clientId: s.client_id
     }));
     if (comboRes.data) db.combos = comboRes.data.map(c => ({
       id: c.id, code: c.code, name: c.name, price: c.price, items: c.items
     }));
     if (setRes.data) db.settings = Object.assign(db.settings, setRes.data.value || {});
+    if (userRes.data) db.users = userRes.data.map(u => ({
+      id: u.id, username: u.username, passwordHash: u.password_hash,
+      fullName: u.full_name, role: u.role, active: u.active
+    }));
+    if (clientRes.data) db.clients = clientRes.data.map(c => ({
+      id: c.id, name: c.name, phone: c.phone, email: c.email,
+      address: c.address, idNumber: c.id_number, notes: c.notes, active: c.active
+    }));
     saveDB();
   } catch (e) { console.warn('loadFromSupabase:', e); }
 }
@@ -845,6 +1055,8 @@ function loadDB() {
       db.products = parsed.products || [];
       db.sales = parsed.sales || [];
       db.combos = parsed.combos || [];
+      db.users = parsed.users || [];
+      db.clients = parsed.clients || [];
       db.settings = Object.assign({}, db.settings, parsed.settings || {});
     }
   } catch (e) { console.error('loadDB:', e); }
@@ -871,6 +1083,18 @@ async function syncToSupabase() {
       id: c.id, code: c.code, name: c.name, price: c.price || 0, items: c.items || []
     }));
     if (combos.length) await sb.from('combos').upsert(combos, { onConflict: 'id' });
+
+    const users = db.users.map(u => ({
+      id: u.id, username: u.username, password_hash: u.passwordHash,
+      full_name: u.fullName || '', role: u.role || 'operator', active: u.active !== false
+    }));
+    if (users.length) await sb.from('users').upsert(users, { onConflict: 'id' });
+
+    const clients = db.clients.map(c => ({
+      id: c.id, name: c.name, phone: c.phone || '', email: c.email || '',
+      address: c.address || '', id_number: c.idNumber || '', notes: c.notes || '', active: c.active !== false
+    }));
+    if (clients.length) await sb.from('clients').upsert(clients, { onConflict: 'id' });
 
     await sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' });
   } catch (e) { console.warn('syncToSupabase:', e); }
@@ -934,7 +1158,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', reportes:'Reportes' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -953,6 +1177,8 @@ function showTab(tab) {
     case 'inventario': renderInventario(); break;
     case 'ventas':     renderPOS();        break;
     case 'reportes':   renderReportes();   break;
+    case 'clientes':   renderClientsTable(); break;
+    case 'usuarios':   renderUsersTable();   break;
   }
 }
 
@@ -2004,6 +2230,185 @@ function exportInventoryCSV() {
   const h = ['sku','name','category','costPrice','profitPercent','price','stock','minStock'];
   const csv = [h.join(','), ...db.products.map(p => h.map(k => JSON.stringify(p[k]??'')).join(','))].join('\n');
   downloadFile(csv, 'inventario_refrigiherrera.csv', 'text/csv');
+}
+
+// ===================================================================
+// CLIENTES
+// ===================================================================
+function renderClientsTable() {
+  const search = (document.getElementById('client-search')?.value || '').toLowerCase();
+  let rows = [...db.clients];
+  if (search) rows = rows.filter(c =>
+    (c.name||'').toLowerCase().includes(search) ||
+    (c.phone||'').toLowerCase().includes(search) ||
+    (c.idNumber||'').toLowerCase().includes(search));
+
+  const body = document.getElementById('clients-table-body');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-400">
+      <i class="fa-solid fa-users text-3xl mb-2 block opacity-30"></i>
+      ${db.clients.length ? 'Sin resultados' : 'Sin clientes. ¡Agrega el primero!'}
+    </td></tr>`;
+  } else {
+    body.innerHTML = rows.map(c => `<tr class="hover:bg-sky-50/40 transition-all">
+      <td class="px-3 py-2.5">
+        <div class="text-sm font-medium text-slate-800">${escHtml(c.name)}</div>
+        ${c.email ? `<div class="text-[0.65rem] text-slate-400">${escHtml(c.email)}</div>` : ''}
+      </td>
+      <td class="px-3 py-2.5 hidden lg:table-cell text-sm text-slate-600">${escHtml(c.phone||'—')}</td>
+      <td class="px-3 py-2.5 hidden lg:table-cell text-sm text-slate-600 font-mono">${escHtml(c.idNumber||'—')}</td>
+      <td class="px-3 py-2.5 hidden lg:table-cell text-xs text-slate-500 max-w-[200px] truncate">${escHtml(c.address||'—')}</td>
+      <td class="px-3 py-2.5 text-center">
+        <div class="flex items-center justify-center gap-1">
+          <button onclick="openClientModal('${c.id}')" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+          <button onclick="deleteClient('${c.id}')" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+  }
+  document.getElementById('clients-count').textContent = rows.length;
+}
+
+function openClientModal(id) {
+  const c = id ? db.clients.find(x => x.id === id) : null;
+  document.getElementById('modal-client-title').textContent = c ? 'Editar Cliente' : 'Nuevo Cliente';
+  document.getElementById('client-id').value = c?.id || '';
+  document.getElementById('client-name').value = c?.name || '';
+  document.getElementById('client-id-number').value = c?.idNumber || '';
+  document.getElementById('client-phone').value = c?.phone || '';
+  document.getElementById('client-email').value = c?.email || '';
+  document.getElementById('client-address').value = c?.address || '';
+  document.getElementById('client-notes').value = c?.notes || '';
+  openModal('modal-client');
+}
+
+function saveClient() {
+  const id = document.getElementById('client-id').value;
+  const name = document.getElementById('client-name').value.trim();
+  if (!name) { showToast('El nombre es requerido', 'error'); return; }
+
+  const client = {
+    id: id || generateId(), name,
+    idNumber: document.getElementById('client-id-number').value.trim(),
+    phone: document.getElementById('client-phone').value.trim(),
+    email: document.getElementById('client-email').value.trim(),
+    address: document.getElementById('client-address').value.trim(),
+    notes: document.getElementById('client-notes').value.trim(),
+    active: true
+  };
+
+  if (id) {
+    const idx = db.clients.findIndex(c => c.id === id);
+    if (idx !== -1) db.clients[idx] = client;
+  } else {
+    db.clients.push(client);
+  }
+  saveDB();
+  closeModal('modal-client');
+  renderClientsTable();
+  showToast(id ? 'Cliente actualizado' : 'Cliente creado');
+}
+
+function deleteClient(id) {
+  if (!confirm('¿Eliminar este cliente?')) return;
+  db.clients = db.clients.filter(c => c.id !== id);
+  saveDB();
+  renderClientsTable();
+  showToast('Cliente eliminado', 'warning');
+}
+
+// ===================================================================
+// USUARIOS
+// ===================================================================
+function renderUsersTable() {
+  const body = document.getElementById('users-table-body');
+  const rows = [...db.users];
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-400">
+      <i class="fa-solid fa-user-gear text-3xl mb-2 block opacity-30"></i>Sin usuarios
+    </td></tr>`;
+  } else {
+    body.innerHTML = rows.map(u => {
+      const roleBadge = u.role === 'admin'
+        ? '<span class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">Admin</span>'
+        : '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">Operador</span>';
+      const statusBadge = u.active !== false
+        ? '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Activo</span>'
+        : '<span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Inactivo</span>';
+      const current = JSON.parse(localStorage.getItem('rh_session')||'{}');
+      const isCurrent = u.username === current.user;
+      return `<tr class="hover:bg-sky-50/40 transition-all ${isCurrent ? 'bg-sky-50/60' : ''}">
+        <td class="px-3 py-2.5">
+          <div class="text-sm font-medium text-slate-800">${escHtml(u.username)}${isCurrent ? ' <span class="text-[0.6rem] text-sky-500">(tú)</span>' : ''}</div>
+        </td>
+        <td class="px-3 py-2.5 hidden lg:table-cell text-sm text-slate-600">${escHtml(u.fullName||'—')}</td>
+        <td class="px-3 py-2.5 text-center">${roleBadge}</td>
+        <td class="px-3 py-2.5 text-center">${statusBadge}</td>
+        <td class="px-3 py-2.5 text-center">
+          <div class="flex items-center justify-center gap-1">
+            <button onclick="openUserModal('${u.id}')" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+            ${!isCurrent ? `<button onclick="deleteUser('${u.id}')" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('users-count').textContent = rows.length;
+}
+
+function openUserModal(id) {
+  const u = id ? db.users.find(x => x.id === id) : null;
+  const isNew = !u;
+  document.getElementById('modal-user-title').textContent = u ? 'Editar Usuario' : 'Nuevo Usuario';
+  document.getElementById('user-id').value = u?.id || '';
+  document.getElementById('user-username').value = u?.username || '';
+  document.getElementById('user-fullname').value = u?.fullName || '';
+  document.getElementById('user-password').value = '';
+  document.getElementById('user-role').value = u?.role || 'operator';
+  document.getElementById('user-active').checked = u?.active !== false;
+  document.getElementById('user-pass-required').style.display = isNew ? 'inline' : 'none';
+  document.getElementById('user-pass-hint').style.display = isNew ? 'none' : 'block';
+  openModal('modal-user');
+}
+
+function saveUser() {
+  const id = document.getElementById('user-id').value;
+  const username = document.getElementById('user-username').value.trim().toLowerCase();
+  const password = document.getElementById('user-password').value;
+  const isNew = !id;
+
+  if (!username) { showToast('El usuario es requerido', 'error'); return; }
+  if (isNew && !password) { showToast('La contraseña es requerida', 'error'); return; }
+  if (password && password.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
+  if (db.users.some(u => u.username === username && u.id !== id)) { showToast('Este usuario ya existe', 'error'); return; }
+
+  const user = {
+    id: id || generateId(), username,
+    fullName: document.getElementById('user-fullname').value.trim(),
+    role: document.getElementById('user-role').value,
+    active: document.getElementById('user-active').checked
+  };
+  if (password) user.passwordHash = password;
+  else if (id) user.passwordHash = db.users.find(u => u.id === id)?.passwordHash || '';
+
+  if (id) {
+    const idx = db.users.findIndex(u => u.id === id);
+    if (idx !== -1) db.users[idx] = user;
+  } else {
+    db.users.push(user);
+  }
+  saveDB();
+  closeModal('modal-user');
+  renderUsersTable();
+  showToast(id ? 'Usuario actualizado' : 'Usuario creado');
+}
+
+function deleteUser(id) {
+  if (!confirm('¿Eliminar este usuario?')) return;
+  db.users = db.users.filter(u => u.id !== id);
+  saveDB();
+  renderUsersTable();
+  showToast('Usuario eliminado', 'warning');
 }
 
 // ===================================================================
