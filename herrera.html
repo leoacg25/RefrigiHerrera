@@ -14,6 +14,20 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" type="image/png" href="logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function(){
+      const s = localStorage.getItem('rh_session');
+      if (!s) { window.location.href = 'login.html'; return; }
+      try {
+        const sess = JSON.parse(s);
+        if (!sess.authenticated || (Date.now() - sess.timestamp > 86400000)) {
+          localStorage.removeItem('rh_session');
+          window.location.href = 'login.html';
+        }
+      } catch(e) { window.location.href = 'login.html'; }
+    })();
+  </script>
   <script>
     tailwind.config = {
       theme: { extend: {
@@ -122,6 +136,10 @@
     <button onclick="openSettings()"
       class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-gear w-5 text-center"></i><span>Configuración</span>
+    </button>
+    <button onclick="handleLogout()"
+      class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all text-red-300 hover:text-red-200">
+      <i class="fa-solid fa-right-from-bracket w-5 text-center"></i><span>Cerrar Sesión</span>
     </button>
   </div>
 </aside>
@@ -782,6 +800,51 @@ let comboItemsData = [];
 // ===================================================================
 // PERSISTENCIA
 // ===================================================================
+let sbReady = false;
+
+async function initSupabase() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const email = 'herrera@refrigiherrera.app';
+      await sb.auth.signInWithPassword({ email, password: 'herrera2026' }).catch(async () => {
+        await sb.auth.signUp({ email, password: 'herrera2026' });
+        await sb.auth.signInWithPassword({ email, password: 'herrera2026' });
+      });
+    }
+    sbReady = true;
+    await loadFromSupabase();
+  } catch (e) { console.warn('Supabase init fallback to localStorage:', e); }
+}
+
+async function loadFromSupabase() {
+  if (!sbReady) return;
+  try {
+    const [prodRes, salesRes, comboRes, setRes] = await Promise.all([
+      sb.from('products').select('*'),
+      sb.from('sales').select('*').order('date', { ascending: false }),
+      sb.from('combos').select('*'),
+      sb.from('settings').select('*').eq('key', 'app').single()
+    ]);
+    if (prodRes.data) db.products = prodRes.data.map(p => ({
+      id: p.id, sku: p.sku, name: p.name, category: p.category,
+      costPrice: p.cost_price, profitPercent: p.profit_percent,
+      price: p.price, stock: p.stock, minStock: p.min_stock,
+      offerEnabled: p.offer_enabled, offerQty: p.offer_qty, offerPrice: p.offer_price
+    }));
+    if (salesRes.data) db.sales = salesRes.data.map(s => ({
+      id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
+      total: s.total, method: s.method, cashAmount: s.cash_amount,
+      transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate
+    }));
+    if (comboRes.data) db.combos = comboRes.data.map(c => ({
+      id: c.id, code: c.code, name: c.name, price: c.price, items: c.items
+    }));
+    if (setRes.data) db.settings = Object.assign(db.settings, setRes.data.value || {});
+    saveDB();
+  } catch (e) { console.warn('loadFromSupabase:', e); }
+}
+
 function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
@@ -798,6 +861,39 @@ function loadDB() {
 function saveDB() {
   try { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
   catch (e) { showToast('Error al guardar datos', 'error'); }
+  syncToSupabase();
+}
+
+async function syncToSupabase() {
+  if (!sbReady) return;
+  try {
+    const products = db.products.map(p => ({
+      id: p.id, sku: p.sku, name: p.name, category: p.category || '',
+      cost_price: p.costPrice || 0, profit_percent: p.profitPercent || 0,
+      price: p.price || 0, stock: p.stock || 0, min_stock: p.minStock || 5,
+      offer_enabled: p.offerEnabled || false, offer_qty: p.offerQty || 0, offer_price: p.offerPrice || 0
+    }));
+    if (products.length) await sb.from('products').upsert(products, { onConflict: 'id' });
+
+    const combos = db.combos.map(c => ({
+      id: c.id, code: c.code, name: c.name, price: c.price || 0, items: c.items || []
+    }));
+    if (combos.length) await sb.from('combos').upsert(combos, { onConflict: 'id' });
+
+    await sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  } catch (e) { console.warn('syncToSupabase:', e); }
+}
+
+async function syncSaleToSupabase(sale) {
+  if (!sbReady) return;
+  try {
+    await sb.from('sales').insert({
+      id: sale.id, date: sale.date, items: sale.items,
+      subtotal: sale.subtotal, total: sale.total, method: sale.method,
+      cash_amount: sale.cashAmount, transfer_amount: sale.transferAmount,
+      exchange_rate: sale.exchangeRate
+    });
+  } catch (e) { console.warn('syncSaleToSupabase:', e); }
 }
 
 function generateId() {
@@ -1689,6 +1785,7 @@ function processPayment() {
 
   db.sales.push(sale);
   saveDB();
+  syncSaleToSupabase(sale);
 
   cart = [];
   renderCart();
@@ -2026,7 +2123,19 @@ self.addEventListener('fetch',e=>{
 // ===================================================================
 // INIT
 // ===================================================================
+const SUPABASE_URL = 'https://muwthhwoxpooliatnmhk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_qfIeLtWYNzmQhLAjiGdh_Q_J3PQ5TID';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function handleLogout() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  sb.auth.signOut().catch(()=>{});
+  localStorage.removeItem('rh_session');
+  window.location.href = 'login.html';
+}
+
 loadDB();
+initSupabase().then(() => {
 registerPWA();
 
 // Inicializar nombre en sidebar
@@ -2041,6 +2150,7 @@ if (db.settings.exchangeRate) {
 
 showTab('dashboard');
 fetchExchangeRate();
+});
 </script>
 </body>
 </html>
