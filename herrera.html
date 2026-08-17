@@ -141,6 +141,11 @@
       </div>
       <div id="sidebar-rate-status" class="text-xs text-blue-300 mt-0.5">Cargando...</div>
     </div>
+    <button onclick="showNotifications()"
+      class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all relative">
+      <i class="fa-solid fa-bell w-5 text-center"></i><span>Notificaciones</span>
+      <span id="sidebar-notif-badge" class="hidden ml-auto bg-red-500 text-white text-[0.55rem] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">0</span>
+    </button>
     <button onclick="openSettings()"
       class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-gear w-5 text-center"></i><span>Configuración</span>
@@ -162,12 +167,19 @@
       <img src="logo.png" alt="RefrigiHerrera" style="height:32px;width:auto;object-fit:contain">
     </div>
     <span id="mobile-title" class="font-semibold text-sm flex-1 truncate">Dashboard</span>
+    <button onclick="showNotifications()" class="p-1.5 rounded-lg hover:bg-white/20 transition-all flex-shrink-0 relative">
+      <i class="fa-solid fa-bell text-xs"></i>
+      <span id="mobile-notif-badge" class="hidden absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-[0.45rem] font-bold flex items-center justify-center">0</span>
+    </button>
     <div class="flex-shrink-0 bg-white/10 rounded-lg px-1.5 py-0.5 text-center leading-tight">
       <div class="text-blue-300 text-[0.5rem]">BCV</div>
       <div id="mobile-rate-value" class="font-bold text-white text-[0.55rem] max-w-[56px] truncate">--</div>
     </div>
     <button onclick="openSettings()" class="p-1.5 rounded-lg hover:bg-white/20 transition-all flex-shrink-0">
       <i class="fa-solid fa-gear text-xs"></i>
+    </button>
+    <button onclick="handleLogout()" class="p-1.5 rounded-lg hover:bg-white/20 transition-all flex-shrink-0">
+      <i class="fa-solid fa-right-from-bracket text-xs"></i>
     </button>
   </div>
 </header>
@@ -952,6 +964,28 @@
           class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
           <i class="fa-solid fa-save mr-1.5"></i>Guardar
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: NOTIFICACIONES ===================== -->
+<div id="modal-notifications" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-notifications')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100">
+        <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-bell text-sky-500 mr-2"></i>Notificaciones</h3>
+        <button onclick="closeModal('modal-notifications')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div id="notifications-list" class="overflow-y-auto max-h-[60vh] p-4">
+        <div class="text-center py-8">
+          <i class="fa-solid fa-bell-slash text-3xl text-slate-200 block mb-2"></i>
+          <p class="text-slate-400 text-sm">Sin notificaciones</p>
+          <p class="text-slate-300 text-xs mt-1">Aquí aparecerán los pedidos de la tienda online</p>
+        </div>
       </div>
     </div>
   </div>
@@ -2409,6 +2443,74 @@ function deleteUser(id) {
   saveDB();
   renderUsersTable();
   showToast('Usuario eliminado', 'warning');
+}
+
+// ===================================================================
+// NOTIFICACIONES
+// ===================================================================
+let notifications = [];
+
+function showNotifications() {
+  const list = document.getElementById('notifications-list');
+  if (!notifications.length) {
+    list.innerHTML = `<div class="text-center py-8">
+      <i class="fa-solid fa-bell-slash text-3xl text-slate-200 block mb-2"></i>
+      <p class="text-slate-400 text-sm">Sin notificaciones</p>
+      <p class="text-slate-300 text-xs mt-1">Aquí aparecerán los pedidos de la tienda online</p>
+    </div>`;
+  } else {
+    list.innerHTML = notifications.map(n => `
+      <div class="p-3 mb-2 rounded-xl border ${n.read ? 'border-slate-100 bg-slate-50' : 'border-sky-100 bg-sky-50'} transition-all cursor-pointer"
+        onclick="markNotifRead('${n.id}')">
+        <div class="flex items-start gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${n.type === 'order' ? 'bg-emerald-100 text-emerald-600' : 'bg-sky-100 text-sky-600'}">
+            <i class="fa-solid ${n.type === 'order' ? 'fa-shopping-bag' : 'fa-info'} text-xs"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-slate-800">${escHtml(n.title)}</div>
+            <div class="text-xs text-slate-500 mt-0.5">${escHtml(n.message)}</div>
+            <div class="text-[0.6rem] text-slate-400 mt-1">${n.time}</div>
+          </div>
+          ${!n.read ? '<div class="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-1.5"></div>' : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+  openModal('modal-notifications');
+}
+
+function addNotification(title, message, type = 'info') {
+  const n = {
+    id: generateId(),
+    title, message, type,
+    time: new Date().toLocaleString('es-VE'),
+    read: false
+  };
+  notifications.unshift(n);
+  updateNotifBadges();
+}
+
+function markNotifRead(id) {
+  const n = notifications.find(x => x.id === id);
+  if (n) n.read = true;
+  updateNotifBadges();
+  showNotifications();
+}
+
+function updateNotifBadges() {
+  const unread = notifications.filter(n => !n.read).length;
+  const badges = ['mobile-notif-badge', 'sidebar-notif-badge'];
+  badges.forEach(bid => {
+    const el = document.getElementById(bid);
+    if (el) {
+      if (unread > 0) {
+        el.textContent = unread > 99 ? '99+' : unread;
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    }
+  });
 }
 
 // ===================================================================
