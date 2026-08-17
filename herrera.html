@@ -1047,10 +1047,17 @@ let comboItemsData = [];
 let sbReady = false;
 
 async function initSupabase() {
+  if (!navigator.onLine) {
+    sbReady = false;
+    return;
+  }
   try {
     sbReady = true;
     await loadFromSupabase();
-  } catch (e) { console.warn('Supabase init fallback to localStorage:', e); }
+  } catch (e) {
+    console.warn('Supabase init fallback to localStorage:', e);
+    sbReady = false;
+  }
 }
 
 async function loadFromSupabase() {
@@ -2701,7 +2708,7 @@ function handleLogout() {
 }
 
 loadDB();
-initSupabase().then(() => {
+initSupabase().catch(()=>{}).finally(() => {
 registerPWA();
 updateConnectionStatus();
 
