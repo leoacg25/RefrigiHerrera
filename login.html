@@ -110,14 +110,17 @@
 
       try {
         console.log('Buscando usuario:', user);
+
+        const { data: allUsers, error: errAll } = await sb.from('users').select('*');
+        console.log('Todos los usuarios:', JSON.stringify(allUsers), 'Error:', errAll);
+
         const { data: users, error } = await sb.from('users')
           .select('*')
           .eq('username', user)
           .eq('password_hash', pass)
-          .eq('active', true)
           .limit(1);
 
-        console.log('Resultado:', users, 'Error:', error);
+        console.log('Match:', users, 'Error:', error);
 
         if (error) throw error;
 
