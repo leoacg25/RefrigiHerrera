@@ -109,12 +109,15 @@
       spinner.style.display = 'block';
 
       try {
+        console.log('Buscando usuario:', user);
         const { data: users, error } = await sb.from('users')
           .select('*')
           .eq('username', user)
           .eq('password_hash', pass)
           .eq('active', true)
           .limit(1);
+
+        console.log('Resultado:', users, 'Error:', error);
 
         if (error) throw error;
 
