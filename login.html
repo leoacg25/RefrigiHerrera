@@ -82,7 +82,7 @@
   <script>
     const SUPABASE_URL = 'https://muwthhwoxpooliatnmhk.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_qfIeLtWYNzmQhLAjiGdh_Q_J3PQ5TID';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const CREDENTIALS = { username: 'herrera', password: 'herrera2026' };
 
@@ -110,12 +110,12 @@
 
       try {
         const email = user + '@refrigiherrera.app';
-        let { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+        let { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
 
         if (error) {
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password: pass });
+          const { data: signUpData, error: signUpError } = await sbClient.auth.signUp({ email, password: pass });
           if (signUpError) throw signUpError;
-          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pass });
+          const { error: signInError } = await sbClient.auth.signInWithPassword({ email, password: pass });
           if (signInError) throw signInError;
         }
 
