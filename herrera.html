@@ -804,14 +804,6 @@ let sbReady = false;
 
 async function initSupabase() {
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      const email = 'herrera@refrigiherrera.app';
-      await sb.auth.signInWithPassword({ email, password: 'herrera2026' }).catch(async () => {
-        await sb.auth.signUp({ email, password: 'herrera2026' });
-        await sb.auth.signInWithPassword({ email, password: 'herrera2026' });
-      });
-    }
     sbReady = true;
     await loadFromSupabase();
   } catch (e) { console.warn('Supabase init fallback to localStorage:', e); }

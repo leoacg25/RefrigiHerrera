@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{font-family:'Inter',sans-serif;margin:0;padding:0;box-sizing:border-box}
     body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#04154B;position:relative;overflow:hidden}
@@ -80,10 +79,6 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://muwthhwoxpooliatnmhk.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_qfIeLtWYNzmQhLAjiGdh_Q_J3PQ5TID';
-    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     const CREDENTIALS = { username: 'herrera', password: 'herrera2026' };
 
     async function handleLogin(e) {
@@ -108,32 +103,13 @@
       btnText.style.display = 'none';
       spinner.style.display = 'block';
 
-      try {
-        const email = user + '@refrigiherrera.app';
-        let { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+      localStorage.setItem('rh_session', JSON.stringify({
+        authenticated: true,
+        user: user,
+        timestamp: Date.now()
+      }));
 
-        if (error) {
-          const { data: signUpData, error: signUpError } = await sbClient.auth.signUp({ email, password: pass });
-          if (signUpError) throw signUpError;
-          const { error: signInError } = await sbClient.auth.signInWithPassword({ email, password: pass });
-          if (signInError) throw signInError;
-        }
-
-        localStorage.setItem('rh_session', JSON.stringify({
-          authenticated: true,
-          user: user,
-          timestamp: Date.now()
-        }));
-
-        window.location.href = 'herrera.html';
-      } catch (err) {
-        console.error('Login error:', err);
-        errText.textContent = 'Error de conexión con el servidor';
-        errBox.style.display = 'flex';
-        btn.disabled = false;
-        btnText.style.display = 'inline';
-        spinner.style.display = 'none';
-      }
+      window.location.href = 'herrera.html';
     }
 
     (function checkSession() {
