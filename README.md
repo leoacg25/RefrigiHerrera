@@ -1,2 +1,2 @@
-# virgishop
-tienda
+# RefrigiHerrera
+Sistema POS e Inventario
