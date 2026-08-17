@@ -109,18 +109,10 @@
       spinner.style.display = 'block';
 
       try {
-        console.log('Buscando usuario:', user);
-
-        const { data: allUsers, error: errAll } = await sb.from('users').select('*');
-        console.log('Todos los usuarios:', JSON.stringify(allUsers), 'Error:', errAll);
-
         const { data: users, error } = await sb.from('users')
           .select('*')
           .eq('username', user)
-          .eq('password_hash', pass)
           .limit(1);
-
-        console.log('Match:', users, 'Error:', error);
 
         if (error) throw error;
 
@@ -134,6 +126,24 @@
         }
 
         const loggedUser = users[0];
+
+        if (loggedUser.password_hash !== pass) {
+          errText.textContent = 'Usuario o contraseña incorrectos';
+          errBox.style.display = 'flex';
+          btn.disabled = false;
+          btnText.style.display = 'inline';
+          spinner.style.display = 'none';
+          return;
+        }
+
+        if (loggedUser.active === false) {
+          errText.textContent = 'Usuario desactivado. Contacta al administrador.';
+          errBox.style.display = 'flex';
+          btn.disabled = false;
+          btnText.style.display = 'inline';
+          spinner.style.display = 'none';
+          return;
+        }
         localStorage.setItem('rh_session', JSON.stringify({
           authenticated: true,
           user: loggedUser.username,
