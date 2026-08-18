@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS products (
   sku TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   category TEXT DEFAULT '',
+  is_service BOOLEAN DEFAULT false,
   cost_price NUMERIC DEFAULT 0,
   profit_percent NUMERIC DEFAULT 0,
   price NUMERIC DEFAULT 0,
@@ -141,3 +142,4 @@ ALTER TABLE sales ADD COLUMN IF NOT EXISTS cop_rate NUMERIC DEFAULT 0;
 -- Migración precios VES/COP (ejecutar si ya tienes la base de datos creada)
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price_ves NUMERIC DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price_cop NUMERIC DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_service BOOLEAN DEFAULT false;

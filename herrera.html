@@ -683,23 +683,37 @@
             class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
           <datalist id="category-list"></datalist>
         </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="text-xs font-medium text-slate-600 mb-1 block">Costo ($)</label>
-            <input type="number" id="product-cost" placeholder="0.00" min="0" step="0.01" oninput="calcSellPrice()"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600 mb-1 block">% Utilidad</label>
-            <input type="number" id="product-profit" placeholder="0" min="0" step="0.1" oninput="calcSellPrice()"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta ($)</label>
-            <input type="number" id="product-price" placeholder="0.00" min="0" step="0.01" oninput="calcPricesFromUSD()"
-              class="w-full px-3 py-2 text-sm border border-sky-300 rounded-xl bg-sky-50 focus:border-sky-500 outline-none font-semibold text-sky-700">
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Tipo</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="product-type" value="article" checked onchange="toggleProductType()" class="accent-sky-500">
+              <span class="text-sm text-slate-700">Artículo</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="product-type" value="service" onchange="toggleProductType()" class="accent-sky-500">
+              <span class="text-sm text-slate-700">Servicio</span>
+            </label>
           </div>
         </div>
+        <div id="product-stock-section">
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs font-medium text-slate-600 mb-1 block">Costo ($)</label>
+              <input type="number" id="product-cost" placeholder="0.00" min="0" step="0.01" oninput="calcProfitFromCost()"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 mb-1 block">% Utilidad</label>
+              <input type="number" id="product-profit" placeholder="0" min="0" step="0.1" oninput="calcSellPrice()"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all" readonly>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta ($)</label>
+              <input type="number" id="product-price" placeholder="0.00" min="0" step="0.01" oninput="calcPricesFromUSD()"
+                class="w-full px-3 py-2 text-sm border border-sky-300 rounded-xl bg-sky-50 focus:border-sky-500 outline-none font-semibold text-sky-700">
+            </div>
+          </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta (VES)</label>
@@ -712,16 +726,17 @@
               class="w-full px-3 py-2 text-sm border border-emerald-200 rounded-xl bg-emerald-50 focus:border-emerald-400 outline-none font-semibold text-emerald-700">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-medium text-slate-600 mb-1 block">Stock actual</label>
-            <input type="number" id="product-stock" placeholder="0" min="0" step="1"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600 mb-1 block">Stock mínimo</label>
-            <input type="number" id="product-min-stock" placeholder="5" min="0" step="1"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-medium text-slate-600 mb-1 block">Stock actual</label>
+              <input type="number" id="product-stock" placeholder="0" min="0" step="1"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600 mb-1 block">Stock mínimo</label>
+              <input type="number" id="product-min-stock" placeholder="5" min="0" step="1"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+            </div>
           </div>
         </div>
         <!-- Oferta por volumen -->
@@ -1108,7 +1123,7 @@ async function loadFromSupabase() {
       sb.from('clients').select('*').order('created_at', { ascending: false })
     ]);
     if (prodRes.data) db.products = prodRes.data.map(p => ({
-      id: p.id, sku: p.sku, name: p.name, category: p.category,
+      id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
       costPrice: p.cost_price, profitPercent: p.profit_percent,
       price: p.price, stock: p.stock, minStock: p.min_stock,
       offerEnabled: p.offer_enabled, offerQty: p.offer_qty, offerPrice: p.offer_price,
@@ -1162,6 +1177,7 @@ async function syncToSupabase() {
   try {
     const products = db.products.map(p => ({
       id: p.id, sku: p.sku, name: p.name, category: p.category || '',
+      is_service: p.isService || false,
       cost_price: p.costPrice || 0, profit_percent: p.profitPercent || 0,
       price: p.price || 0, stock: p.stock || 0, min_stock: p.minStock || 5,
       price_ves: p.priceVES || 0, price_cop: p.priceCOP || 0,
@@ -1506,7 +1522,9 @@ function renderProductsTable() {
     </td></tr>`;
   } else {
     body.innerHTML = rows.map(p => {
-      const [cls, lbl] = p.stock === 0 ? ['badge-out','Sin stock'] :
+      const isServ = p.isService;
+      const [cls, lbl] = isServ ? ['bg-purple-100 text-purple-700','Servicio'] :
+                         p.stock === 0 ? ['badge-out','Sin stock'] :
                          p.stock <= (p.minStock||0) ? ['badge-low','Stock bajo'] :
                          ['badge-ok','Disponible'];
       return `<tr class="hover:bg-sky-50/40 transition-all">
@@ -1518,10 +1536,10 @@ function renderProductsTable() {
         <td class="px-3 py-2.5 hidden lg:table-cell">
           <span class="text-xs bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full">${escHtml(p.category||'—')}</span>
         </td>
-        <td class="px-3 py-2.5 text-right text-xs text-slate-400 hidden lg:table-cell">${fmt(p.costPrice)}</td>
-        <td class="px-3 py-2.5 text-right hidden lg:table-cell"><span class="text-xs font-medium text-emerald-600">${parseFloat(p.profitPercent||0).toFixed(1)}%</span></td>
+        <td class="px-3 py-2.5 text-right text-xs text-slate-400 hidden lg:table-cell">${isServ ? '<span class="text-purple-500">—</span>' : fmt(p.costPrice)}</td>
+        <td class="px-3 py-2.5 text-right hidden lg:table-cell"><span class="text-xs font-medium text-emerald-600">${isServ ? '<span class="text-purple-500">—</span>' : parseFloat(p.profitPercent||0).toFixed(1) + '%'}</span></td>
         <td class="px-3 py-2.5 text-right font-semibold text-slate-800">${fmt(p.price)}${p.priceVES ? `<div class="text-xs font-normal text-amber-600">Bs. ${fmtNum(p.priceVES)}</div>` : ''}${p.priceCOP ? `<div class="text-xs font-normal text-emerald-600">$${fmtNum(p.priceCOP)} COP</div>` : ''}</td>
-        <td class="px-3 py-2.5 text-center font-bold text-sm ${p.stock===0?'text-red-500':p.stock<=(p.minStock||0)?'text-amber-600':'text-slate-700'}">${p.stock||0}</td>
+        <td class="px-3 py-2.5 text-center font-bold text-sm ${isServ ? 'text-purple-500' : p.stock===0?'text-red-500':p.stock<=(p.minStock||0)?'text-amber-600':'text-slate-700'}">${isServ ? '∞' : (p.stock||0)}</td>
         <td class="px-3 py-2.5 text-center hidden sm:table-cell"><span class="text-xs px-2 py-0.5 rounded-full ${cls}">${lbl}</span></td>
         <td class="px-3 py-2.5 text-center">
           <div class="flex items-center justify-center gap-1">
@@ -1588,6 +1606,9 @@ function openProductModal(id) {
   document.getElementById('product-offer-enabled').checked = p?.offerEnabled || false;
   document.getElementById('product-offer-qty').value   = p?.offerQty || '';
   document.getElementById('product-offer-price').value = p?.offerPrice || '';
+  const typeRadio = p?.isService ? 'service' : 'article';
+  document.querySelector(`input[name="product-type"][value="${typeRadio}"]`).checked = true;
+  toggleProductType();
   toggleOfferSection();
   openModal('modal-product');
 }
@@ -1595,12 +1616,49 @@ function openProductModal(id) {
 let COP_FACTOR = 3.5;
 let _priceLock = false;
 
+function toggleProductType() {
+  const isService = document.querySelector('input[name="product-type"]:checked').value === 'service';
+  document.getElementById('product-stock-section').classList.toggle('hidden', isService);
+  document.getElementById('offer-section').classList.toggle('hidden', true);
+  document.getElementById('product-offer-enabled').checked = false;
+}
+
+function isProductService() {
+  return document.querySelector('input[name="product-type"]:checked').value === 'service';
+}
+
+function recalcProfit() {
+  const cost  = parseFloat(document.getElementById('product-cost').value) || 0;
+  const price = parseFloat(document.getElementById('product-price').value) || 0;
+  const profEl = document.getElementById('product-profit');
+  if (cost > 0 && price > 0) {
+    profEl.value = (((price - cost) / cost) * 100).toFixed(1);
+  } else {
+    profEl.value = '';
+  }
+}
+
 function calcSellPrice() {
   const cost   = parseFloat(document.getElementById('product-cost').value) || 0;
   const profit = parseFloat(document.getElementById('product-profit').value) || 0;
-  const usd    = (cost * (1 + profit / 100));
+  const usd    = cost * (1 + profit / 100);
   document.getElementById('product-price').value = usd.toFixed(2);
   calcPricesFromUSD();
+}
+
+function calcProfitFromCost() {
+  _priceLock = true;
+  const cost   = parseFloat(document.getElementById('product-cost').value) || 0;
+  const price  = parseFloat(document.getElementById('product-price').value) || 0;
+  if (cost > 0 && price > 0) {
+    document.getElementById('product-profit').value = (((price - cost) / cost) * 100).toFixed(1);
+  }
+  if (cost > 0 && !price) {
+    document.getElementById('product-price').value = cost.toFixed(2);
+    recalcProfit();
+  }
+  calcPricesFromUSD();
+  _priceLock = false;
 }
 
 function calcPricesFromUSD() {
@@ -1612,6 +1670,7 @@ function calcPricesFromUSD() {
     document.getElementById('product-price-ves').value = (usd * rate).toFixed(2);
     document.getElementById('product-price-cop').value = (usd * rate * COP_FACTOR).toFixed(2);
   }
+  recalcProfit();
   _priceLock = false;
 }
 
@@ -1624,6 +1683,7 @@ function calcPricesFromVES() {
     document.getElementById('product-price').value = (ves / rate).toFixed(2);
     document.getElementById('product-price-cop').value = (ves * COP_FACTOR).toFixed(2);
   }
+  recalcProfit();
   _priceLock = false;
 }
 
@@ -1637,6 +1697,7 @@ function calcPricesFromCOP() {
     document.getElementById('product-price-ves').value = ves.toFixed(2);
     document.getElementById('product-price').value = (ves / rate).toFixed(2);
   }
+  recalcProfit();
   _priceLock = false;
 }
 
@@ -1651,21 +1712,30 @@ function saveProduct() {
   const id   = document.getElementById('product-id').value;
   const name = document.getElementById('product-name').value.trim();
   const sku  = document.getElementById('product-sku').value.trim().toUpperCase();
+  const isService = isProductService();
   if (!name) { showToast('El nombre es requerido', 'error'); return; }
   if (!sku)  { showToast('El SKU es requerido', 'error'); return; }
   if (db.products.some(p => p.sku === sku && p.id !== id)) { showToast('SKU ya existe', 'error'); return; }
 
+  const cost  = parseFloat(document.getElementById('product-cost').value) || 0;
+  const price = parseFloat(document.getElementById('product-price').value) || 0;
+
+  if (!isService && cost > 0 && price > 0 && price < cost) {
+    showToast('El precio de venta no puede ser menor al costo', 'error'); return;
+  }
+
   const prod = {
     id: id || generateId(), sku, name,
+    isService,
     category:     document.getElementById('product-category').value.trim(),
-    costPrice:    parseFloat(document.getElementById('product-cost').value)       || 0,
+    costPrice:    cost,
     profitPercent:parseFloat(document.getElementById('product-profit').value)     || 0,
-    price:        parseFloat(document.getElementById('product-price').value)      || 0,
+    price:        price,
     priceVES:     parseFloat(document.getElementById('product-price-ves').value)  || 0,
     priceCOP:     parseFloat(document.getElementById('product-price-cop').value)  || 0,
-    stock:        parseInt(document.getElementById('product-stock').value)        || 0,
-    minStock:     parseInt(document.getElementById('product-min-stock').value)    || 0,
-    offerEnabled: document.getElementById('product-offer-enabled').checked,
+    stock:        isService ? 0 : parseInt(document.getElementById('product-stock').value) || 0,
+    minStock:     isService ? 0 : parseInt(document.getElementById('product-min-stock').value) || 0,
+    offerEnabled: isService ? false : document.getElementById('product-offer-enabled').checked,
     offerQty:     parseInt(document.getElementById('product-offer-qty').value)    || 0,
     offerPrice:   parseFloat(document.getElementById('product-offer-price').value)|| 0
   };
@@ -1891,7 +1961,7 @@ function renderProductGrid() {
   const items = [];
 
   db.products.forEach(p => {
-    if ((p.stock||0) < 1) return;
+    if (!p.isService && (p.stock||0) < 1) return;
     if (posSearch && !(p.name||'').toLowerCase().includes(posSearch) && !(p.sku||'').toLowerCase().includes(posSearch)) return;
     if (posCategoryFilter && p.category !== posCategoryFilter) return;
     items.push({ type:'product', data:p });
@@ -1913,9 +1983,9 @@ function renderProductGrid() {
     if (item.type === 'product') {
       const p = item.data;
       const offer = p.offerEnabled && (p.offerQty||0) > 1;
-      return `<div class="product-card bg-white rounded-xl border border-slate-100 p-2 cursor-pointer hover:border-sky-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
+      return `<div class="product-card bg-white rounded-xl border ${p.isService ? 'border-purple-200' : 'border-slate-100'} p-2 cursor-pointer hover:border-sky-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
         onclick="addToCart('${p.id}',false)">
-        ${offer ? `<span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-red-500 text-white px-1 py-px rounded-full font-bold leading-tight">OFERTA</span>` : ''}
+        ${p.isService ? `<span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-purple-500 text-white px-1 py-px rounded-full font-bold leading-tight">SERVICIO</span>` : offer ? `<span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-red-500 text-white px-1 py-px rounded-full font-bold leading-tight">OFERTA</span>` : ''}
         <div class="psku text-[0.55rem] text-slate-400 font-mono leading-none">${escHtml(p.sku)}</div>
         <div class="pname text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(p.name)}</div>
         <div class="flex items-end justify-between mt-0.5">
@@ -1924,7 +1994,7 @@ function renderProductGrid() {
             ${p.priceVES ? `<div class="text-[0.5rem] text-amber-600 leading-none mt-0.5">Bs. ${fmtNum(p.priceVES)}</div>` : ''}
             ${p.priceCOP ? `<div class="text-[0.5rem] text-emerald-600 leading-none mt-0.5">$${fmtNum(p.priceCOP)} COP</div>` : ''}
           </div>
-          <span class="text-[0.55rem] text-slate-400">${p.stock}</span>
+          <span class="text-[0.55rem] ${p.isService ? 'text-purple-400' : 'text-slate-400'}">${p.isService ? '∞' : p.stock}</span>
         </div>
       </div>`;
     } else {
@@ -1954,7 +2024,7 @@ function addToCart(id, isCombo) {
     };
   } else {
     const prod = db.products.find(p => p.id === id);
-    if (!prod || (prod.stock||0) < 1) { showToast('Sin stock disponible', 'warning'); return; }
+    if (!prod || (!prod.isService && (prod.stock||0) < 1)) { showToast('Sin stock disponible', 'warning'); return; }
     const existing = cart.find(c => c.productId === id && !c.isCombo);
     if (existing) { updateCartQty(cart.indexOf(existing), 1); return; }
     newItem = {
@@ -2151,7 +2221,7 @@ function processPayment() {
   cart.forEach(item => {
     if (!item.isCombo) {
       const p = db.products.find(x => x.id === item.productId);
-      if (p) p.stock = Math.max(0, (p.stock||0) - item.qty);
+      if (p && !p.isService) p.stock = Math.max(0, (p.stock||0) - item.qty);
     } else {
       const combo = db.combos.find(c => c.id === item.productId);
       (combo?.items||[]).forEach(ci => {
