@@ -703,6 +703,18 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta (VES)</label>
+            <input type="number" id="product-price-ves" placeholder="0.00" min="0" step="0.01"
+              class="w-full px-3 py-2 text-sm border border-amber-200 rounded-xl bg-amber-50 focus:border-amber-400 outline-none font-semibold text-amber-700">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta (COP)</label>
+            <input type="number" id="product-price-cop" placeholder="0.00" min="0" step="0.01"
+              class="w-full px-3 py-2 text-sm border border-emerald-200 rounded-xl bg-emerald-50 focus:border-emerald-400 outline-none font-semibold text-emerald-700">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
             <label class="text-xs font-medium text-slate-600 mb-1 block">Stock actual</label>
             <input type="number" id="product-stock" placeholder="0" min="0" step="1"
               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
@@ -1100,7 +1112,8 @@ async function loadFromSupabase() {
       id: p.id, sku: p.sku, name: p.name, category: p.category,
       costPrice: p.cost_price, profitPercent: p.profit_percent,
       price: p.price, stock: p.stock, minStock: p.min_stock,
-      offerEnabled: p.offer_enabled, offerQty: p.offer_qty, offerPrice: p.offer_price
+      offerEnabled: p.offer_enabled, offerQty: p.offer_qty, offerPrice: p.offer_price,
+      priceVES: p.price_ves || 0, priceCOP: p.price_cop || 0
     }));
     if (salesRes.data) db.sales = salesRes.data.map(s => ({
       id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
@@ -1152,6 +1165,7 @@ async function syncToSupabase() {
       id: p.id, sku: p.sku, name: p.name, category: p.category || '',
       cost_price: p.costPrice || 0, profit_percent: p.profitPercent || 0,
       price: p.price || 0, stock: p.stock || 0, min_stock: p.minStock || 5,
+      price_ves: p.priceVES || 0, price_cop: p.priceCOP || 0,
       offer_enabled: p.offerEnabled || false, offer_qty: p.offerQty || 0, offer_price: p.offerPrice || 0
     }));
     if (products.length) await sb.from('products').upsert(products, { onConflict: 'id' });
@@ -1500,7 +1514,7 @@ function renderProductsTable() {
         </td>
         <td class="px-3 py-2.5 text-right text-xs text-slate-400 hidden lg:table-cell">${fmt(p.costPrice)}</td>
         <td class="px-3 py-2.5 text-right hidden lg:table-cell"><span class="text-xs font-medium text-emerald-600">${parseFloat(p.profitPercent||0).toFixed(1)}%</span></td>
-        <td class="px-3 py-2.5 text-right font-semibold text-slate-800">${fmt(p.price)}</td>
+        <td class="px-3 py-2.5 text-right font-semibold text-slate-800">${fmt(p.price)}${p.priceVES ? `<div class="text-xs font-normal text-amber-600">Bs. ${p.priceVES.toLocaleString('es-VE',{minimumFractionDigits:2})}</div>` : ''}${p.priceCOP ? `<div class="text-xs font-normal text-emerald-600">$${p.priceCOP.toLocaleString('es-VE',{minimumFractionDigits:2})} COP</div>` : ''}</td>
         <td class="px-3 py-2.5 text-center font-bold text-sm ${p.stock===0?'text-red-500':p.stock<=(p.minStock||0)?'text-amber-600':'text-slate-700'}">${p.stock||0}</td>
         <td class="px-3 py-2.5 text-center hidden sm:table-cell"><span class="text-xs px-2 py-0.5 rounded-full ${cls}">${lbl}</span></td>
         <td class="px-3 py-2.5 text-center">
@@ -1561,6 +1575,8 @@ function openProductModal(id) {
   document.getElementById('product-cost').value      = p?.costPrice || '';
   document.getElementById('product-profit').value    = p?.profitPercent || '';
   document.getElementById('product-price').value     = p?.price || '';
+  document.getElementById('product-price-ves').value = p?.priceVES || '';
+  document.getElementById('product-price-cop').value = p?.priceCOP || '';
   document.getElementById('product-stock').value     = p?.stock ?? '';
   document.getElementById('product-min-stock').value = p?.minStock ?? 5;
   document.getElementById('product-offer-enabled').checked = p?.offerEnabled || false;
@@ -1573,7 +1589,12 @@ function openProductModal(id) {
 function calcSellPrice() {
   const cost   = parseFloat(document.getElementById('product-cost').value) || 0;
   const profit = parseFloat(document.getElementById('product-profit').value) || 0;
-  document.getElementById('product-price').value = (cost * (1 + profit / 100)).toFixed(2);
+  const usd    = (cost * (1 + profit / 100));
+  document.getElementById('product-price').value = usd.toFixed(2);
+  const rate   = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
+  const copRate= parseFloat(document.getElementById('pos-cop-rate')?.value) || db.settings.copRate || 0;
+  if (rate && usd) document.getElementById('product-price-ves').value = (usd * rate).toFixed(2);
+  if (copRate && usd) document.getElementById('product-price-cop').value = (usd * copRate).toFixed(2);
 }
 
 function toggleOfferSection() {
@@ -1597,6 +1618,8 @@ function saveProduct() {
     costPrice:    parseFloat(document.getElementById('product-cost').value)       || 0,
     profitPercent:parseFloat(document.getElementById('product-profit').value)     || 0,
     price:        parseFloat(document.getElementById('product-price').value)      || 0,
+    priceVES:     parseFloat(document.getElementById('product-price-ves').value)  || 0,
+    priceCOP:     parseFloat(document.getElementById('product-price-cop').value)  || 0,
     stock:        parseInt(document.getElementById('product-stock').value)        || 0,
     minStock:     parseInt(document.getElementById('product-min-stock').value)    || 0,
     offerEnabled: document.getElementById('product-offer-enabled').checked,
@@ -1854,7 +1877,11 @@ function renderProductGrid() {
         <div class="psku text-[0.55rem] text-slate-400 font-mono leading-none">${escHtml(p.sku)}</div>
         <div class="pname text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(p.name)}</div>
         <div class="flex items-end justify-between mt-0.5">
-          <span class="pprice text-xs font-bold text-sky-600">${fmt(p.price)}</span>
+          <div>
+            <span class="pprice text-xs font-bold text-sky-600">${fmt(p.price)}</span>
+            ${p.priceVES ? `<div class="text-[0.5rem] text-amber-600 leading-none mt-0.5">Bs. ${p.priceVES.toLocaleString('es-VE',{minimumFractionDigits:2})}</div>` : ''}
+            ${p.priceCOP ? `<div class="text-[0.5rem] text-emerald-600 leading-none mt-0.5">$${p.priceCOP.toLocaleString('es-VE',{minimumFractionDigits:2})}</div>` : ''}
+          </div>
           <span class="text-[0.55rem] text-slate-400">${p.stock}</span>
         </div>
       </div>`;
@@ -1954,7 +1981,10 @@ function renderCart() {
   c.innerHTML = cart.map((item, idx) => {
     const lt = calcLineTotal(item);
     total += lt;
-    const refText = rate ? `Ref: 1 USD = ${rate.toFixed(2)} VES | ${(lt * rate).toFixed(2)} VES` : '';
+    const copRate = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 0;
+    const vesRef = rate ? `Bs. ${(lt * rate).toFixed(2)}` : '';
+    const copRef = copRate ? `$${(lt * copRate).toLocaleString('es-VE',{minimumFractionDigits:2})} COP` : '';
+    const refText = (vesRef || copRef) ? `Ref: ${[vesRef, copRef].filter(Boolean).join(' | ')}` : '';
     return `<div class="cart-item flex items-center gap-1.5 p-1.5 hover:bg-slate-50 rounded-lg transition-all">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-1 flex-wrap">

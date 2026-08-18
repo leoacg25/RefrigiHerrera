@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS products (
   cost_price NUMERIC DEFAULT 0,
   profit_percent NUMERIC DEFAULT 0,
   price NUMERIC DEFAULT 0,
+  price_ves NUMERIC DEFAULT 0,
+  price_cop NUMERIC DEFAULT 0,
   stock INTEGER DEFAULT 0,
   min_stock INTEGER DEFAULT 5,
   offer_enabled BOOLEAN DEFAULT false,
@@ -135,3 +137,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 -- Migración COP (ejecutar si ya tienes la base de datos creada)
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS cop_amount NUMERIC DEFAULT 0;
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS cop_rate NUMERIC DEFAULT 0;
+
+-- Migración precios VES/COP (ejecutar si ya tienes la base de datos creada)
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_ves NUMERIC DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_cop NUMERIC DEFAULT 0;
