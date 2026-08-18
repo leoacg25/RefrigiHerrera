@@ -34,9 +34,6 @@ CREATE TABLE IF NOT EXISTS products (
   price_cop NUMERIC DEFAULT 0,
   stock INTEGER DEFAULT 0,
   min_stock INTEGER DEFAULT 5,
-  offer_enabled BOOLEAN DEFAULT false,
-  offer_qty INTEGER DEFAULT 0,
-  offer_price NUMERIC DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
