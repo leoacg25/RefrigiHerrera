@@ -398,6 +398,9 @@
               class="px-2 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
               <option value="">Todas</option>
             </select>
+            <button id="pos-service-btn" onclick="onPosServiceFilter()" class="px-2.5 py-2 text-xs font-medium border border-purple-200 rounded-xl bg-white hover:bg-purple-50 text-purple-600 transition-all flex-shrink-0">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Servicios
+            </button>
           </div>
           <div id="product-grid-container" class="overflow-y-auto">
             <div id="product-grid" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5"></div>
@@ -1066,6 +1069,7 @@ let invSearch = '';
 let invCategory = '';
 let posSearch = '';
 let posCategoryFilter = '';
+let posServiceFilter = false;
 let cart = [];
 let chartMode = 'weekly';
 let salesChart = null;
@@ -1895,6 +1899,15 @@ function downloadFile(content, name, type) {
 // ===================================================================
 function onPosSearch(val)       { posSearch = val.toLowerCase(); renderProductGrid(); }
 function onPosCategoryFilter(v) { posCategoryFilter = v;         renderProductGrid(); }
+function onPosServiceFilter() {
+  posServiceFilter = !posServiceFilter;
+  const btn = document.getElementById('pos-service-btn');
+  btn.classList.toggle('bg-purple-600', posServiceFilter);
+  btn.classList.toggle('text-white', posServiceFilter);
+  btn.classList.toggle('bg-white', !posServiceFilter);
+  btn.classList.toggle('text-purple-600', !posServiceFilter);
+  renderProductGrid();
+}
 
 function renderPOS() {
   updateCategoryLists();
@@ -1925,6 +1938,7 @@ function renderProductGrid() {
 
   db.products.forEach(p => {
     if (!p.isService && (p.stock||0) < 1) return;
+    if (posServiceFilter && !p.isService) return;
     if (posSearch && !(p.name||'').toLowerCase().includes(posSearch) && !(p.sku||'').toLowerCase().includes(posSearch)) return;
     if (posCategoryFilter && p.category !== posCategoryFilter) return;
     items.push({ type:'product', data:p });
