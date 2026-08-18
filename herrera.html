@@ -487,8 +487,7 @@
             <div class="mb-2 flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
               <i class="fa-solid fa-coins text-emerald-500 text-xs"></i>
               <span class="text-xs text-slate-400">COP:</span>
-              <input type="number" id="pos-cop-rate" step="0.01" placeholder="--" oninput="updateTotalVESDisplay()"
-                class="flex-1 text-xs border-0 bg-transparent focus:outline-none font-semibold text-slate-700 w-16 min-w-0">
+              <span id="pos-cop-rate-display" class="flex-1 text-xs font-semibold text-slate-700">--</span>
               <span class="text-xs text-slate-400 flex-shrink-0">COP/USD</span>
             </div>
             <div id="total-ves-display" class="text-xs text-slate-400 text-center mb-2"></div>
@@ -697,7 +696,7 @@
           </div>
           <div>
             <label class="text-xs font-medium text-slate-600 mb-1 block">P.Venta ($)</label>
-            <input type="number" id="product-price" placeholder="0.00" min="0" step="0.01"
+            <input type="number" id="product-price" placeholder="0.00" min="0" step="0.01" oninput="calcPricesFromUSD()"
               class="w-full px-3 py-2 text-sm border border-sky-300 rounded-xl bg-sky-50 focus:border-sky-500 outline-none font-semibold text-sky-700">
           </div>
         </div>
@@ -883,10 +882,10 @@
           <p class="text-xs text-slate-400 mt-1">Se actualiza automáticamente desde la API del BCV.</p>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-600 mb-1 block">Tasa COP (Factor de cambio)</label>
-          <input type="number" id="setting-cop-rate" placeholder="773.31" step="0.01"
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Factor COP (Bs → COP)</label>
+          <input type="number" id="setting-cop-factor" placeholder="3.5" step="0.01" min="0"
             class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
-          <p class="text-xs text-slate-400 mt-1">Pesos colombianos por 1 USD. Ej: 773.31</p>
+          <p class="text-xs text-slate-400 mt-1">Factor de conversión Bs a Pesos COP. Default: 3.5</p>
         </div>
       </div>
       <div class="flex justify-end gap-2 p-4 border-t border-slate-100">
@@ -1586,15 +1585,24 @@ function openProductModal(id) {
   openModal('modal-product');
 }
 
+let COP_FACTOR = 3.5;
+
 function calcSellPrice() {
   const cost   = parseFloat(document.getElementById('product-cost').value) || 0;
   const profit = parseFloat(document.getElementById('product-profit').value) || 0;
   const usd    = (cost * (1 + profit / 100));
   document.getElementById('product-price').value = usd.toFixed(2);
-  const rate   = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
-  const copRate= parseFloat(document.getElementById('pos-cop-rate')?.value) || db.settings.copRate || 0;
-  if (rate && usd) document.getElementById('product-price-ves').value = (usd * rate).toFixed(2);
-  if (copRate && usd) document.getElementById('product-price-cop').value = (usd * copRate).toFixed(2);
+  calcPricesFromUSD();
+}
+
+function calcPricesFromUSD() {
+  const usd     = parseFloat(document.getElementById('product-price').value) || 0;
+  const rate    = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
+  if (rate && usd) {
+    const ves = usd * rate;
+    document.getElementById('product-price-ves').value = ves.toFixed(2);
+    document.getElementById('product-price-cop').value = (ves * COP_FACTOR).toFixed(2);
+  }
 }
 
 function toggleOfferSection() {
@@ -1834,13 +1842,12 @@ function renderPOS() {
 
 function updateTotalVESDisplay() {
   const rate    = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
-  const copRate = parseFloat(document.getElementById('pos-cop-rate')?.value) || db.settings.copRate || 0;
   const total   = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const el      = document.getElementById('total-ves-display');
   if (!el) return;
   let parts = [];
   if (rate && total) parts.push(`Bs. ${(total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}`);
-  if (copRate && total) parts.push(`$${(total*copRate).toLocaleString('es-VE',{minimumFractionDigits:2})} COP`);
+  if (rate && total) parts.push(`$${(total*rate*COP_FACTOR).toLocaleString('es-VE',{minimumFractionDigits:2})} COP`);
   el.textContent = parts.length ? `≈ ${parts.join(' · ')}` : '';
 }
 
@@ -1981,9 +1988,8 @@ function renderCart() {
   c.innerHTML = cart.map((item, idx) => {
     const lt = calcLineTotal(item);
     total += lt;
-    const copRate = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 0;
     const vesRef = rate ? `Bs. ${(lt * rate).toFixed(2)}` : '';
-    const copRef = copRate ? `$${(lt * copRate).toLocaleString('es-VE',{minimumFractionDigits:2})} COP` : '';
+    const copRef = rate ? `$${(lt * rate * COP_FACTOR).toLocaleString('es-VE',{minimumFractionDigits:2})} COP` : '';
     const refText = (vesRef || copRef) ? `Ref: ${[vesRef, copRef].filter(Boolean).join(' | ')}` : '';
     return `<div class="cart-item flex items-center gap-1.5 p-1.5 hover:bg-slate-50 rounded-lg transition-all">
       <div class="flex-1 min-w-0">
@@ -2022,7 +2028,7 @@ function onPaymentMethodChange() {
 function calcMixedBalance() {
   const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
-  const copRate  = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 1;
+  const copRate  = rate * COP_FACTOR;
   const cUsd     = parseFloat(document.getElementById('cash-usd').value) || 0;
   const cVes     = parseFloat(document.getElementById('cash-ves').value) || 0;
   const tUsd     = parseFloat(document.getElementById('transfer-usd').value) || 0;
@@ -2050,7 +2056,7 @@ function calcMixedBalance() {
 function completeMixedPayment() {
   const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
-  const copRate  = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 1;
+  const copRate  = rate * COP_FACTOR;
   const cUsd     = parseFloat(document.getElementById('cash-usd').value) || 0;
   const cVes     = parseFloat(document.getElementById('cash-ves').value) || 0;
   const tUsd     = parseFloat(document.getElementById('transfer-usd').value) || 0;
@@ -2077,7 +2083,7 @@ function processPayment() {
   const method   = document.getElementById('payment-method').value;
   const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
-  const copRate  = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 1;
+  const copRate  = rate * COP_FACTOR;
   let cashAmount = 0, transferAmount = 0, copAmount = 0;
 
   if (method === 'Pago Mixto') {
@@ -2715,9 +2721,8 @@ function updateRateDisplay(rate) {
   if (inp && rate) inp.value = parseFloat(rate).toFixed(2);
   const settingInp = document.getElementById('setting-exchange-rate');
   if (settingInp && rate) settingInp.value = parseFloat(rate).toFixed(2);
-  const copRate = db.settings.copRate;
-  const copInp = document.getElementById('pos-cop-rate');
-  if (copInp && copRate) copInp.value = parseFloat(copRate).toFixed(2);
+  const copEl = document.getElementById('pos-cop-rate-display');
+  if (copEl) copEl.textContent = rate ? (rate * COP_FACTOR).toLocaleString('es-VE',{minimumFractionDigits:2}) : '--';
 }
 
 function updateRateStatus(msg, online) {
@@ -2732,7 +2737,7 @@ function openSettings() {
   document.getElementById('setting-store-name').value  = db.settings.storeName || '';
   document.getElementById('setting-whatsapp').value    = db.settings.whatsapp  || '';
   document.getElementById('setting-exchange-rate').value = db.settings.exchangeRate ? parseFloat(db.settings.exchangeRate).toFixed(2) : '';
-  document.getElementById('setting-cop-rate').value = db.settings.copRate ? parseFloat(db.settings.copRate).toFixed(2) : '';
+  document.getElementById('setting-cop-factor').value = db.settings.copFactor ? parseFloat(db.settings.copFactor).toFixed(2) : '';
   openModal('modal-settings');
 }
 
@@ -2741,8 +2746,8 @@ function saveSettings() {
   db.settings.whatsapp  = document.getElementById('setting-whatsapp').value.replace(/\D/g,'');
   const rate = parseFloat(document.getElementById('setting-exchange-rate').value);
   if (rate > 0) { db.settings.exchangeRate = rate; updateRateDisplay(rate); }
-  const copRate = parseFloat(document.getElementById('setting-cop-rate').value);
-  if (copRate > 0) { db.settings.copRate = copRate; updateRateDisplay(db.settings.exchangeRate); }
+  const copFactor = parseFloat(document.getElementById('setting-cop-factor').value);
+  if (copFactor > 0) { db.settings.copFactor = copFactor; COP_FACTOR = copFactor; }
 
   // Actualizar nombre en sidebar
   const sn = document.getElementById('sidebar-store-name');
@@ -2813,6 +2818,7 @@ const snEl = document.getElementById('sidebar-store-name');
 if (snEl) snEl.textContent = db.settings.storeName || 'RefrigiHerrera';
 
 // Mostrar tasa guardada
+if (db.settings.copFactor) COP_FACTOR = parseFloat(db.settings.copFactor);
 if (db.settings.exchangeRate) {
   updateRateDisplay(db.settings.exchangeRate);
   updateRateStatus('Caché', true);
