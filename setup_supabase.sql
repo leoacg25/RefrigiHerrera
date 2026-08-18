@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS sales (
   cash_amount NUMERIC DEFAULT 0,
   transfer_amount NUMERIC DEFAULT 0,
   exchange_rate NUMERIC DEFAULT 0,
+  cop_amount NUMERIC DEFAULT 0,
+  cop_rate NUMERIC DEFAULT 0,
   client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -101,7 +103,7 @@ CREATE TABLE IF NOT EXISTS settings (
 
 -- Insertar configuración por defecto
 INSERT INTO settings (key, value) VALUES
-  ('app', '{"storeName":"RefrigiHerrera","whatsapp":"","exchangeRate":0}'::jsonb)
+  ('app', '{"storeName":"RefrigiHerrera","whatsapp":"","exchangeRate":0,"copRate":0}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- Habilitar RLS (Row Level Security)
@@ -129,3 +131,7 @@ CREATE INDEX IF NOT EXISTS idx_clients_phone ON clients(phone);
 CREATE INDEX IF NOT EXISTS idx_clients_name ON clients(name);
 CREATE INDEX IF NOT EXISTS idx_orders_client ON orders(client_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+
+-- Migración COP (ejecutar si ya tienes la base de datos creada)
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cop_amount NUMERIC DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cop_rate NUMERIC DEFAULT 0;

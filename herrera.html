@@ -432,6 +432,7 @@
                 class="w-full px-2.5 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
                 <option value="Efectivo">💵 Efectivo</option>
                 <option value="Transferencia">📲 Transferencia</option>
+                <option value="Pesos COP">🇨🇴 Pesos COP</option>
                 <option value="Pago Mixto">🔀 Pago Mixto</option>
               </select>
             </div>
@@ -458,6 +459,16 @@
                   <input type="number" id="transfer-ves" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
                     class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
                 </div>
+                <div>
+                  <label class="text-[0.65rem] text-slate-500 mb-1 block">🇨🇴 Pesos COP ($)</label>
+                  <input type="number" id="cash-cop" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
+                    class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                </div>
+                <div>
+                  <label class="text-[0.65rem] text-slate-500 mb-1 block">🇨🇴 Transf. COP ($)</label>
+                  <input type="number" id="transfer-cop" placeholder="0.00" min="0" step="0.01" oninput="calcMixedBalance()"
+                    class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                </div>
               </div>
               <button onclick="completeMixedPayment()"
                 class="w-full text-xs py-1.5 bg-sky-100 text-sky-700 rounded-lg font-medium hover:bg-sky-200 transition-all">
@@ -468,10 +479,17 @@
             <!-- Tasa BCV -->
             <div class="mb-2 flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
               <i class="fa-solid fa-coins text-amber-500 text-xs"></i>
-              <span class="text-xs text-slate-400">Tasa:</span>
+              <span class="text-xs text-slate-400">BCV:</span>
               <input type="number" id="pos-exchange-rate" step="0.01" placeholder="--" oninput="updateTotalVESDisplay()"
                 class="flex-1 text-xs border-0 bg-transparent focus:outline-none font-semibold text-slate-700 w-16 min-w-0">
               <span class="text-xs text-slate-400 flex-shrink-0">VES/USD</span>
+            </div>
+            <div class="mb-2 flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
+              <i class="fa-solid fa-coins text-emerald-500 text-xs"></i>
+              <span class="text-xs text-slate-400">COP:</span>
+              <input type="number" id="pos-cop-rate" step="0.01" placeholder="--" oninput="updateTotalVESDisplay()"
+                class="flex-1 text-xs border-0 bg-transparent focus:outline-none font-semibold text-slate-700 w-16 min-w-0">
+              <span class="text-xs text-slate-400 flex-shrink-0">COP/USD</span>
             </div>
             <div id="total-ves-display" class="text-xs text-slate-400 text-center mb-2"></div>
             <!-- Botón pagar -->
@@ -852,6 +870,12 @@
             class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
           <p class="text-xs text-slate-400 mt-1">Se actualiza automáticamente desde la API del BCV.</p>
         </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600 mb-1 block">Tasa COP (Factor de cambio)</label>
+          <input type="number" id="setting-cop-rate" placeholder="773.31" step="0.01"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-sky-400 outline-none transition-all">
+          <p class="text-xs text-slate-400 mt-1">Pesos colombianos por 1 USD. Ej: 773.31</p>
+        </div>
       </div>
       <div class="flex justify-end gap-2 p-4 border-t border-slate-100">
         <button onclick="closeModal('modal-settings')"
@@ -1025,7 +1049,8 @@ let db = {
   settings: {
     whatsapp: '',
     storeName: 'RefrigiHerrera',
-    exchangeRate: 0
+    exchangeRate: 0,
+    copRate: 0
   }
 };
 
@@ -1080,7 +1105,8 @@ async function loadFromSupabase() {
     if (salesRes.data) db.sales = salesRes.data.map(s => ({
       id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
       total: s.total, method: s.method, cashAmount: s.cash_amount,
-      transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate, clientId: s.client_id
+      transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate, clientId: s.client_id,
+      copAmount: s.cop_amount || 0, copRate: s.cop_rate || 0
     }));
     if (comboRes.data) db.combos = comboRes.data.map(c => ({
       id: c.id, code: c.code, name: c.name, price: c.price, items: c.items
@@ -1158,7 +1184,7 @@ async function syncSaleToSupabase(sale) {
       id: sale.id, date: sale.date, items: sale.items,
       subtotal: sale.subtotal, total: sale.total, method: sale.method,
       cash_amount: sale.cashAmount, transfer_amount: sale.transferAmount,
-      exchange_rate: sale.exchangeRate
+      exchange_rate: sale.exchangeRate, cop_amount: sale.copAmount || 0, cop_rate: sale.copRate || 0
     });
   } catch (e) { console.warn('syncSaleToSupabase:', e); }
 }
@@ -1784,10 +1810,15 @@ function renderPOS() {
 }
 
 function updateTotalVESDisplay() {
-  const rate  = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
-  const total = cart.reduce((s, i) => s + calcLineTotal(i), 0);
-  const el    = document.getElementById('total-ves-display');
-  if (el) el.textContent = (rate && total) ? `≈ Bs. ${(total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}` : '';
+  const rate    = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
+  const copRate = parseFloat(document.getElementById('pos-cop-rate')?.value) || db.settings.copRate || 0;
+  const total   = cart.reduce((s, i) => s + calcLineTotal(i), 0);
+  const el      = document.getElementById('total-ves-display');
+  if (!el) return;
+  let parts = [];
+  if (rate && total) parts.push(`Bs. ${(total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}`);
+  if (copRate && total) parts.push(`$${(total*copRate).toLocaleString('es-VE',{minimumFractionDigits:2})} COP`);
+  el.textContent = parts.length ? `≈ ${parts.join(' · ')}` : '';
 }
 
 function renderProductGrid() {
@@ -1961,12 +1992,16 @@ function onPaymentMethodChange() {
 function calcMixedBalance() {
   const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
+  const copRate  = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 1;
   const cUsd     = parseFloat(document.getElementById('cash-usd').value) || 0;
   const cVes     = parseFloat(document.getElementById('cash-ves').value) || 0;
   const tUsd     = parseFloat(document.getElementById('transfer-usd').value) || 0;
   const tVes     = parseFloat(document.getElementById('transfer-ves').value) || 0;
+  const cCop     = parseFloat(document.getElementById('cash-cop').value) || 0;
+  const tCop     = parseFloat(document.getElementById('transfer-cop').value) || 0;
   
-  const totalPaidUsd = cUsd + tUsd + (cVes / rate) + (tVes / rate);
+  const totalCopToUsd = (cCop + tCop) / copRate;
+  const totalPaidUsd = cUsd + tUsd + (cVes / rate) + (tVes / rate) + totalCopToUsd;
   const balanceUsd = total - totalPaidUsd;
   
   const el = document.getElementById('mixed-balance');
@@ -1985,12 +2020,16 @@ function calcMixedBalance() {
 function completeMixedPayment() {
   const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
+  const copRate  = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 1;
   const cUsd     = parseFloat(document.getElementById('cash-usd').value) || 0;
   const cVes     = parseFloat(document.getElementById('cash-ves').value) || 0;
   const tUsd     = parseFloat(document.getElementById('transfer-usd').value) || 0;
   const tVes     = parseFloat(document.getElementById('transfer-ves').value) || 0;
+  const cCop     = parseFloat(document.getElementById('cash-cop').value) || 0;
+  const tCop     = parseFloat(document.getElementById('transfer-cop').value) || 0;
   
-  const totalPaidUsd = cUsd + tUsd + (cVes / rate) + (tVes / rate);
+  const totalCopToUsd = (cCop + tCop) / copRate;
+  const totalPaidUsd = cUsd + tUsd + (cVes / rate) + (tVes / rate) + totalCopToUsd;
   const balanceUsd = total - totalPaidUsd;
   
   if (balanceUsd > 0) {
@@ -2008,22 +2047,34 @@ function processPayment() {
   const method   = document.getElementById('payment-method').value;
   const total    = cart.reduce((s, i) => s + calcLineTotal(i), 0);
   const rate     = parseFloat(document.getElementById('pos-exchange-rate').value) || db.settings.exchangeRate || 1;
-  let cashAmount = 0, transferAmount = 0;
+  const copRate  = parseFloat(document.getElementById('pos-cop-rate').value) || db.settings.copRate || 1;
+  let cashAmount = 0, transferAmount = 0, copAmount = 0;
 
   if (method === 'Pago Mixto') {
     const mCashUsd  = parseFloat(document.getElementById('cash-usd').value) || 0;
     const mCashVes  = parseFloat(document.getElementById('cash-ves').value) || 0;
     const mTransUsd = parseFloat(document.getElementById('transfer-usd').value) || 0;
     const mTransVes = parseFloat(document.getElementById('transfer-ves').value) || 0;
+    const mCashCop  = parseFloat(document.getElementById('cash-cop').value) || 0;
+    const mTransCop = parseFloat(document.getElementById('transfer-cop').value) || 0;
     
     cashAmount = mCashUsd + (mCashVes / rate);
     transferAmount = mTransUsd + (mTransVes / rate);
+    copAmount = mCashCop + mTransCop;
     
-    if (Math.abs(cashAmount + transferAmount - total) > 0.02) {
+    const totalPaidUsd = cashAmount + transferAmount + (copAmount / copRate);
+    if (Math.abs(totalPaidUsd - total) > 0.02) {
       showToast('Los montos del pago mixto no cuadran', 'error'); return;
     }
   } else if (method === 'Efectivo')       { cashAmount     = total; }
   else if (method === 'Transferencia')    { transferAmount = total; }
+  else if (method === 'Pesos COP')        {
+    const copInput = prompt('Monto en Pesos Colombianos (COP):');
+    if (!copInput) return;
+    copAmount = parseFloat(copInput);
+    if (!copAmount || copAmount <= 0) { showToast('Monto inválido', 'error'); return; }
+    cashAmount = copAmount / copRate;
+  }
 
   // Descontar stock
   cart.forEach(item => {
@@ -2049,7 +2100,7 @@ function processPayment() {
       isCombo: item.isCombo, comboItems: item.comboItems||[],
       lineTotal: calcLineTotal(item)
     })),
-    subtotal: total, total, method, cashAmount, transferAmount, exchangeRate: rate
+    subtotal: total, total, method, cashAmount, transferAmount, copAmount: copAmount || 0, copRate: copRate, exchangeRate: rate
   };
 
   db.sales.push(sale);
@@ -2112,13 +2163,17 @@ function openReceipt(sale) {
         <span class="text-slate-700">Total</span><span class="text-sky-600">${fmt(sale.total)}</span>
       </div>
       ${rate ? `<div class="flex justify-between text-xs text-slate-400"><span>Total VES</span><span>Bs. ${(sale.total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}</span></div>` : ''}
+      ${sale.copAmount ? `<div class="flex justify-between text-xs text-slate-400"><span>Total COP</span><span>$${sale.copAmount.toLocaleString('es-VE',{minimumFractionDigits:2})} COP</span></div>` : ''}
     </div>
     <div class="mt-3 p-3 bg-slate-50 rounded-xl text-xs space-y-1">
       <div class="flex justify-between"><span class="text-slate-400">Método</span><span class="font-medium">${sale.method}</span></div>
       ${sale.method==='Pago Mixto' ? `
         <div class="flex justify-between"><span class="text-slate-400">· Efectivo</span><span>${fmt(sale.cashAmount)}</span></div>
-        <div class="flex justify-between"><span class="text-slate-400">· Transferencia</span><span>${fmt(sale.transferAmount)}</span></div>` : ''}
+        <div class="flex justify-between"><span class="text-slate-400">· Transferencia</span><span>${fmt(sale.transferAmount)}</span></div>
+        ${sale.copAmount ? `<div class="flex justify-between"><span class="text-slate-400">· Pesos COP</span><span>$${sale.copAmount.toLocaleString('es-VE')} COP</span></div>` : ''}` : ''}
+      ${sale.method==='Pesos COP' ? `<div class="flex justify-between"><span class="text-slate-400">Pesos COP</span><span>$${(sale.copAmount||0).toLocaleString('es-VE')} COP</span></div>` : ''}
       ${rate ? `<div class="flex justify-between"><span class="text-slate-400">Tasa BCV</span><span>${parseFloat(rate).toFixed(2)} VES/USD</span></div>` : ''}
+      ${sale.copRate ? `<div class="flex justify-between"><span class="text-slate-400">Tasa COP</span><span>${parseFloat(sale.copRate).toFixed(2)} COP/USD</span></div>` : ''}
     </div>`;
 
   openModal('modal-receipt');
@@ -2162,9 +2217,14 @@ function sendWhatsApp(sale) {
   });
   msg += `─────────────────\n💵 *Total: ${fmt(sale.total)}*\n`;
   if (rate) msg += `💱 Bs. ${(sale.total*rate).toLocaleString('es-VE',{minimumFractionDigits:2})}\n`;
+  if (sale.copAmount) msg += `🇨🇴 $${sale.copAmount.toLocaleString('es-VE',{minimumFractionDigits:2})} COP\n`;
   msg += `\n💳 Pago: ${sale.method}`;
   if (sale.method === 'Pago Mixto') {
     msg += `\n   · Efectivo: ${fmt(sale.cashAmount)}\n   · Transferencia: ${fmt(sale.transferAmount)}`;
+    if (sale.copAmount) msg += `\n   · Pesos COP: $${sale.copAmount.toLocaleString('es-VE')} COP`;
+  }
+  if (sale.method === 'Pesos COP') {
+    msg += `\n   COP: $${(sale.copAmount||0).toLocaleString('es-VE')} COP`;
   }
   msg += `\n\n¡Gracias por su compra! 🙏`;
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -2625,6 +2685,9 @@ function updateRateDisplay(rate) {
   if (inp && rate) inp.value = parseFloat(rate).toFixed(2);
   const settingInp = document.getElementById('setting-exchange-rate');
   if (settingInp && rate) settingInp.value = parseFloat(rate).toFixed(2);
+  const copRate = db.settings.copRate;
+  const copInp = document.getElementById('pos-cop-rate');
+  if (copInp && copRate) copInp.value = parseFloat(copRate).toFixed(2);
 }
 
 function updateRateStatus(msg, online) {
@@ -2639,6 +2702,7 @@ function openSettings() {
   document.getElementById('setting-store-name').value  = db.settings.storeName || '';
   document.getElementById('setting-whatsapp').value    = db.settings.whatsapp  || '';
   document.getElementById('setting-exchange-rate').value = db.settings.exchangeRate ? parseFloat(db.settings.exchangeRate).toFixed(2) : '';
+  document.getElementById('setting-cop-rate').value = db.settings.copRate ? parseFloat(db.settings.copRate).toFixed(2) : '';
   openModal('modal-settings');
 }
 
@@ -2647,6 +2711,8 @@ function saveSettings() {
   db.settings.whatsapp  = document.getElementById('setting-whatsapp').value.replace(/\D/g,'');
   const rate = parseFloat(document.getElementById('setting-exchange-rate').value);
   if (rate > 0) { db.settings.exchangeRate = rate; updateRateDisplay(rate); }
+  const copRate = parseFloat(document.getElementById('setting-cop-rate').value);
+  if (copRate > 0) { db.settings.copRate = copRate; updateRateDisplay(db.settings.exchangeRate); }
 
   // Actualizar nombre en sidebar
   const sn = document.getElementById('sidebar-store-name');
