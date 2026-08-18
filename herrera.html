@@ -1496,7 +1496,6 @@ function renderProductsTable() {
     (p.name||'').toLowerCase().includes(invSearch) || (p.sku||'').toLowerCase().includes(invSearch));
   if (invCategory) rows = rows.filter(p => p.category === invCategory);
   if (invServiceFilter) rows = rows.filter(p => p.isService);
-  else rows = rows.filter(p => !p.isService);
 
   const body = document.getElementById('products-table-body');
   if (!rows.length) {
