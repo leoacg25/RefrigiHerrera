@@ -1322,7 +1322,7 @@ function renderDashboard() {
 
   // Alertas stock
   const alertsEl = document.getElementById('stock-alerts');
-  const low = db.products.filter(p => (p.stock || 0) <= (p.minStock || 0));
+  const low = db.products.filter(p => !p.isService && (p.stock || 0) <= (p.minStock || 0));
   if (!low.length) {
     alertsEl.innerHTML = '<p class="text-slate-400 text-xs text-center py-4"><i class="fa-solid fa-check-circle text-emerald-400 mr-1"></i>Sin alertas de stock</p>';
   } else {
