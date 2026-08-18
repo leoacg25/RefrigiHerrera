@@ -335,6 +335,9 @@
           class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none min-w-0">
           <option value="">Todas las categorías</option>
         </select>
+        <button id="inv-service-btn" onclick="onInvServiceFilter()" class="px-3 py-2 text-xs font-medium border border-purple-200 rounded-xl bg-white hover:bg-purple-50 text-purple-600 transition-all flex-shrink-0">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Servicios
+        </button>
       </div>
 
       <!-- Tabla Productos -->
@@ -398,9 +401,6 @@
               class="px-2 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
               <option value="">Todas</option>
             </select>
-            <button id="pos-service-btn" onclick="onPosServiceFilter()" class="px-2.5 py-2 text-xs font-medium border border-purple-200 rounded-xl bg-white hover:bg-purple-50 text-purple-600 transition-all flex-shrink-0">
-              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Servicios
-            </button>
           </div>
           <div id="product-grid-container" class="overflow-y-auto">
             <div id="product-grid" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5"></div>
@@ -1069,7 +1069,7 @@ let invSearch = '';
 let invCategory = '';
 let posSearch = '';
 let posCategoryFilter = '';
-let posServiceFilter = false;
+let invServiceFilter = false;
 let cart = [];
 let chartMode = 'weekly';
 let salesChart = null;
@@ -1495,6 +1495,8 @@ function renderProductsTable() {
   if (invSearch) rows = rows.filter(p =>
     (p.name||'').toLowerCase().includes(invSearch) || (p.sku||'').toLowerCase().includes(invSearch));
   if (invCategory) rows = rows.filter(p => p.category === invCategory);
+  if (invServiceFilter) rows = rows.filter(p => p.isService);
+  else rows = rows.filter(p => !p.isService);
 
   const body = document.getElementById('products-table-body');
   if (!rows.length) {
@@ -1899,14 +1901,14 @@ function downloadFile(content, name, type) {
 // ===================================================================
 function onPosSearch(val)       { posSearch = val.toLowerCase(); renderProductGrid(); }
 function onPosCategoryFilter(v) { posCategoryFilter = v;         renderProductGrid(); }
-function onPosServiceFilter() {
-  posServiceFilter = !posServiceFilter;
-  const btn = document.getElementById('pos-service-btn');
-  btn.classList.toggle('bg-purple-600', posServiceFilter);
-  btn.classList.toggle('text-white', posServiceFilter);
-  btn.classList.toggle('bg-white', !posServiceFilter);
-  btn.classList.toggle('text-purple-600', !posServiceFilter);
-  renderProductGrid();
+function onInvServiceFilter() {
+  invServiceFilter = !invServiceFilter;
+  const btn = document.getElementById('inv-service-btn');
+  btn.classList.toggle('bg-purple-600', invServiceFilter);
+  btn.classList.toggle('text-white', invServiceFilter);
+  btn.classList.toggle('bg-white', !invServiceFilter);
+  btn.classList.toggle('text-purple-600', !invServiceFilter);
+  renderInventario();
 }
 
 function renderPOS() {
@@ -1938,7 +1940,6 @@ function renderProductGrid() {
 
   db.products.forEach(p => {
     if (!p.isService && (p.stock||0) < 1) return;
-    if (posServiceFilter && !p.isService) return;
     if (posSearch && !(p.name||'').toLowerCase().includes(posSearch) && !(p.sku||'').toLowerCase().includes(posSearch)) return;
     if (posCategoryFilter && p.category !== posCategoryFilter) return;
     items.push({ type:'product', data:p });
@@ -2045,6 +2046,14 @@ function clearCart() {
   cart = [];
   renderCart();
   updateTotalVESDisplay();
+  document.getElementById('payment-method').value = 'Efectivo';
+  document.getElementById('mixed-payment-section').classList.add('hidden');
+  ['cash-usd','cash-ves','transfer-usd','transfer-ves','cash-cop','transfer-cop'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const mb = document.getElementById('mixed-balance');
+  if (mb) { mb.textContent = ''; mb.className = ''; }
 }
 
 function renderCart() {
