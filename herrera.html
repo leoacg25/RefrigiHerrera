@@ -1330,10 +1330,12 @@ async function syncToSupabase() {
     }));
     if (quotes.length) await sb.from('quotes').upsert(quotes, { onConflict: 'id' });
     const localQuoteIds = db.quotes.map(q => q.id);
-    if (localQuoteIds.length) {
-      await sb.from('quotes').delete().not('id', 'in', `(${localQuoteIds.join(',')})`);
-    } else {
-      await sb.from('quotes').delete().neq('id', '__none__');
+    const serverQuotes = await sb.from('quotes').select('id');
+    if (serverQuotes.data) {
+      const toDelete = serverQuotes.data.filter(sq => !localQuoteIds.includes(sq.id));
+      for (const sq of toDelete) {
+        await sb.from('quotes').delete().eq('id', sq.id);
+      }
     }
 
     await sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' });
@@ -3075,6 +3077,11 @@ function deleteQuote(id) {
   if (!confirm('¿Eliminar esta cotización?')) return;
   db.quotes = db.quotes.filter(q => q.id !== id);
   saveDB();
+  if (sbReady) {
+    sb.from('quotes').delete().eq('id', id).then(() => {
+      console.log('Cotización eliminada de Supabase:', id);
+    }).catch(e => console.warn('Error eliminando cotización de Supabase:', e));
+  }
   renderQuotesList();
   showToast('Cotización eliminada', 'warning');
 }
