@@ -1234,6 +1234,7 @@ let posCategoryFilter = '';
 let invServiceFilter = false;
 let cart = [];
 let posClientId = null;
+let cotiConvertingId = null;
 let chartMode = 'weekly';
 let salesChart = null;
 let currentReceiptSale = null;
@@ -1469,7 +1470,7 @@ function showTab(tab) {
     case 'inventario':   renderInventario();   break;
     case 'ventas':       renderPOS();          break;
     case 'cotizaciones':       renderCotizaciones();       break;
-    case 'cotizaciones-lista':  renderCotizacionesLista();  break;
+    case 'cotizaciones-lista':  cotiConvertingId = null; renderCotizacionesLista();  break;
     case 'reportes':     renderReportes();     break;
     case 'clientes':     renderClientsTable(); break;
     case 'usuarios':     renderUsersTable();   break;
@@ -2315,6 +2316,7 @@ function removeFromCart(idx) {
 function clearCart() {
   if (!cart.length || !confirm('¿Limpiar el carrito?')) return;
   cart = [];
+  cotiConvertingId = null;
   renderCart();
   updateTotalVESDisplay();
   document.getElementById('payment-method').value = 'Efectivo';
@@ -2507,6 +2509,13 @@ function processPayment() {
   document.getElementById('transfer-ves').value = '';
 
   currentReceiptSale = sale;
+
+  if (cotiConvertingId) {
+    const cq = db.quotes.find(q => q.id === cotiConvertingId);
+    if (cq) { cq.status = 'converted'; saveDB(); }
+    cotiConvertingId = null;
+  }
+
   openReceipt(sale);
   showToast('¡Venta registrada!', 'success');
 }
@@ -3220,10 +3229,15 @@ function cotiEdit(id) {
 
 function cotiDelete(id) {
   if (!confirm('¿Eliminar esta cotización?')) return;
+  const quote = db.quotes.find(q => q.id === id);
   db.quotes = db.quotes.filter(q => q.id !== id);
   saveDB();
   if (sbReady) {
     sb.from('quotes').delete().eq('id', id).then(() => console.log('Cotización eliminada Supabase:', id)).catch(e => console.warn('Error:', e));
+    if (quote && quote.pdfUrl) {
+      const path = quote.pdfUrl.split('/storage/v1/object/public/cotizaciones/')[1];
+      if (path) sb.storage.from('cotizaciones').remove([path]).then(() => console.log('PDF eliminado:', path)).catch(e => console.warn('Storage:', e));
+    }
   }
   cotiRenderList();
   showToast('Cotización eliminada', 'warning');
@@ -3232,42 +3246,29 @@ function cotiDelete(id) {
 function cotiConvert(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return;
-  if (!confirm(`¿Convertir cotización de ${q.clientName || 'sin cliente'} a factura?`)) return;
+  if (!confirm(`¿Convertir cotización de ${q.clientName || 'sin cliente'} a factura?\nSe cargarán los artículos en el Punto de Venta.`)) return;
 
-  const rate = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 1;
-  const itemsUSD = (q.items || []).map(item => {
+  cart = (q.items || []).map(item => {
     const baseUSD = item.baseUSD != null ? item.baseUSD : cotiFromCurrency(item.unitPrice || 0, q.currency);
     return {
-      productId: item.productId, name: item.name, sku: item.sku,
+      id: generateId(), productId: item.productId, name: item.name, sku: item.sku,
       qty: item.qty, unitPrice: baseUSD,
-      isCombo: item.isCombo || false, comboItems: [],
+      isCombo: item.isCombo || false, comboItems: item.comboItems || [],
       lineTotal: item.qty * baseUSD
     };
   });
-  const total = itemsUSD.reduce((s, i) => s + i.lineTotal, 0);
 
-  const sale = {
-    id: generateId(),
-    date: new Date().toISOString(),
-    items: itemsUSD,
-    subtotal: total, total, method: 'Efectivo', cashAmount: total, transferAmount: 0,
-    copAmount: 0, copRate: rate * COP_FACTOR, exchangeRate: rate,
-    clientId: q.clientId || null
-  };
+  cotiConvertingId = id;
 
-  q.items.forEach(item => {
-    if (!item.isCombo) {
-      const p = db.products.find(x => x.id === item.productId);
-      if (p && !p.isService) p.stock = Math.max(0, (p.stock || 0) - item.qty);
-    }
-  });
+  if (q.clientId) {
+    posClientId = q.clientId;
+    renderPosClientSelected();
+  }
 
-  db.sales.push(sale);
-  q.status = 'converted';
-  saveDB();
-  syncSaleToSupabase(sale);
-  cotiRenderList();
-  showToast('Cotización convertida a factura', 'success');
+  renderCart();
+  updateTotalVESDisplay();
+  showTab('ventas');
+  showToast('Artículos cargados. Completa el pago para facturar.', 'info');
 }
 
 function cotiGeneratePDF(id) {
@@ -3412,7 +3413,12 @@ async function cotiWhatsApp(id) {
         console.error('Error Supabase Storage:', error.message, error);
       } else if (data) {
         const { data: urlData } = sb.storage.from('cotizaciones').getPublicUrl(fileName);
-        if (urlData) { pdfUrl = urlData.publicUrl; console.log('PDF subido:', pdfUrl); }
+        if (urlData) {
+          pdfUrl = urlData.publicUrl;
+          q.pdfUrl = pdfUrl;
+          saveDB();
+          console.log('PDF subido:', pdfUrl);
+        }
       }
     } else {
       console.warn('Supabase no listo, no se sube PDF');
@@ -3454,7 +3460,7 @@ function cotiRenderList() {
   );
 
   const statusBadge = { pending: 'bg-amber-100 text-amber-700', converted: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-600' };
-  const statusLabel = { pending: 'Pendiente', converted: 'Convertida', cancelled: 'Anulada' };
+  const statusLabel = { pending: 'Pendiente', converted: 'Facturada', cancelled: 'Anulada' };
 
   if (!quotes.length) {
     el.innerHTML = `<div class="text-center py-10">
@@ -3796,6 +3802,25 @@ self.addEventListener('fetch',e=>{
 }
 
 // ===================================================================
+// CLEANUP: Borrar cotizaciones vieias (+ Storage PDFs) al iniciar
+// ===================================================================
+function cleanupOldQuotes() {
+  const ONE_MONTH = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const old = db.quotes.filter(q => (now - new Date(q.date).getTime()) > ONE_MONTH);
+  if (!old.length) return;
+  console.log('Borrando', old.length, 'cotizaciones viejas (>1 mes)');
+  const ids = old.map(q => q.id);
+  const pdfPaths = old.filter(q => q.pdfUrl).map(q => q.pdfUrl.split('/storage/v1/object/public/cotizaciones/')[1]).filter(Boolean);
+  db.quotes = db.quotes.filter(q => !ids.includes(q.id));
+  saveDB();
+  if (sbReady) {
+    ids.forEach(id => sb.from('quotes').delete().eq('id', id).catch(() => {}));
+    if (pdfPaths.length) sb.storage.from('cotizaciones').remove(pdfPaths).then(() => console.log('PDFs viejos borrados:', pdfPaths.length)).catch(() => {});
+  }
+}
+
+// ===================================================================
 // INIT
 // ===================================================================
 const SUPABASE_URL = 'https://muwthhwoxpooliatnmhk.supabase.co';
@@ -3814,6 +3839,7 @@ initSupabase().catch(()=>{}).finally(() => {
 registerPWA();
 updateConnectionStatus();
 ensureDemoClient();
+cleanupOldQuotes();
 
 // Inicializar nombre en sidebar
 const snEl = document.getElementById('sidebar-store-name');
