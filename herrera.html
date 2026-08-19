@@ -122,8 +122,16 @@
     </button>
     <button onclick="showTab('ventas')" id="nav-ventas"
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
-      <i class="fa-solid fa-cash-register w-5 text-center"></i><span>Punto de Venta</span>
+      <i class="fa-solid fa-cash-register w-5 text-center"></i><span class="flex-1">Punto de Venta</span>
+      <i onclick="event.stopPropagation();togglePosSubmenu()" id="pos-submenu-toggle" class="fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all"></i>
     </button>
+    <div id="pos-submenu" class="hidden pl-8 space-y-0.5 -mt-1 mb-1">
+      <button onclick="showTab('cotizaciones');closeMobileMenu()" id="nav-cotizaciones"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-file-invoice w-4 text-center"></i><span>Cotizaciones</span>
+        <span id="quotes-count-badge" class="text-[0.5rem] bg-sky-400 text-white px-1 py-px rounded-full font-bold hidden ml-auto">0</span>
+      </button>
+    </div>
     <button onclick="showTab('reportes')" id="nav-reportes"
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Reportes</span>
@@ -212,8 +220,14 @@
       <i class="fa-solid fa-boxes-stacked w-4 text-center text-xs"></i><span>Inventario</span>
     </button>
     <button onclick="showTab('ventas');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="ventas">
-      <i class="fa-solid fa-cash-register w-4 text-center text-xs"></i><span>Punto de Venta</span>
+      <i class="fa-solid fa-cash-register w-4 text-center text-xs"></i><span class="flex-1">Punto de Venta</span>
+      <i onclick="event.stopPropagation();togglePosSubmenuMobile()" class="fa-solid fa-plus text-[0.55rem] opacity-60"></i>
     </button>
+    <div id="pos-submenu-mobile" class="hidden pl-8 space-y-0.5 -mt-0.5 mb-0.5">
+      <button onclick="showTab('cotizaciones');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="cotizaciones">
+        <i class="fa-solid fa-file-invoice w-4 text-center"></i><span>Cotizaciones</span>
+      </button>
+    </div>
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
       <i class="fa-solid fa-chart-line w-4 text-center text-xs"></i><span>Reportes</span>
     </button>
@@ -525,31 +539,23 @@
           </div>
         </div>
       </div>
-      <!-- ======== SUB-MODULO: COTIZACIONES ======== -->
-      <div class="mt-4">
-        <button onclick="toggleQuotesSection()" id="quotes-toggle-btn"
-          class="w-full flex items-center justify-between px-4 py-2.5 bg-white rounded-xl border border-slate-200 hover:border-sky-300 hover:shadow-sm transition-all">
-          <span class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <i class="fa-solid fa-file-invoice text-sky-500"></i>Cotizaciones
-            <span id="quotes-count-badge" class="text-[0.6rem] bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-full font-bold hidden">0</span>
-          </span>
-          <i id="quotes-chevron" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
-        </button>
-        <div id="quotes-section" class="hidden mt-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div class="p-3 border-b border-slate-100 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <h4 class="text-sm font-semibold text-slate-700">Cotizaciones</h4>
-              <span id="quotes-list-count" class="text-[0.6rem] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">0</span>
-            </div>
-            <button onclick="openQuoteModal()"
-              class="text-xs px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-medium transition-all">
-              <i class="fa-solid fa-plus mr-1"></i>Nueva
-            </button>
-          </div>
-          <div id="quotes-list" class="max-h-72 overflow-y-auto divide-y divide-slate-50">
-            <p class="text-slate-400 text-xs text-center py-8">Sin cotizaciones</p>
-          </div>
+      </div>
+    </div>
+
+    <!-- ======== TAB: COTIZACIONES ======== -->
+    <div id="tab-cotizaciones" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Cotizaciones</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Gestión de cotizaciones para clientes</p>
         </div>
+        <button onclick="openQuoteModal()"
+          class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-plus mr-1.5"></i>Nueva Cotización
+        </button>
+      </div>
+      <div id="quotes-list" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <p class="text-slate-400 text-xs text-center py-10">Sin cotizaciones</p>
       </div>
     </div>
 
@@ -1394,7 +1400,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -1406,15 +1412,23 @@ function showTab(tab) {
   const navEl = document.getElementById('nav-' + tab);
   if (navEl) { navEl.classList.add('active'); navEl.classList.add('bg-white/20'); }
 
+  if (tab === 'cotizaciones') {
+    const sub = document.getElementById('pos-submenu');
+    const icon = document.getElementById('pos-submenu-toggle');
+    if (sub) sub.classList.remove('hidden');
+    if (icon) icon.className = 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
+  }
+
   document.getElementById('mobile-title').textContent = tabNames[tab] || tab;
 
   switch (tab) {
-    case 'dashboard':  renderDashboard();  break;
-    case 'inventario': renderInventario(); break;
-    case 'ventas':     renderPOS();        break;
-    case 'reportes':   renderReportes();   break;
-    case 'clientes':   renderClientsTable(); break;
-    case 'usuarios':   renderUsersTable();   break;
+    case 'dashboard':    renderDashboard();    break;
+    case 'inventario':   renderInventario();   break;
+    case 'ventas':       renderPOS();          break;
+    case 'cotizaciones': renderQuotesList();   break;
+    case 'reportes':     renderReportes();     break;
+    case 'clientes':     renderClientsTable(); break;
+    case 'usuarios':     renderUsersTable();   break;
   }
 }
 
@@ -2827,63 +2841,78 @@ function deleteClient(id) {
 let quoteItems = [];
 let quotesExpanded = false;
 
-function toggleQuotesSection() {
-  quotesExpanded = !quotesExpanded;
-  const sec = document.getElementById('quotes-section');
-  const chev = document.getElementById('quotes-chevron');
-  sec.classList.toggle('hidden', !quotesExpanded);
-  chev.style.transform = quotesExpanded ? 'rotate(180deg)' : '';
-  if (quotesExpanded) renderQuotesList();
+function togglePosSubmenu() {
+  const sub = document.getElementById('pos-submenu');
+  const icon = document.getElementById('pos-submenu-toggle');
+  const isVisible = !sub.classList.contains('hidden');
+  sub.classList.toggle('hidden', isVisible);
+  icon.className = isVisible
+    ? 'fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all'
+    : 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
+}
+
+function togglePosSubmenuMobile() {
+  const sub = document.getElementById('pos-submenu-mobile');
+  sub.classList.toggle('hidden');
 }
 
 function updateQuotesBadge() {
   const pending = db.quotes.filter(q => q.status === 'pending').length;
-  const badge = document.getElementById('quotes-count-badge');
-  const listCount = document.getElementById('quotes-list-count');
-  if (badge) { badge.textContent = pending; badge.classList.toggle('hidden', pending === 0); }
-  if (listCount) listCount.textContent = db.quotes.length;
+  const badges = document.querySelectorAll('#quotes-count-badge');
+  badges.forEach(b => { b.textContent = pending; b.classList.toggle('hidden', pending === 0); });
 }
 
 function renderQuotesList() {
   updateQuotesBadge();
   const body = document.getElementById('quotes-list');
+  if (!body) return;
   const quotes = [...db.quotes].sort((a, b) => new Date(b.date) - new Date(a.date));
   if (!quotes.length) {
-    body.innerHTML = '<p class="text-slate-400 text-xs text-center py-8">Sin cotizaciones</p>';
+    body.innerHTML = `<div class="text-center py-12">
+      <i class="fa-solid fa-file-invoice text-4xl text-slate-200 block mb-3"></i>
+      <p class="text-slate-400 text-sm">Sin cotizaciones</p>
+      <p class="text-slate-300 text-xs mt-1">Crea una nueva desde el botón superior</p>
+    </div>`;
     return;
   }
-  const currencySymbol = { USD: '$', VES: 'Bs.', COP: '$COP' };
+  const currencySymbol = { USD: '$', VES: 'Bs.', COP: '$' };
   const statusBadge = { pending: 'bg-amber-100 text-amber-700', converted: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-600' };
   const statusLabel = { pending: 'Pendiente', converted: 'Convertida', cancelled: 'Anulada' };
-  body.innerHTML = quotes.map(q => {
-    const client = db.clients.find(c => c.id === q.clientId);
-    const sym = currencySymbol[q.currency] || '$';
-    const date = new Date(q.date).toLocaleDateString('es-VE');
-    const itemsPreview = (q.items || []).slice(0, 2).map(i => i.name).join(', ');
-    const more = (q.items || []).length > 2 ? ` +${q.items.length - 2}` : '';
-    return `<div class="px-3 py-2.5 hover:bg-slate-50/50 transition-all">
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-0.5">
-            <span class="text-sm font-semibold text-slate-800">${client ? escHtml(client.name) : '<span class="text-slate-400">Sin cliente</span>'}</span>
-            <span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[q.status] || statusBadge.pending}">${statusLabel[q.status] || 'Pendiente'}</span>
+  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
+    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
+      <th class="px-4 py-3 font-semibold">Cliente</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Fecha</th>
+      <th class="px-4 py-3 font-semibold">Moneda</th>
+      <th class="px-4 py-3 font-semibold">Total</th>
+      <th class="px-4 py-3 font-semibold">Estado</th>
+      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
+    </tr></thead>
+    <tbody class="divide-y divide-slate-50">${quotes.map(q => {
+      const client = db.clients.find(c => c.id === q.clientId);
+      const sym = currencySymbol[q.currency] || '$';
+      const date = new Date(q.date).toLocaleDateString('es-VE');
+      const itemsCount = (q.items || []).length;
+      return `<tr class="hover:bg-sky-50/40 transition-all">
+        <td class="px-4 py-3">
+          <div class="text-sm font-medium text-slate-800">${client ? escHtml(client.name) : '<span class="text-slate-400 italic">Sin cliente</span>'}</div>
+          <div class="text-[0.6rem] text-slate-400">${itemsCount} artículo${itemsCount !== 1 ? 's' : ''}</div>
+        </td>
+        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-500">${date}</td>
+        <td class="px-4 py-3 text-xs font-medium text-slate-600">${q.currency}</td>
+        <td class="px-4 py-3 text-sm font-bold text-sky-600">${sym} ${fmtNum(q.total)}</td>
+        <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[q.status] || statusBadge.pending}">${statusLabel[q.status] || 'Pendiente'}</span></td>
+        <td class="px-4 py-3 text-center">
+          <div class="flex items-center justify-center gap-1">
+            ${q.status === 'pending' ? `
+              <button onclick="editQuote('${q.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+              <button onclick="convertQuoteToSale('${q.id}')" title="Convertir a factura" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-file-invoice text-xs"></i></button>
+              <button onclick="deleteQuote('${q.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+            ` : ''}
+            <button onclick="sendQuoteWhatsApp('${q.id}')" title="WhatsApp" class="p-1.5 rounded-lg hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp text-xs"></i></button>
           </div>
-          <div class="text-[0.65rem] text-slate-400">${date} · ${escHtml(itemsPreview)}${more}</div>
-          <div class="text-xs font-bold text-sky-600 mt-0.5">${sym} ${fmtNum(q.total)}</div>
-        </div>
-        <div class="flex items-center gap-0.5 flex-shrink-0">
-          ${q.status === 'pending' ? `
-            <button onclick="editQuote('${q.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-[0.6rem]"></i></button>
-            <button onclick="convertQuoteToSale('${q.id}')" title="Convertir a factura" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-file-invoice text-[0.6rem]"></i></button>
-            <button onclick="sendQuoteWhatsApp('${q.id}')" title="Enviar WhatsApp" class="p-1.5 rounded-lg hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp text-[0.6rem]"></i></button>
-            <button onclick="deleteQuote('${q.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-[0.6rem]"></i></button>
-          ` : `
-            <button onclick="sendQuoteWhatsApp('${q.id}')" title="Enviar WhatsApp" class="p-1.5 rounded-lg hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp text-[0.6rem]"></i></button>
-          `}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
 }
 
 function openQuoteModal(id) {
