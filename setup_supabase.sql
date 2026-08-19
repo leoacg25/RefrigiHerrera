@@ -147,7 +147,7 @@ ALTER TABLE sales ADD COLUMN IF NOT EXISTS client_id TEXT REFERENCES clients(id)
 -- Tabla de cotizaciones
 CREATE TABLE IF NOT EXISTS quotes (
   id TEXT PRIMARY KEY,
-  client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
+  client_id TEXT,
   client_name TEXT DEFAULT '',
   items JSONB DEFAULT '[]'::jsonb,
   currency TEXT DEFAULT 'USD',
@@ -158,6 +158,11 @@ CREATE TABLE IF NOT EXISTS quotes (
   date TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+-- Eliminar FK si ya existía de una versión anterior
+DO $$ BEGIN
+  ALTER TABLE quotes DROP CONSTRAINT IF EXISTS quotes_client_id_fkey;
+EXCEPTION WHEN others THEN NULL;
+END $$;
 ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_quotes_date ON quotes(date);
 CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);

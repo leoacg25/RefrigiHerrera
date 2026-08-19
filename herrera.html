@@ -3178,7 +3178,13 @@ function cotiSave() {
   }
   saveDB();
   if (sbReady) {
-    sb.from('quotes').upsert(quote).then(() => console.log('Cotización sync Supabase')).catch(e => console.warn('Error sync cotización:', e));
+    sb.from('quotes').upsert({
+      id: quote.id, client_id: quote.clientId || null, client_name: quote.clientName || '',
+      items: quote.items || [], currency: quote.currency || 'USD',
+      subtotal: quote.subtotal || 0, total: quote.total || 0,
+      status: quote.status || 'pending', notes: quote.notes || '',
+      date: quote.date, updated_at: new Date().toISOString()
+    }).then(() => console.log('Cotización sync Supabase')).catch(e => console.warn('Error sync cotización:', e));
   }
   showToast(cotiEditId ? 'Cotización actualizada' : 'Cotización creada', 'success');
   const savedId = quote.id;
@@ -3434,10 +3440,9 @@ async function cotiWhatsApp(id) {
 
 function cotiRenderList() {
   const el = document.getElementById('coti-list');
-  if (!el) { console.warn('cotiRenderList: #coti-list not found'); return; }
+  if (!el) return;
   const searchInput = document.getElementById('coti-list-search');
   const q = searchInput ? searchInput.value.toLowerCase() : '';
-  console.log('cotiRenderList: db.quotes =', db.quotes.length, 'quotes');
   let quotes = [...db.quotes].sort((a, b) => new Date(b.date) - new Date(a.date));
   if (q) quotes = quotes.filter(x =>
     (x.clientName||'').toLowerCase().includes(q) ||
@@ -3447,7 +3452,6 @@ function cotiRenderList() {
 
   const statusBadge = { pending: 'bg-amber-100 text-amber-700', converted: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-600' };
   const statusLabel = { pending: 'Pendiente', converted: 'Convertida', cancelled: 'Anulada' };
-  const currSym = { USD: '$', VES: 'Bs.', COP: '$' };
 
   if (!quotes.length) {
     el.innerHTML = `<div class="text-center py-10">
@@ -3457,40 +3461,34 @@ function cotiRenderList() {
     return;
   }
 
-  el.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
-    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
-      <th class="px-3 py-2.5 font-semibold">Cliente</th>
-      <th class="px-3 py-2.5 font-semibold hidden lg:table-cell">Fecha</th>
-      <th class="px-3 py-2.5 font-semibold">Moneda</th>
-      <th class="px-3 py-2.5 font-semibold">Total</th>
-      <th class="px-3 py-2.5 font-semibold">Estado</th>
-      <th class="px-3 py-2.5 font-semibold text-center">Acciones</th>
-    </tr></thead>
-    <tbody class="divide-y divide-slate-50">${quotes.map(q => {
-      const sym = currSym[q.currency] || '$';
-      const date = new Date(q.date).toLocaleDateString('es-VE');
-      const itemsCount = (q.items || []).length;
-      return `<tr class="hover:bg-sky-50/40 transition-all">
-        <td class="px-3 py-2.5">
-          <div class="text-sm font-medium text-slate-800">${q.clientName ? escHtml(q.clientName) : '<span class="text-slate-400 italic">Sin cliente</span>'}</div>
-          <div class="text-[0.6rem] text-slate-400">${itemsCount} artículo${itemsCount !== 1 ? 's' : ''}</div>
-        </td>
-        <td class="px-3 py-2.5 hidden lg:table-cell text-xs text-slate-500">${date}</td>
-        <td class="px-3 py-2.5 text-xs font-medium text-slate-600">${q.currency}</td>
-        <td class="px-3 py-2.5 text-sm font-bold text-sky-600">${sym} ${fmtNum(q.total)}</td>
-        <td class="px-3 py-2.5"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[q.status] || statusBadge.pending}">${statusLabel[q.status] || 'Pendiente'}</span></td>
-        <td class="px-3 py-2.5 text-center">
-          <div class="flex items-center justify-center gap-1">
-            ${q.status === 'pending' ? `
-              <button onclick="cotiEdit('${q.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
-              <button onclick="cotiConvert('${q.id}')" title="Convertir a factura" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-file-invoice text-xs"></i></button>
-              <button onclick="cotiDelete('${q.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
-            ` : ''}
-            <button onclick="cotiWhatsApp('${q.id}')" title="WhatsApp" class="p-1.5 rounded-lg hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp text-xs"></i></button>
+  el.innerHTML = quotes.map(q => {
+    const date = new Date(q.date).toLocaleDateString('es-VE');
+    const itemsCount = (q.items || []).length;
+    return `<div class="mb-2 p-3 bg-white border border-slate-100 rounded-xl hover:border-sky-200 transition-all">
+      <div class="flex items-start justify-between gap-2 mb-1.5">
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-800 truncate">${q.clientName ? escHtml(q.clientName) : '<span class="text-slate-400 italic">Sin cliente</span>'}</div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-[0.6rem] text-slate-400">${date}</span>
+            <span class="text-[0.6rem] text-slate-300">·</span>
+            <span class="text-[0.6rem] text-slate-400">${itemsCount} artículo${itemsCount !== 1 ? 's' : ''}</span>
           </div>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-sm font-bold text-sky-600">${cotiFmtVal(q.total, q.currency)}</div>
+          <span class="text-[0.5rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[q.status] || statusBadge.pending}">${statusLabel[q.status] || 'Pendiente'}</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-1 border-t border-slate-50 pt-1.5">
+        ${q.status === 'pending' ? `
+          <button onclick="cotiEdit('${q.id}')" title="Editar" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil mr-0.5"></i>Editar</button>
+          <button onclick="cotiConvert('${q.id}')" title="Convertir a factura" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-file-invoice mr-0.5"></i>Factura</button>
+          <button onclick="cotiDelete('${q.id}')" title="Eliminar" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash mr-0.5"></i></button>
+        ` : ''}
+        <button onclick="cotiWhatsApp('${q.id}')" title="WhatsApp" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp mr-0.5"></i>Enviar</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderCotizaciones() {
