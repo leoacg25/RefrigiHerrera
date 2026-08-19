@@ -417,6 +417,24 @@
               <i class="fa-solid fa-trash-can mr-0.5"></i>Limpiar
             </button>
           </div>
+          <!-- Selector de cliente -->
+          <div class="px-3 py-2 border-b border-slate-100 bg-slate-50/50">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Cliente</label>
+            <div class="flex items-center gap-1.5">
+              <div class="relative flex-1">
+                <i class="fa-solid fa-user absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 text-[0.6rem]"></i>
+                <input type="text" id="pos-client-search" placeholder="Buscar cliente..." oninput="onPosClientSearch(this.value)"
+                  class="w-full pl-6 pr-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:border-sky-400 outline-none transition-all">
+                <div id="pos-client-dropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-32 overflow-y-auto"></div>
+              </div>
+              <button onclick="openClientModal()" title="Nuevo cliente" class="w-7 h-7 flex items-center justify-center rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-500 hover:text-sky-700 transition-all flex-shrink-0">
+                <i class="fa-solid fa-plus text-[0.6rem]"></i>
+              </button>
+            </div>
+            <div id="pos-client-selected" class="mt-1 text-[0.65rem] text-sky-600 font-medium hidden">
+              <i class="fa-solid fa-check-circle mr-0.5"></i><span id="pos-client-name"></span>
+            </div>
+          </div>
           <div id="cart-items" class="flex-1 overflow-y-auto max-h-48 lg:max-h-72 divide-y divide-slate-50 p-1.5">
             <p class="text-slate-400 text-xs text-center py-6">Carrito vacío</p>
           </div>
@@ -1072,6 +1090,7 @@ let posSearch = '';
 let posCategoryFilter = '';
 let invServiceFilter = false;
 let cart = [];
+let posClientId = null;
 let chartMode = 'weekly';
 let salesChart = null;
 let currentReceiptSale = null;
@@ -1196,7 +1215,8 @@ async function syncSaleToSupabase(sale) {
       id: sale.id, date: sale.date, items: sale.items,
       subtotal: sale.subtotal, total: sale.total, method: sale.method,
       cash_amount: sale.cashAmount, transfer_amount: sale.transferAmount,
-      exchange_rate: sale.exchangeRate, cop_amount: sale.copAmount || 0, cop_rate: sale.copRate || 0
+      exchange_rate: sale.exchangeRate, cop_amount: sale.copAmount || 0, cop_rate: sale.copRate || 0,
+      client_id: sale.clientId || null
     });
   } catch (e) { console.warn('syncSaleToSupabase:', e); }
 }
@@ -1915,6 +1935,7 @@ function renderPOS() {
   updateCategoryLists();
   renderProductGrid();
   renderCart();
+  initPosClient();
   const rate = db.settings.exchangeRate;
   if (rate) {
     const inp = document.getElementById('pos-exchange-rate');
@@ -1922,6 +1943,78 @@ function renderPOS() {
   }
   updateTotalVESDisplay();
 }
+
+function ensureDemoClient() {
+  if (!db.clients.find(c => c.name === 'Cliente Demo')) {
+    db.clients.push({
+      id: generateId(), name: 'Cliente Demo',
+      phone: '0', email: '0', address: '0', idNumber: '0',
+      notes: 'Cliente por defecto', active: true
+    });
+    saveDB();
+  }
+}
+
+function initPosClient() {
+  ensureDemoClient();
+  const demo = db.clients.find(c => c.name === 'Cliente Demo');
+  if (!posClientId && demo) {
+    posClientId = demo.id;
+  }
+  renderPosClientSelected();
+}
+
+function renderPosClientSelected() {
+  const el = document.getElementById('pos-client-selected');
+  const nameEl = document.getElementById('pos-client-name');
+  if (!posClientId) { el.classList.add('hidden'); return; }
+  const client = db.clients.find(c => c.id === posClientId);
+  if (client) {
+    nameEl.textContent = client.name;
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
+}
+
+function onPosClientSearch(val) {
+  const dropdown = document.getElementById('pos-client-dropdown');
+  if (!val.trim()) { dropdown.classList.add('hidden'); return; }
+  const q = val.toLowerCase();
+  const matches = db.clients.filter(c =>
+    c.active !== false && (
+      (c.name||'').toLowerCase().includes(q) ||
+      (c.phone||'').toLowerCase().includes(q) ||
+      (c.idNumber||'').toLowerCase().includes(q)
+    )
+  ).slice(0, 8);
+
+  if (!matches.length) {
+    dropdown.innerHTML = `<div class="px-3 py-2 text-xs text-slate-400">Sin resultados</div>`;
+  } else {
+    dropdown.innerHTML = matches.map(c =>
+      `<div class="px-3 py-2 text-xs hover:bg-sky-50 cursor-pointer flex items-center gap-2 transition-all ${c.id===posClientId?'bg-sky-50 text-sky-700 font-semibold':'text-slate-600'}"
+        onclick="selectPosClient('${c.id}')">
+        <i class="fa-solid fa-user text-[0.55rem] text-slate-300"></i>
+        <div><span class="font-medium">${escHtml(c.name)}</span>${c.phone ? `<span class="text-slate-400 ml-1">${escHtml(c.phone)}</span>` : ''}</div>
+      </div>`
+    ).join('');
+  }
+  dropdown.classList.remove('hidden');
+}
+
+function selectPosClient(id) {
+  posClientId = id;
+  document.getElementById('pos-client-search').value = '';
+  document.getElementById('pos-client-dropdown').classList.add('hidden');
+  renderPosClientSelected();
+}
+
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('pos-client-dropdown');
+  const inp = document.getElementById('pos-client-search');
+  if (dd && inp && !dd.contains(e.target) && e.target !== inp) dd.classList.add('hidden');
+});
 
 function updateTotalVESDisplay() {
   const rate    = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 0;
@@ -2215,7 +2308,8 @@ function processPayment() {
       isCombo: item.isCombo, comboItems: item.comboItems||[],
       lineTotal: calcLineTotal(item)
     })),
-    subtotal: total, total, method, cashAmount, transferAmount, copAmount: copAmount || 0, copRate: copRate, exchangeRate: rate
+    subtotal: total, total, method, cashAmount, transferAmount, copAmount: copAmount || 0, copRate: copRate, exchangeRate: rate,
+    clientId: posClientId || null
   };
 
   db.sales.push(sale);
@@ -2226,6 +2320,7 @@ function processPayment() {
   renderCart();
   renderProductGrid();
   updateTotalVESDisplay();
+  initPosClient();
   document.getElementById('payment-method').value = 'Efectivo';
   document.getElementById('mixed-payment-section').classList.add('hidden');
   document.getElementById('cash-usd').value = '';
@@ -2247,6 +2342,8 @@ function openReceipt(sale) {
   const rate      = sale.exchangeRate;
   const date      = new Date(sale.date).toLocaleString('es-VE');
   const storeName = db.settings.storeName || 'RefrigiHerrera';
+  const client    = sale.clientId ? db.clients.find(c => c.id === sale.clientId) : null;
+  const clientName = client ? client.name : '';
 
   const itemsHtml = sale.items.map(item => {
     const lt = item.lineTotal ?? (item.qty * item.unitPrice);
@@ -2270,6 +2367,7 @@ function openReceipt(sale) {
       <h4 class="font-bold text-slate-800">${escHtml(storeName)}</h4>
       <p class="text-xs text-slate-400">${date}</p>
       <p class="text-xs text-slate-400 font-mono">#${(sale.id||'').slice(0,8).toUpperCase()}</p>
+      ${clientName ? `<p class="text-[0.65rem] text-sky-600 mt-1"><i class="fa-solid fa-user mr-0.5"></i>${escHtml(clientName)}</p>` : ''}
     </div>
     <div class="mb-3">${itemsHtml}</div>
     <div class="space-y-1.5 pt-3 border-t border-slate-200">
@@ -2316,7 +2414,9 @@ function sendWhatsApp(sale) {
   const store = db.settings.storeName || 'RefrigiHerrera';
   const date  = new Date(sale.date).toLocaleString('es-VE');
   const rate  = sale.exchangeRate;
+  const client = sale.clientId ? db.clients.find(c => c.id === sale.clientId) : null;
   let msg = `🛍️ *${store}*\n📋 Recibo #${(sale.id||'').slice(0,8).toUpperCase()}\n📅 ${date}\n`;
+  if (client) msg += `👤 *Cliente:* ${client.name}\n`;
   msg += `─────────────────\n`;
   sale.items.forEach(item => {
     const lt = item.lineTotal ?? (item.qty * item.unitPrice);
@@ -2891,6 +2991,7 @@ loadDB();
 initSupabase().catch(()=>{}).finally(() => {
 registerPWA();
 updateConnectionStatus();
+ensureDemoClient();
 
 // Inicializar nombre en sidebar
 const snEl = document.getElementById('sidebar-store-name');
