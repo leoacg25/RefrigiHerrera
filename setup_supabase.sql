@@ -143,3 +143,22 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS is_service BOOLEAN DEFAULT false;
 
 -- Migración cliente en ventas
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS client_id TEXT REFERENCES clients(id) ON DELETE SET NULL;
+
+-- Tabla de cotizaciones
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY,
+  client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
+  client_name TEXT DEFAULT '',
+  items JSONB DEFAULT '[]'::jsonb,
+  currency TEXT DEFAULT 'USD',
+  subtotal NUMERIC DEFAULT 0,
+  total NUMERIC DEFAULT 0,
+  status TEXT DEFAULT 'pending',
+  notes TEXT DEFAULT '',
+  date TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_quotes_date ON quotes(date);
+CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
+ALTER PUBLICATION supabase_realtime ADD TABLE quotes;
