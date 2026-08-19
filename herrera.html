@@ -3390,8 +3390,9 @@ function cotiSendWhatsApp() {
 async function cotiWhatsApp(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return;
-  const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
-  if (!phone) { showToast('Configura el número de WhatsApp en Configuración', 'warning'); return; }
+  const client = q.clientId ? db.clients.find(c => c.id === q.clientId) : null;
+  const phone = (client?.phone || db.settings.whatsapp || '').replace(/\D/g, '');
+  if (!phone) { showToast('El cliente no tiene teléfono registrado', 'warning'); return; }
 
   const doc = cotiGeneratePDF(id);
   if (!doc) return;
