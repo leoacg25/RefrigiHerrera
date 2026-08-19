@@ -162,3 +162,23 @@ ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_quotes_date ON quotes(date);
 CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
 ALTER PUBLICATION supabase_realtime ADD TABLE quotes;
+
+-- ===================================================================
+-- STORAGE: Bucket cotizaciones para PDFs
+-- Ejecutar en Supabase SQL Editor si el bucket no existe
+-- ===================================================================
+INSERT INTO storage.buckets (id, name, public) VALUES ('cotizaciones', 'cotizaciones', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Permitir a usuarios anónimos subir y leer PDFs
+CREATE POLICY IF NOT EXISTS "Allow anon upload cotizaciones" ON storage.objects
+  FOR INSERT TO anon WITH CHECK (bucket_id = 'cotizaciones');
+
+CREATE POLICY IF NOT EXISTS "Allow anon read cotizaciones" ON storage.objects
+  FOR SELECT TO anon USING (bucket_id = 'cotizaciones');
+
+CREATE POLICY IF NOT EXISTS "Allow authenticated upload cotizaciones" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'cotizaciones');
+
+CREATE POLICY IF NOT EXISTS "Allow authenticated read cotizaciones" ON storage.objects
+  FOR SELECT TO authenticated USING (bucket_id = 'cotizaciones');

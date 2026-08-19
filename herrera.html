@@ -3181,8 +3181,14 @@ function cotiSave() {
     sb.from('quotes').upsert(quote).then(() => console.log('Cotización sync Supabase')).catch(e => console.warn('Error sync cotización:', e));
   }
   showToast(cotiEditId ? 'Cotización actualizada' : 'Cotización creada', 'success');
+  const savedId = quote.id;
   cotiClear();
+  updateQuotesBadge();
   cotiRenderList();
+  const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
+  if (phone && confirm('Cotización guardada. ¿Enviar PDF por WhatsApp?')) {
+    cotiWhatsApp(savedId);
+  }
 }
 
 function cotiEdit(id) {
@@ -3388,13 +3394,21 @@ async function cotiWhatsApp(id) {
 
   try {
     if (sbReady) {
-      const { data, error } = await sb.storage.from('cotizaciones').upload(fileName, pdfBlob, { contentType: 'application/pdf' });
-      if (!error && data) {
+      console.log('Subiendo PDF a Supabase Storage...', fileName);
+      const { data, error } = await sb.storage.from('cotizaciones').upload(fileName, pdfBlob, {
+        contentType: 'application/pdf',
+        upsert: false
+      });
+      if (error) {
+        console.error('Error Supabase Storage:', error.message, error);
+      } else if (data) {
         const { data: urlData } = sb.storage.from('cotizaciones').getPublicUrl(fileName);
-        if (urlData) pdfUrl = urlData.publicUrl;
+        if (urlData) { pdfUrl = urlData.publicUrl; console.log('PDF subido:', pdfUrl); }
       }
+    } else {
+      console.warn('Supabase no listo, no se sube PDF');
     }
-  } catch(e) { console.warn('Error subiendo PDF a Supabase:', e); }
+  } catch(e) { console.error('Excepción subiendo PDF:', e); }
 
   const cur = q.currency;
   const store = db.settings.storeName || 'RefrigiHerrera';
@@ -3420,9 +3434,10 @@ async function cotiWhatsApp(id) {
 
 function cotiRenderList() {
   const el = document.getElementById('coti-list');
-  if (!el) return;
+  if (!el) { console.warn('cotiRenderList: #coti-list not found'); return; }
   const searchInput = document.getElementById('coti-list-search');
   const q = searchInput ? searchInput.value.toLowerCase() : '';
+  console.log('cotiRenderList: db.quotes =', db.quotes.length, 'quotes');
   let quotes = [...db.quotes].sort((a, b) => new Date(b.date) - new Date(a.date));
   if (q) quotes = quotes.filter(x =>
     (x.clientName||'').toLowerCase().includes(q) ||
