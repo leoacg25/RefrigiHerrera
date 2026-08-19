@@ -1235,6 +1235,8 @@ let invServiceFilter = false;
 let cart = [];
 let posClientId = null;
 let cotiConvertingId = null;
+let logoBase64 = '';
+fetch('logo.png').then(r=>r.blob()).then(b=>{const fr=new FileReader();fr.onload=()=>logoBase64=fr.result;fr.readAsDataURL(b)});
 let chartMode = 'weekly';
 let salesChart = null;
 let currentReceiptSale = null;
@@ -3281,9 +3283,9 @@ function cotiGeneratePDF(id) {
   const sym = cotiCurrencySym(cur);
 
   try {
-    const img = new Image();
-    img.src = 'logo.png';
-    doc.addImage(img, 'PNG', 15, 12, 25, 20);
+    if (logoBase64) {
+      doc.addImage(logoBase64, 'PNG', 15, 12, 25, 20);
+    }
   } catch(e) {}
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
@@ -3447,6 +3449,14 @@ async function cotiWhatsApp(id) {
   showToast(pdfUrl ? 'PDF subido y mensaje enviado' : 'PDF generado. Adjúntalo al mensaje.', pdfUrl ? 'success' : 'info');
 }
 
+function cotiDownloadPDF(id) {
+  const doc = cotiGeneratePDF(id);
+  if (!doc) return;
+  const q = db.quotes.find(x => x.id === id);
+  doc.save(`cotizacion_${q ? q.id.slice(0,8) : 'doc'}.pdf`);
+  showToast('PDF descargado', 'success');
+}
+
 function cotiRenderList() {
   const el = document.getElementById('coti-list');
   if (!el) return;
@@ -3495,6 +3505,7 @@ function cotiRenderList() {
           <button onclick="cotiDelete('${q.id}')" title="Eliminar" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash mr-0.5"></i></button>
         ` : ''}
         <button onclick="cotiWhatsApp('${q.id}')" title="WhatsApp" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp mr-0.5"></i>Enviar</button>
+        <button onclick="cotiDownloadPDF('${q.id}')" title="Descargar PDF" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-all"><i class="fa-solid fa-download mr-0.5"></i>PDF</button>
       </div>
     </div>`;
   }).join('');
