@@ -1329,6 +1329,12 @@ async function syncToSupabase() {
       date: q.date, updated_at: new Date().toISOString()
     }));
     if (quotes.length) await sb.from('quotes').upsert(quotes, { onConflict: 'id' });
+    const localQuoteIds = db.quotes.map(q => q.id);
+    if (localQuoteIds.length) {
+      await sb.from('quotes').delete().not('id', 'in', `(${localQuoteIds.join(',')})`);
+    } else {
+      await sb.from('quotes').delete().neq('id', '__none__');
+    }
 
     await sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' });
   } catch (e) { console.warn('syncToSupabase:', e); }
