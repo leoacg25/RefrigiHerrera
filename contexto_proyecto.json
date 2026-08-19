@@ -1,0 +1,167 @@
+{
+  "proyecto": "RefrigiHerrera",
+  "descripcion": "Sistema POS/inventario para negocio de refrigeración con gestión de artículos, servicios, clientes, ventas, cotizaciones y tienda online futura.",
+  "repo": {
+    "github": "https://github.com/leoacg25/RefrigiHerrera",
+    "usuario": "leoacg25",
+    "ultimo_commit": "d9e6ff0"
+  },
+  "supabase": {
+    "dashboard": "https://supabase.com/dashboard/project/muwthhwoxpooliatnmhk",
+    "url": "https://muwthhwoxpooliatnmhk.supabase.co",
+    "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11d3RoaHdveHBvb2xpYXRubWhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5OTExNDYsImV4cCI6MjEwMjU2NzE0Nn0.CIo8-o5eJnNrYubYSmB-g0-2ZQoDlQ4947v_espCGsM"
+  },
+  "credenciales_login": {
+    "usuario": "herrera",
+    "contraseña": "herrera2026"
+  },
+  "diseno": {
+    "paleta_colores": {
+      "azul_oscuro": "#04154B",
+      "azul_claro": "#0D7BC1",
+      "blanco": "#FFFFFF"
+    },
+    "formato_numeros": "Estilo europeo: separador de miles con punto, decimal con coma (ej: 10.000,00). Usar locale es-VE con fmtNum()",
+    "monedas_soportadas": ["USD", "VES", "COP"]
+  },
+  "formula_conversion_cop": {
+    "COP_FACTOR": 3.5,
+    "descripcion": "Multiplicador para convertir VES a COP. COP = USD × BCV × COP_FACTOR. Configurable en ajustes.",
+    "tasa_derivada": "BCV × COP_FACTOR"
+  },
+  "archivos": {
+    "herrera_html": {
+      "ruta": "herrera.html",
+      "lineas": 3333,
+      "descripcion": "Archivo principal POS/inventario. Toda la lógica JS, UI, Supabase sync, offline. Incluye cotizaciones con PDF."
+    },
+    "login_html": {
+      "ruta": "login.html",
+      "descripcion": "Página de login"
+    },
+    "index_html": {
+      "ruta": "index.html",
+      "descripcion": "Redirige a login"
+    },
+    "setup_sql": {
+      "ruta": "setup_supabase.sql",
+      "descripcion": "Esquema SQL con migraciones para todas las tablas incluyendo quotes"
+    },
+    "logo": {
+      "ruta": "logo.png",
+      "descripcion": "Logo de la app (usado en recibos y PDFs de cotización)"
+    }
+  },
+  "tablas_supabase": ["products", "sales", "combos", "settings", "users", "clients", "quotes"],
+  "esquema_tablas": {
+    "products": "id, sku, name, category, is_service (bool), cost_price, profit_percent, price, stock, min_stock, price_ves, price_cop",
+    "sales": "id, date, items (jsonb), subtotal, total, method, cash_amount, transfer_amount, exchange_rate, cop_amount, cop_rate, client_id (FK clients)",
+    "combos": "id, code, name, price, items (jsonb)",
+    "settings": "key (pk), value (jsonb), updated_at",
+    "users": "id, username, password_hash, full_name, role, active",
+    "clients": "id, name, phone, email, address, id_number, notes, active",
+    "quotes": "id, client_id (FK clients), client_name, items (jsonb), currency (USD/VES/COP), subtotal, total, status (pending/converted/cancelled), notes, date, updated_at"
+  },
+  "configuracion_tecnica": {
+    "rls": "Deshabilitado en todas las tablas (ALTER TABLE ... DISABLE ROW LEVEL SECURITY)",
+    "variable_supabase": "Usar 'sb' o 'sbClient' — NUNCA 'supabase' (conflicto con el global de la librería)",
+    "sync_clientes": "Si da error 401 en clients, ejecutar: ALTER TABLE clients DISABLE ROW LEVEL SECURITY;",
+    "offline_storage": "localStorage con key 'refrigiherrera_v1' para datos, 'rh_pending_sales' para ventas offline",
+    "librerias_cdn": [
+      "Tailwind CSS (cdn.tailwindcss.com)",
+      "Font Awesome 6.5.0",
+      "Chart.js 4.4.0",
+      "Supabase JS v2",
+      "jsPDF 2.5.1 (para PDFs de cotización)"
+    ]
+  },
+  "nav_sidebar": {
+    "desktop": "Sidebar fijo a la izquierda con nav-items",
+    "mobile": "Menú desplegable hamburger (id=mobile-menu)",
+    "estructura": [
+      "Dashboard",
+      "Inventario",
+      "Punto de Venta → Cotizaciones (sub-menu desplegable con botón +)",
+      "Reportes",
+      "Clientes",
+      "Usuarios"
+    ]
+  },
+  "funcionalidades_implementadas": {
+    "pos": "Punto de venta con carrito, búsqueda, métodos de pago (Efectivo, Transferencia, Pago Mixto, Pesos COP)",
+    "inventario": "Gestión CRUD de productos con filtros, búsqueda, exportación CSV",
+    "servicios_vs_articulos": "Toggle radio button en modal de producto. Servicios: sin stock/costo/utilidad. Se filtran con botón 'Servicios' en Inventario (no en POS)",
+    "clientes": "CRUD de clientes con búsqueda y sync a Supabase",
+    "ventas": "Registro completo con descuento de stock, recibo, envío por WhatsApp",
+    "cliente_en_pos": "Selector de cliente con búsqueda (nombre/teléfono/cédula), botón + para cliente nuevo, Cliente Demo por defecto con campos en 0",
+    "cotizaciones": "Módulo completo: CRUD, multi-moneda (USD/VES/COP), conversión a factura, PDF con logo, envío WhatsApp. Sub-menu desplegable bajo Punto de Venta",
+    "multi_moneda": "Precios en USD, VES y COP. Auto-cálculo bidireccional con _priceLock para evitar loops. BCV configurable en ajustes",
+    "formato_europeo": "fmtNum() usa locale es-VE para mostrar números con separador de miles (.) y decimal (,)",
+    "conversión_cop": "Pago Mixto incluye campos COP. Método 'Pesos COP' con prompt. COP_FACTOR configurable en ajustes",
+    "utilidad_auto": "Campo % Utilidad se calcula automáticamente desde precio: ((price - cost) / cost) × 100. Readonly",
+    "validacion_venta": "No se puede vender por debajo del costo (solo artículos)",
+    "dashboard": "Resumen de ventas, stock, alertas de stock bajo (excluye servicios)",
+    "reportes": "Filtros por fecha, exportación CSV de ventas e inventario",
+    "ajustes": "Configuración de tasa BCV, COP_FACTOR, nombre tienda, etc.",
+    "usuarios": "CRUD de usuarios con roles (admin/operator)",
+    "pwa": "Progressive Web App con service worker registrado",
+    "conexion": "Indicador Online/Offline en header, con sincronización automática"
+  },
+  "cotizaciones_detalle": {
+    "ubicacion": "Sub-menu desplegable bajo 'Punto de Venta' en sidebar (desktop y mobile). Vista dedicada (tab-cotizaciones).",
+    "datos": {
+      "estructura": "id, clientId, clientName, items[], currency, subtotal, total, status, notes, date",
+      "monedas": "USD ($), VES (Bs.), COP ($COP)",
+      "estados": "pending, converted, cancelled"
+    },
+    "acciones": [
+      "Crear: Seleccionar cliente, moneda, agregar artículos con cantidad/precio",
+      "Editar: Modificar cualquier campo (solo si status=pending)",
+      "Eliminar: Borra de localStorage y Supabase directamente",
+      "Convertir a factura: Crea venta, descuenta stock, sync a Supabase",
+      "WhatsApp: Genera mensaje formateado + descarga PDF para adjuntar"
+    ],
+    "pdf": {
+      "libreria": "jsPDF 2.5.1",
+      "contenido": "Logo empresa, encabezado, fecha, #cotización, cliente, moneda, tabla artículos, subtotal, total, notas, footer",
+      "descarga": "Se descarga como archivo PDF local + se abre WhatsApp con mensaje"
+    },
+    "sidebar_badge": "Muestra contador de cotizaciones pendientes en el sub-menu"
+  },
+  "offline_sync": {
+    "estrategia": "Datos siempre se guardan en localStorage. Sync a Supabase solo cuando online.",
+    "ventas_pendientes": "Cola 'pendingSales' en localStorage. Si offline, venta se agrega a la cola. Al reconectar, processPendingSync() inserta cada venta pendiente.",
+    "productos_clientes": "syncToSupabase() hace bulk upsert + delete de quotes eliminados. Se ejecuta al reconectar.",
+    "quotes_sync": "syncToSupabase() compara IDs del servidor vs local y borra en Supabase los que ya no existen localmente. deleteQuote() también borra directo de Supabase.",
+    "fusion_load": "loadFromSupabase() fusiona ventas pendientes del servidor con las locales.",
+    "trigger_sync": "updateConnectionStatus() se llama en init y al evento 'online'.",
+    "flujo": "1) Operación offline → localStorage. 2) Reconexión → processPendingSync() sube todo. 3) Toast de confirmación."
+  },
+  "commit_history_reciente": [
+    "d9e6ff0 fix: boton + de cotizaciones 30% mas grande en modo telefono",
+    "38a988b fix: eliminar cotizacion directo de Supabase + sync bulk correcto",
+    "c32011f fix: sincronizar eliminacion de cotizaciones con Supabase",
+    "782ae84 fix: alinear texto Punto de Venta a la izquierda en modo telefono",
+    "9d7f176 refactor: cotizaciones como sub-menu desplegable bajo Punto de Venta con vista dedicada",
+    "c49f2dd feat: modulo de cotizaciones con CRUD, multi-moneda, PDF y WhatsApp",
+    "5215d73 feat: selector de cliente en POS con busqueda, boton nuevo y Cliente Demo por defecto",
+    "9102f62 fix: mejorar legibilidad de nombres en modo movil - tarjetas POS y carrito"
+  ],
+  "proximos_pasos_posibles": [
+    "Tienda online (futura integración)",
+    "Fix: ventas eliminadas del servidor (actualmente solo se insertan, no se borran en bulk sync para ventas/products/clients)",
+    "Mejorar sync de eliminaciones de productos/clientes (actualmente el bulk upsert no elimina filas en el servidor)"
+  ],
+  "errores_conocidos": [
+    "Las ventas se pierden temporalmente del db.sales local al hacer loadFromSupabase(), pero se fusionan de vuelta antes de renderizar",
+    "Las eliminaciones de productos/clientes no se reflejan en el servidor con el sync actual (solo quotes tiene sync de eliminación)"
+  ],
+  "comandos_utiles": {
+    "rls_clients": "ALTER TABLE clients DISABLE ROW LEVEL SECURITY;",
+    "rls_quotes": "ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;",
+    "rls_sales": "ALTER TABLE sales DISABLE ROW LEVEL SECURITY;",
+    "clone_repo": "git clone https://github.com/leoacg25/RefrigiHerrera.git .",
+    "migracion_quotes": "CREATE TABLE IF NOT EXISTS quotes (id TEXT PRIMARY KEY, client_id TEXT REFERENCES clients(id) ON DELETE SET NULL, client_name TEXT DEFAULT '', items JSONB DEFAULT '[]'::jsonb, currency TEXT DEFAULT 'USD', subtotal NUMERIC DEFAULT 0, total NUMERIC DEFAULT 0, status TEXT DEFAULT 'pending', notes TEXT DEFAULT '', date TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now()); ALTER TABLE quotes DISABLE ROW LEVEL SECURITY; CREATE INDEX IF NOT EXISTS idx_quotes_date ON quotes(date); ALTER PUBLICATION supabase_realtime ADD TABLE quotes;",
+    "migracion_client_id": "ALTER TABLE sales ADD COLUMN IF NOT EXISTS client_id TEXT REFERENCES clients(id) ON DELETE SET NULL;"
+  }
+}
