@@ -128,7 +128,11 @@
     <div id="pos-submenu" class="hidden pl-8 space-y-0.5 -mt-1 mb-1">
       <button onclick="showTab('cotizaciones');closeMobileMenu()" id="nav-cotizaciones"
         class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
-        <i class="fa-solid fa-file-invoice w-4 text-center"></i><span>Cotizaciones</span>
+        <i class="fa-solid fa-plus w-4 text-center"></i><span>Nueva Cotización</span>
+      </button>
+      <button onclick="showTab('cotizaciones-lista');closeMobileMenu()" id="nav-cotizaciones-lista"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-list w-4 text-center"></i><span>Lista de Cotizaciones</span>
         <span id="quotes-count-badge" class="text-[0.5rem] bg-sky-400 text-white px-1 py-px rounded-full font-bold hidden ml-auto">0</span>
       </button>
     </div>
@@ -225,7 +229,10 @@
     </button>
     <div id="pos-submenu-mobile" class="hidden pl-8 space-y-0.5 -mt-0.5 mb-0.5">
       <button onclick="showTab('cotizaciones');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="cotizaciones">
-        <i class="fa-solid fa-file-invoice w-4 text-center"></i><span>Cotizaciones</span>
+        <i class="fa-solid fa-plus w-4 text-center"></i><span>Nueva Cotización</span>
+      </button>
+      <button onclick="showTab('cotizaciones-lista');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="cotizaciones-lista">
+        <i class="fa-solid fa-list w-4 text-center"></i><span>Lista de Cotizaciones</span>
       </button>
     </div>
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
@@ -632,17 +639,25 @@
                 <i class="fa-brands fa-whatsapp"></i>
               </button>
             </div>
-          </div>
         </div>
       </div>
-      <!-- Lista de cotizaciones guardadas -->
-      <div class="mt-4">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-slate-700 text-sm"><i class="fa-solid fa-file-invoice mr-1.5 text-sky-500"></i>Cotizaciones Guardadas</h3>
-          <input type="text" id="coti-list-search" placeholder="Buscar..." oninput="cotiRenderList()"
-            class="px-2.5 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none w-40">
+    </div>
+
+    <!-- ======== TAB: COTIZACIONES LISTA ======== -->
+    <div id="tab-cotizaciones-lista" class="tab-content">
+      <div class="mb-3">
+        <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Cotizaciones</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Historial de cotizaciones emitidas</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-3 border-b border-slate-100 flex items-center gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="coti-list-search" placeholder="Buscar por cliente, moneda o notas..." oninput="cotiRenderList()"
+              class="w-full pl-7 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
         </div>
-        <div id="coti-list" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div id="coti-list" class="p-1">
           <p class="text-slate-400 text-xs text-center py-10">Sin cotizaciones</p>
         </div>
       </div>
@@ -1426,7 +1441,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Nueva Cotización', 'cotizaciones-lista':'Lista de Cotizaciones', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -1438,7 +1453,7 @@ function showTab(tab) {
   const navEl = document.getElementById('nav-' + tab);
   if (navEl) { navEl.classList.add('active'); navEl.classList.add('bg-white/20'); }
 
-  if (tab === 'cotizaciones') {
+  if (tab === 'cotizaciones' || tab === 'cotizaciones-lista') {
     const sub = document.getElementById('pos-submenu');
     const icon = document.getElementById('pos-submenu-toggle');
     if (sub) sub.classList.remove('hidden');
@@ -1451,7 +1466,8 @@ function showTab(tab) {
     case 'dashboard':    renderDashboard();    break;
     case 'inventario':   renderInventario();   break;
     case 'ventas':       renderPOS();          break;
-    case 'cotizaciones': renderCotizaciones(); break;
+    case 'cotizaciones':       renderCotizaciones();       break;
+    case 'cotizaciones-lista':  renderCotizacionesLista();  break;
     case 'reportes':     renderReportes();     break;
     case 'clientes':     renderClientsTable(); break;
     case 'usuarios':     renderUsersTable();   break;
@@ -3177,6 +3193,7 @@ function cotiEdit(id) {
     ...item,
     baseUSD: item.baseUSD != null ? item.baseUSD : cotiFromCurrency(item.unitPrice || 0, q.currency)
   }));
+  showTab('cotizaciones');
   document.getElementById('coti-title').textContent = 'Editar Cotización';
   if (q.clientId) cotiSelectClient(q.clientId, q.clientName || '');
   document.getElementById('coti-notes').value = q.notes || '';
@@ -3251,15 +3268,15 @@ function cotiGeneratePDF(id) {
   try {
     const img = new Image();
     img.src = 'logo.png';
-    doc.addImage(img, 'PNG', 15, 12, 20, 20);
+    doc.addImage(img, 'PNG', 15, 12, 25, 20);
   } catch(e) {}
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(storeName, 40, 20);
+  doc.text(storeName, 45, 20);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(120);
-  doc.text('Cotización', 40, 26);
+  doc.text('Cotización', 45, 26);
 
   doc.setDrawColor(13, 123, 193);
   doc.setLineWidth(0.5);
@@ -3356,22 +3373,28 @@ function cotiSendWhatsApp() {
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function cotiWhatsApp(id) {
+async function cotiWhatsApp(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return;
   const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
   if (!phone) { showToast('Configura el número de WhatsApp en Configuración', 'warning'); return; }
 
   const doc = cotiGeneratePDF(id);
-  if (doc) {
-    const pdfBlob = doc.output('blob');
-    const url = URL.createObjectURL(pdfBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Cotizacion_${q.id.slice(0,8)}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  if (!doc) return;
+
+  const pdfBlob = doc.output('blob');
+  const fileName = `cotizacion_${q.id.slice(0,8)}_${Date.now()}.pdf`;
+  let pdfUrl = '';
+
+  try {
+    if (sbReady) {
+      const { data, error } = await sb.storage.from('cotizaciones').upload(fileName, pdfBlob, { contentType: 'application/pdf' });
+      if (!error && data) {
+        const { data: urlData } = sb.storage.from('cotizaciones').getPublicUrl(fileName);
+        if (urlData) pdfUrl = urlData.publicUrl;
+      }
+    }
+  } catch(e) { console.warn('Error subiendo PDF a Supabase:', e); }
 
   const cur = q.currency;
   const store = db.settings.storeName || 'RefrigiHerrera';
@@ -3388,10 +3411,11 @@ function cotiWhatsApp(id) {
   msg += `─────────────────\n`;
   msg += `💰 *Total: ${cotiFmtVal(q.total, cur)}*\n`;
   if (q.notes) msg += `\n📝 ${q.notes}\n`;
+  if (pdfUrl) msg += `\n📄 PDF: ${pdfUrl}\n`;
   msg += `\n¡Gracias por su preferencia!`;
 
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-  showToast('PDF descargado. Adjúntalo al mensaje de WhatsApp.', 'info');
+  showToast(pdfUrl ? 'PDF subido y mensaje enviado' : 'PDF generado. Adjúntalo al mensaje.', pdfUrl ? 'success' : 'info');
 }
 
 function cotiRenderList() {
@@ -3466,6 +3490,19 @@ function renderCotizaciones() {
   if (!cotiCart.length && !cotiEditId) cotiClear();
   cotiRenderGrid();
   cotiRenderCart();
+}
+
+function updateQuotesBadge() {
+  const pending = db.quotes.filter(q => q.status === 'pending').length;
+  const badge = document.getElementById('quotes-count-badge');
+  if (badge) {
+    if (pending > 0) { badge.textContent = pending; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+}
+
+function renderCotizacionesLista() {
+  updateQuotesBadge();
   cotiRenderList();
 }
 
