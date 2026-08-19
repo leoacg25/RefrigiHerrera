@@ -2895,7 +2895,7 @@ function cotiUpdateCurrencyStyles() {
 }
 
 document.addEventListener('change', e => {
-  if (e.target.name === 'coti-currency') { cotiUpdateCurrencyStyles(); cotiUpdateTotals(); }
+  if (e.target.name === 'coti-currency') { cotiUpdateCurrencyStyles(); cotiRenderCart(); }
 });
 
 function cotiGetCurrency() {
@@ -2907,11 +2907,39 @@ function cotiCurrencySym(cur) {
   return { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
 }
 
-function cotiFmt(n, cur) {
+function cotiToCurrency(usd, cur) {
   cur = cur || cotiGetCurrency();
-  if (cur === 'COP') return '$' + fmtNum(n) + ' COP';
-  if (cur === 'VES') return 'Bs. ' + fmtNum(n);
-  return '$' + fmtNum(n);
+  const rate = db.settings.exchangeRate || 0;
+  if (cur === 'VES') return usd * rate;
+  if (cur === 'COP') return usd * rate * COP_FACTOR;
+  return usd;
+}
+
+function cotiFromCurrency(val, cur) {
+  cur = cur || cotiGetCurrency();
+  const rate = db.settings.exchangeRate || 0;
+  if (cur === 'VES' && rate) return val / rate;
+  if (cur === 'COP' && rate) return val / (rate * COP_FACTOR);
+  return val;
+}
+
+function cotiUnitPrice(item) {
+  return cotiToCurrency(item.baseUSD || item.unitPrice || 0);
+}
+
+function cotiFmt(usd, cur) {
+  cur = cur || cotiGetCurrency();
+  const converted = cotiToCurrency(usd, cur);
+  if (cur === 'COP') return '$' + fmtNum(converted) + ' COP';
+  if (cur === 'VES') return 'Bs. ' + fmtNum(converted);
+  return '$' + fmtNum(converted);
+}
+
+function cotiFmtVal(val, cur) {
+  cur = cur || cotiGetCurrency();
+  if (cur === 'COP') return '$' + fmtNum(val) + ' COP';
+  if (cur === 'VES') return 'Bs. ' + fmtNum(val);
+  return '$' + fmtNum(val);
 }
 
 function cotiRenderGrid() {
@@ -2973,7 +3001,7 @@ function cotiAddItem(id, isCombo) {
   if (existing) { cotiUpdateQty(cotiCart.indexOf(existing), 1); return; }
   cotiCart.push({
     id: generateId(), productId: src.id, name: src.name, sku: isCombo ? src.code : src.sku,
-    unitPrice: src.price, qty: 1, isCombo
+    baseUSD: src.price, unitPrice: src.price, qty: 1, isCombo
   });
   cotiRenderCart();
 }
@@ -2986,9 +3014,13 @@ function cotiUpdateQty(idx, delta) {
 
 function cotiEditPrice(idx) {
   if (!cotiCart[idx]) return;
-  const val = prompt('Precio unitario:', cotiCart[idx].unitPrice);
+  const cur = cotiGetCurrency();
+  const currentDisplay = cotiUnitPrice(cotiCart[idx]);
+  const val = prompt(`Precio unitario (${cur}):`, fmtNum(currentDisplay));
   if (val === null) return;
-  cotiCart[idx].unitPrice = parseFloat(val) || 0;
+  const entered = parseFloat(val) || 0;
+  cotiCart[idx].baseUSD = cotiFromCurrency(entered);
+  cotiCart[idx].unitPrice = cotiCart[idx].baseUSD;
   cotiRenderCart();
 }
 
@@ -3021,11 +3053,13 @@ function cotiRenderCart() {
     return;
   }
   el.innerHTML = cotiCart.map((item, idx) => {
+    const up = cotiUnitPrice(item);
+    const lt = up * item.qty;
     return `<div class="flex items-center gap-1.5 p-1.5 hover:bg-slate-50 rounded-lg transition-all">
       <div class="flex-1 min-w-0">
         ${item.isCombo ? `<span class="text-[0.5rem] bg-purple-100 text-purple-700 px-1 rounded font-bold">COMBO</span>` : ''}
         <div class="text-xs font-medium text-slate-700 truncate">${escHtml(item.name)}</div>
-        <div class="text-[0.6rem] text-slate-400 cursor-pointer hover:text-sky-600" onclick="cotiEditPrice(${idx})">${cotiFmt(item.unitPrice)} c/u</div>
+        <div class="text-[0.6rem] text-slate-400 cursor-pointer hover:text-sky-600" onclick="cotiEditPrice(${idx})">${cotiFmt(item.baseUSD)} c/u</div>
       </div>
       <div class="flex items-center gap-0.5 flex-shrink-0">
         <button onclick="cotiUpdateQty(${idx},-1)" class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-600 transition-all">
@@ -3036,7 +3070,7 @@ function cotiRenderCart() {
           <i class="fa-solid fa-plus" style="font-size:.5rem"></i>
         </button>
       </div>
-      <div class="text-xs font-bold text-slate-800 w-12 text-right flex-shrink-0">${cotiFmt(item.qty * item.unitPrice)}</div>
+      <div class="text-xs font-bold text-slate-800 w-14 text-right flex-shrink-0">${cotiFmtVal(lt)}</div>
       <button onclick="cotiRemoveItem(${idx})" class="text-red-300 hover:text-red-500 transition-all flex-shrink-0">
         <i class="fa-solid fa-times text-xs"></i>
       </button>
@@ -3046,9 +3080,9 @@ function cotiRenderCart() {
 }
 
 function cotiUpdateTotals() {
-  const total = cotiCart.reduce((s, i) => s + i.qty * i.unitPrice, 0);
-  document.getElementById('coti-subtotal').textContent = cotiFmt(total);
-  document.getElementById('coti-total').textContent = cotiFmt(total);
+  const total = cotiCart.reduce((s, i) => s + cotiUnitPrice(i) * i.qty, 0);
+  document.getElementById('coti-subtotal').textContent = cotiFmtVal(total);
+  document.getElementById('coti-total').textContent = cotiFmtVal(total);
 }
 
 function cotiClientSearch(val) {
@@ -3104,12 +3138,16 @@ function cotiSave() {
   const currency = cotiGetCurrency();
   const clientId = document.getElementById('coti-client-id').value;
   const client = db.clients.find(c => c.id === clientId);
-  const total = validItems.reduce((s, i) => s + i.qty * i.unitPrice, 0);
+  const total = validItems.reduce((s, i) => s + cotiUnitPrice(i) * i.qty, 0);
 
   const quote = {
     id: cotiEditId || generateId(),
     clientId, clientName: client ? client.name : '',
-    items: validItems.map(i => ({ ...i })),
+    items: validItems.map(i => ({
+      productId: i.productId, name: i.name, sku: i.sku,
+      unitPrice: cotiUnitPrice(i), baseUSD: i.baseUSD,
+      qty: i.qty, isCombo: i.isCombo
+    })),
     currency, subtotal: total, total,
     status: 'pending',
     notes: document.getElementById('coti-notes').value.trim(),
@@ -3135,7 +3173,10 @@ function cotiEdit(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return;
   cotiEditId = id;
-  cotiCart = JSON.parse(JSON.stringify(q.items || []));
+  cotiCart = (q.items || []).map(item => ({
+    ...item,
+    baseUSD: item.baseUSD != null ? item.baseUSD : cotiFromCurrency(item.unitPrice || 0, q.currency)
+  }));
   document.getElementById('coti-title').textContent = 'Editar Cotización';
   if (q.clientId) cotiSelectClient(q.clientId, q.clientName || '');
   document.getElementById('coti-notes').value = q.notes || '';
@@ -3163,19 +3204,21 @@ function cotiConvert(id) {
   if (!confirm(`¿Convertir cotización de ${q.clientName || 'sin cliente'} a factura?`)) return;
 
   const rate = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 1;
-  let total = q.total;
-  if (q.currency === 'VES') total = total / rate;
-  else if (q.currency === 'COP') total = total / (rate * COP_FACTOR);
+  const itemsUSD = (q.items || []).map(item => {
+    const baseUSD = item.baseUSD != null ? item.baseUSD : cotiFromCurrency(item.unitPrice || 0, q.currency);
+    return {
+      productId: item.productId, name: item.name, sku: item.sku,
+      qty: item.qty, unitPrice: baseUSD,
+      isCombo: item.isCombo || false, comboItems: [],
+      lineTotal: item.qty * baseUSD
+    };
+  });
+  const total = itemsUSD.reduce((s, i) => s + i.lineTotal, 0);
 
   const sale = {
     id: generateId(),
     date: new Date().toISOString(),
-    items: q.items.map(item => ({
-      productId: item.productId, name: item.name, sku: item.sku,
-      qty: item.qty, unitPrice: item.unitPrice,
-      isCombo: item.isCombo || false, comboItems: [],
-      lineTotal: item.qty * item.unitPrice
-    })),
+    items: itemsUSD,
     subtotal: total, total, method: 'Efectivo', cashAmount: total, transferAmount: 0,
     copAmount: 0, copRate: rate * COP_FACTOR, exchangeRate: rate,
     clientId: q.clientId || null
@@ -3249,8 +3292,8 @@ function cotiGeneratePDF(id) {
     if (y > 265) { doc.addPage(); y = 20; }
     doc.text(item.name || '', 17, y + 4);
     doc.text(String(item.qty), 118, y + 4);
-    doc.text(cotiFmt(item.unitPrice, cur), 135, y + 4);
-    doc.text(cotiFmt(lt, cur), 165, y + 4);
+    doc.text(cotiFmtVal(item.unitPrice, cur), 135, y + 4);
+    doc.text(cotiFmtVal(lt, cur), 165, y + 4);
     doc.setDrawColor(220);
     doc.line(15, y + 6, 195, y + 6);
     y += 8;
@@ -3263,7 +3306,7 @@ function cotiGeneratePDF(id) {
   doc.setFontSize(11);
   doc.setTextColor(4, 21, 75);
   doc.text('Total:', 135, y + 8);
-  doc.text(cotiFmt(q.total, cur), 155, y + 8);
+  doc.text(cotiFmtVal(q.total, cur), 155, y + 8);
 
   if (q.notes) {
     y += 20;
@@ -3289,7 +3332,7 @@ function cotiSendWhatsApp() {
   if (!phone) { showToast('Configura el número de WhatsApp en Configuración', 'warning'); return; }
 
   const cur = cotiGetCurrency();
-  const total = validItems.reduce((s, i) => s + i.qty * i.unitPrice, 0);
+  const total = validItems.reduce((s, i) => s + cotiUnitPrice(i) * i.qty, 0);
   const store = db.settings.storeName || 'RefrigiHerrera';
   let msg = `📋 *${store} - Cotización*\n`;
   msg += `─────────────────\n`;
@@ -3300,11 +3343,12 @@ function cotiSendWhatsApp() {
   msg += `💱 Moneda: ${cur}\n`;
   msg += `─────────────────\n`;
   validItems.forEach(item => {
-    const lt = item.qty * item.unitPrice;
-    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmt(item.unitPrice, cur)} = *${cotiFmt(lt, cur)}*\n`;
+    const up = cotiUnitPrice(item);
+    const lt = up * item.qty;
+    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmtVal(up, cur)} = *${cotiFmtVal(lt, cur)}*\n`;
   });
   msg += `─────────────────\n`;
-  msg += `💰 *Total: ${cotiFmt(total, cur)}*\n`;
+  msg += `💰 *Total: ${cotiFmtVal(total, cur)}*\n`;
   const notes = document.getElementById('coti-notes').value.trim();
   if (notes) msg += `\n📝 ${notes}\n`;
   msg += `\n¡Gracias por su preferencia!`;
@@ -3339,10 +3383,10 @@ function cotiWhatsApp(id) {
   msg += `─────────────────\n`;
   (q.items || []).forEach(item => {
     const lt = item.qty * item.unitPrice;
-    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmt(item.unitPrice, cur)} = *${cotiFmt(lt, cur)}*\n`;
+    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmtVal(item.unitPrice, cur)} = *${cotiFmtVal(lt, cur)}*\n`;
   });
   msg += `─────────────────\n`;
-  msg += `💰 *Total: ${cotiFmt(q.total, cur)}*\n`;
+  msg += `💰 *Total: ${cotiFmtVal(q.total, cur)}*\n`;
   if (q.notes) msg += `\n📝 ${q.notes}\n`;
   msg += `\n¡Gracias por su preferencia!`;
 
