@@ -136,6 +136,21 @@
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Reportes</span>
     </button>
+    <button onclick="showTab('compras')" id="nav-compras"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-truck w-5 text-center"></i><span class="flex-1">Compras</span>
+      <i onclick="event.stopPropagation();toggleComprasSubmenu()" id="compras-submenu-toggle" class="fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all"></i>
+    </button>
+    <div id="compras-submenu" class="hidden pl-8 space-y-0.5 -mt-1 mb-1">
+      <button onclick="showTab('proveedores');closeMobileMenu()" id="nav-proveedores"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-address-book w-4 text-center"></i><span>Proveedores</span>
+      </button>
+      <button onclick="showTab('gastos');closeMobileMenu()" id="nav-gastos"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-receipt w-4 text-center"></i><span>Compras y Gastos</span>
+      </button>
+    </div>
     <button onclick="showTab('clientes')" id="nav-clientes"
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-users w-5 text-center"></i><span>Clientes</span>
@@ -231,6 +246,18 @@
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
       <i class="fa-solid fa-chart-line w-4 text-center text-xs"></i><span>Reportes</span>
     </button>
+    <button onclick="showTab('compras');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="compras">
+      <i class="fa-solid fa-truck w-4 text-center text-xs"></i><span>Compras</span>
+      <i onclick="event.stopPropagation();toggleComprasSubmenuMobile()" class="fa-solid fa-plus text-[0.72rem] opacity-60 ml-auto p-1"></i>
+    </button>
+    <div id="compras-submenu-mobile" class="hidden pl-8 space-y-0.5 -mt-0.5 mb-0.5">
+      <button onclick="showTab('proveedores');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="proveedores">
+        <i class="fa-solid fa-address-book w-4 text-center"></i><span>Proveedores</span>
+      </button>
+      <button onclick="showTab('gastos');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="gastos">
+        <i class="fa-solid fa-receipt w-4 text-center"></i><span>Compras y Gastos</span>
+      </button>
+    </div>
     <button onclick="showTab('clientes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="clientes">
       <i class="fa-solid fa-users w-4 text-center text-xs"></i><span>Clientes</span>
     </button>
@@ -556,6 +583,67 @@
       </div>
       <div id="quotes-list" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <p class="text-slate-400 text-xs text-center py-10">Sin cotizaciones</p>
+      </div>
+    </div>
+
+    <!-- ======== TAB: PROVEEDORES ======== -->
+    <div id="tab-proveedores" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Proveedores</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Gestión de proveedores del negocio</p>
+        </div>
+        <button onclick="openSupplierModal()"
+          class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-plus mr-1.5"></i>Nuevo
+        </button>
+      </div>
+      <div class="mb-2">
+        <input type="text" id="supplier-search" placeholder="Buscar proveedor..." oninput="renderSuppliersTable()"
+          class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+      </div>
+      <div id="suppliers-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <p class="text-slate-400 text-xs text-center py-10">Sin proveedores</p>
+      </div>
+    </div>
+
+    <!-- ======== TAB: COMPRAS Y GASTOS ======== -->
+    <div id="tab-gastos" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Compras y Gastos</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Registro de compras y gastos del negocio</p>
+        </div>
+        <button onclick="openPurchaseModal()"
+          class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-plus mr-1.5"></i>Nuevo
+        </button>
+      </div>
+      <!-- Filtros -->
+      <div class="mb-3 flex flex-wrap gap-2">
+        <input type="date" id="gastos-from" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        <input type="date" id="gastos-to" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        <select id="gastos-category" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          <option value="">Todas</option>
+          <option value="Compra">Compras</option>
+          <option value="Gasto">Gastos</option>
+        </select>
+        <select id="gastos-status" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          <option value="">Todos</option>
+          <option value="paid">Pagado</option>
+          <option value="pending">Pendiente</option>
+          <option value="partial">Parcial</option>
+        </select>
+      </div>
+      <!-- Resumen -->
+      <div id="gastos-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3"></div>
+      <div class="flex justify-end mb-2">
+        <button onclick="exportPurchasesCSV()" class="text-xs text-sky-500 hover:text-sky-700 font-medium">
+          <i class="fa-solid fa-download mr-1"></i>Exportar CSV
+        </button>
+      </div>
+      <div id="purchases-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <p class="text-slate-400 text-xs text-center py-10">Sin registros</p>
       </div>
     </div>
 
@@ -1160,6 +1248,178 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: PROVEEDOR ===================== -->
+<div id="modal-supplier" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-supplier')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-supplier-title" class="font-bold text-base text-slate-800">Nuevo Proveedor</h3>
+        <button onclick="closeModal('modal-supplier')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="supplier-id">
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Nombre *</label>
+          <input type="text" id="supplier-name" placeholder="Nombre del proveedor"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">RIF / Cédula</label>
+          <input type="text" id="supplier-id-number" placeholder="J-12345678-9"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Teléfono</label>
+            <input type="text" id="supplier-phone" placeholder="0412-1234567"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Email</label>
+            <input type="email" id="supplier-email" placeholder="correo@ejemplo.com"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Dirección</label>
+          <input type="text" id="supplier-address" placeholder="Dirección"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Notas</label>
+          <textarea id="supplier-notes" rows="2" placeholder="Observaciones..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-supplier')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveSupplier()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: COMPRA / GASTO ===================== -->
+<div id="modal-purchase" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-purchase')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-purchase-title" class="font-bold text-base text-slate-800">Nuevo Registro</h3>
+        <button onclick="closeModal('modal-purchase')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="purchase-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Categoría *</label>
+            <select id="purchase-category"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="Compra">Compra</option>
+              <option value="Gasto">Gasto</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Proveedor</label>
+            <select id="purchase-supplier"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="">Sin proveedor</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Descripción *</label>
+          <input type="text" id="purchase-description" placeholder="Descripción del gasto/compra"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">N° Factura</label>
+            <input type="text" id="purchase-invoice" placeholder="000-000000"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Moneda</label>
+            <select id="purchase-currency"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="USD">$ Dólares</option>
+              <option value="VES">Bs. Bolívares</option>
+              <option value="COP">$ Pesos COP</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Monto *</label>
+            <input type="number" id="purchase-amount" min="0" step="0.01" placeholder="0.00"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">IVA % (opcional)</label>
+            <input type="number" id="purchase-iva" min="0" max="100" step="0.1" placeholder="0"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Fecha emisión</label>
+            <input type="date" id="purchase-date"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Fecha vencimiento</label>
+            <input type="date" id="purchase-due-date"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Estado de pago</label>
+            <select id="purchase-status"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="pending">Pendiente</option>
+              <option value="partial">Parcial</option>
+              <option value="paid">Pagado</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Método de pago</label>
+            <select id="purchase-method"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="">--</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Tarjeta">Tarjeta</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Notas</label>
+          <textarea id="purchase-notes" rows="2" placeholder="Observaciones..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-purchase')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="savePurchase()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
 
@@ -1182,6 +1442,8 @@ let db = {
   users: [],
   clients: [],
   quotes: [],
+  suppliers: [],
+  purchases: [],
   settings: {
     whatsapp: '',
     storeName: 'RefrigiHerrera',
@@ -1226,14 +1488,16 @@ async function initSupabase() {
 async function loadFromSupabase() {
   if (!sbReady) return;
   try {
-    const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes] = await Promise.all([
+    const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes, supplierRes, purchaseRes] = await Promise.all([
       sb.from('products').select('*'),
       sb.from('sales').select('*').order('date', { ascending: false }),
       sb.from('combos').select('*'),
       sb.from('settings').select('*').eq('key', 'app').single(),
       sb.from('users').select('*').order('created_at', { ascending: true }),
       sb.from('clients').select('*').order('created_at', { ascending: false }),
-      sb.from('quotes').select('*').order('date', { ascending: false })
+      sb.from('quotes').select('*').order('date', { ascending: false }),
+      sb.from('suppliers').select('*').order('created_at', { ascending: false }),
+      sb.from('purchases').select('*').order('date', { ascending: false })
     ]);
     if (prodRes.data) db.products = prodRes.data.map(p => ({
       id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
@@ -1266,6 +1530,19 @@ async function loadFromSupabase() {
       status: q.status || 'pending', notes: q.notes || '',
       date: q.date
     }));
+    if (supplierRes.data) db.suppliers = supplierRes.data.map(s => ({
+      id: s.id, name: s.name, phone: s.phone || '', email: s.email || '',
+      address: s.address || '', idNumber: s.id_number || '', notes: s.notes || '',
+      active: s.active !== false
+    }));
+    if (purchaseRes.data) db.purchases = purchaseRes.data.map(p => ({
+      id: p.id, supplierId: p.supplier_id, supplierName: p.supplier_name || '',
+      description: p.description || '', invoiceNumber: p.invoice_number || '',
+      amount: p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+      category: p.category || 'Compra', paymentStatus: p.payment_status || 'pending',
+      paymentMethod: p.payment_method || '', date: p.date,
+      dueDate: p.due_date || null, notes: p.notes || ''
+    }));
     saveDB();
   } catch (e) { console.warn('loadFromSupabase:', e); }
 }
@@ -1281,6 +1558,8 @@ function loadDB() {
       db.users = parsed.users || [];
       db.clients = parsed.clients || [];
       db.quotes = parsed.quotes || [];
+      db.suppliers = parsed.suppliers || [];
+      db.purchases = parsed.purchases || [];
       db.settings = Object.assign({}, db.settings, parsed.settings || {});
     }
   } catch (e) { console.error('loadDB:', e); }
@@ -1335,6 +1614,37 @@ async function syncToSupabase() {
       const toDelete = serverQuotes.data.filter(sq => !localQuoteIds.includes(sq.id));
       for (const sq of toDelete) {
         await sb.from('quotes').delete().eq('id', sq.id);
+      }
+    }
+
+    const suppliers = db.suppliers.map(s => ({
+      id: s.id, name: s.name, phone: s.phone || '', email: s.email || '',
+      address: s.address || '', id_number: s.idNumber || '', notes: s.notes || '',
+      active: s.active !== false
+    }));
+    if (suppliers.length) await sb.from('suppliers').upsert(suppliers, { onConflict: 'id' });
+    const localSupplierIds = db.suppliers.map(s => s.id);
+    const serverSuppliers = await sb.from('suppliers').select('id');
+    if (serverSuppliers.data) {
+      for (const ss of serverSuppliers.data.filter(x => !localSupplierIds.includes(x.id))) {
+        await sb.from('suppliers').delete().eq('id', ss.id);
+      }
+    }
+
+    const purchases = db.purchases.map(p => ({
+      id: p.id, supplier_id: p.supplierId || null, supplier_name: p.supplierName || '',
+      description: p.description || '', invoice_number: p.invoiceNumber || '',
+      amount: p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+      category: p.category || 'Compra', payment_status: p.paymentStatus || 'pending',
+      payment_method: p.paymentMethod || '', date: p.date,
+      due_date: p.dueDate || null, notes: p.notes || ''
+    }));
+    if (purchases.length) await sb.from('purchases').upsert(purchases, { onConflict: 'id' });
+    const localPurchaseIds = db.purchases.map(p => p.id);
+    const serverPurchases = await sb.from('purchases').select('id');
+    if (serverPurchases.data) {
+      for (const sp of serverPurchases.data.filter(x => !localPurchaseIds.includes(x.id))) {
+        await sb.from('purchases').delete().eq('id', sp.id);
       }
     }
 
@@ -1408,7 +1718,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', compras:'Compras', proveedores:'Proveedores', gastos:'Compras y Gastos', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -1427,16 +1737,25 @@ function showTab(tab) {
     if (icon) icon.className = 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
   }
 
+  if (tab === 'proveedores' || tab === 'gastos' || tab === 'compras') {
+    const sub = document.getElementById('compras-submenu');
+    const icon = document.getElementById('compras-submenu-toggle');
+    if (sub) sub.classList.remove('hidden');
+    if (icon) icon.className = 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
+  }
+
   document.getElementById('mobile-title').textContent = tabNames[tab] || tab;
 
   switch (tab) {
-    case 'dashboard':    renderDashboard();    break;
-    case 'inventario':   renderInventario();   break;
-    case 'ventas':       renderPOS();          break;
-    case 'cotizaciones': renderQuotesList();   break;
-    case 'reportes':     renderReportes();     break;
-    case 'clientes':     renderClientsTable(); break;
-    case 'usuarios':     renderUsersTable();   break;
+    case 'dashboard':    renderDashboard();     break;
+    case 'inventario':   renderInventario();    break;
+    case 'ventas':       renderPOS();           break;
+    case 'cotizaciones': renderQuotesList();    break;
+    case 'proveedores':  renderSuppliersTable();break;
+    case 'gastos':       renderPurchasesTable();break;
+    case 'reportes':     renderReportes();      break;
+    case 'clientes':     renderClientsTable();  break;
+    case 'usuarios':     renderUsersTable();    break;
   }
 }
 
@@ -3268,6 +3587,331 @@ function sendQuoteWhatsApp(id) {
 
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   showToast('PDF descargado. Adjúntalo al mensaje de WhatsApp.', 'info');
+}
+
+// ===================================================================
+// COMPRAS - SUB-MENÚ TOGGLE
+// ===================================================================
+function toggleComprasSubmenu() {
+  const sub = document.getElementById('compras-submenu');
+  const icon = document.getElementById('compras-submenu-toggle');
+  const isVisible = !sub.classList.contains('hidden');
+  sub.classList.toggle('hidden', isVisible);
+  icon.className = isVisible
+    ? 'fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all'
+    : 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
+}
+
+function toggleComprasSubmenuMobile() {
+  const sub = document.getElementById('compras-submenu-mobile');
+  sub.classList.toggle('hidden');
+}
+
+// ===================================================================
+// PROVEEDORES
+// ===================================================================
+function renderSuppliersTable() {
+  const search = (document.getElementById('supplier-search')?.value || '').toLowerCase();
+  let rows = [...db.suppliers];
+  if (search) rows = rows.filter(s =>
+    (s.name||'').toLowerCase().includes(search) ||
+    (s.phone||'').toLowerCase().includes(search) ||
+    (s.idNumber||'').toLowerCase().includes(search));
+
+  const body = document.getElementById('suppliers-table-container');
+  if (!rows.length) {
+    body.innerHTML = `<div class="text-center py-12">
+      <i class="fa-solid fa-truck text-4xl text-slate-200 block mb-3"></i>
+      <p class="text-slate-400 text-sm">${db.suppliers.length ? 'Sin resultados' : 'Sin proveedores'}</p>
+    </div>`;
+    return;
+  }
+  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
+    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
+      <th class="px-4 py-3 font-semibold">Nombre</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Teléfono</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Email</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">RIF/Cédula</th>
+      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
+    </tr></thead>
+    <tbody class="divide-y divide-slate-50">${rows.map(s => `<tr class="hover:bg-sky-50/40 transition-all">
+      <td class="px-4 py-3">
+        <div class="text-sm font-medium text-slate-800">${escHtml(s.name)}</div>
+        ${s.address ? `<div class="text-[0.6rem] text-slate-400">${escHtml(s.address)}</div>` : ''}
+      </td>
+      <td class="px-4 py-3 hidden lg:table-cell text-sm text-slate-600">${escHtml(s.phone||'—')}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-sm text-slate-600">${escHtml(s.email||'—')}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-sm text-slate-600 font-mono">${escHtml(s.idNumber||'—')}</td>
+      <td class="px-4 py-3 text-center">
+        <div class="flex items-center justify-center gap-1">
+          <button onclick="editSupplier('${s.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+          <button onclick="deleteSupplier('${s.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+        </div>
+      </td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+function openSupplierModal(id) {
+  const s = id ? db.suppliers.find(x => x.id === id) : null;
+  document.getElementById('modal-supplier-title').textContent = s ? 'Editar Proveedor' : 'Nuevo Proveedor';
+  document.getElementById('supplier-id').value = s?.id || '';
+  document.getElementById('supplier-name').value = s?.name || '';
+  document.getElementById('supplier-id-number').value = s?.idNumber || '';
+  document.getElementById('supplier-phone').value = s?.phone || '';
+  document.getElementById('supplier-email').value = s?.email || '';
+  document.getElementById('supplier-address').value = s?.address || '';
+  document.getElementById('supplier-notes').value = s?.notes || '';
+  openModal('modal-supplier');
+}
+
+function editSupplier(id) { openSupplierModal(id); }
+
+function saveSupplier() {
+  const id = document.getElementById('supplier-id').value;
+  const name = document.getElementById('supplier-name').value.trim();
+  if (!name) { showToast('El nombre es requerido', 'error'); return; }
+
+  const supplier = {
+    id: id || generateId(), name,
+    idNumber: document.getElementById('supplier-id-number').value.trim(),
+    phone: document.getElementById('supplier-phone').value.trim(),
+    email: document.getElementById('supplier-email').value.trim(),
+    address: document.getElementById('supplier-address').value.trim(),
+    notes: document.getElementById('supplier-notes').value.trim(),
+    active: true
+  };
+
+  if (id) {
+    const idx = db.suppliers.findIndex(s => s.id === id);
+    if (idx !== -1) db.suppliers[idx] = supplier;
+  } else {
+    db.suppliers.push(supplier);
+  }
+  saveDB();
+  if (sbReady) {
+    sb.from('suppliers').upsert({
+      id: supplier.id, name: supplier.name, phone: supplier.phone || '',
+      email: supplier.email || '', address: supplier.address || '',
+      id_number: supplier.idNumber || '', notes: supplier.notes || '', active: true
+    }).catch(e => console.warn('sync supplier:', e));
+  }
+  closeModal('modal-supplier');
+  renderSuppliersTable();
+  showToast(id ? 'Proveedor actualizado' : 'Proveedor creado', 'success');
+}
+
+function deleteSupplier(id) {
+  if (!confirm('¿Eliminar este proveedor?')) return;
+  db.suppliers = db.suppliers.filter(s => s.id !== id);
+  saveDB();
+  if (sbReady) sb.from('suppliers').delete().eq('id', id).catch(e => console.warn(e));
+  renderSuppliersTable();
+  showToast('Proveedor eliminado', 'warning');
+}
+
+// ===================================================================
+// COMPRAS Y GASTOS
+// ===================================================================
+function renderPurchasesTable() {
+  const from = document.getElementById('gastos-from')?.value || '';
+  const to = document.getElementById('gastos-to')?.value || '';
+  const cat = document.getElementById('gastos-category')?.value || '';
+  const status = document.getElementById('gastos-status')?.value || '';
+
+  let rows = [...db.purchases];
+  if (from) rows = rows.filter(p => (p.date||'') >= from);
+  if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
+  if (cat) rows = rows.filter(p => p.category === cat);
+  if (status) rows = rows.filter(p => p.paymentStatus === status);
+  rows.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  renderGastosSummary(rows);
+
+  const body = document.getElementById('purchases-table-container');
+  if (!rows.length) {
+    body.innerHTML = `<div class="text-center py-12">
+      <i class="fa-solid fa-receipt text-4xl text-slate-200 block mb-3"></i>
+      <p class="text-slate-400 text-sm">Sin registros</p>
+    </div>`;
+    return;
+  }
+
+  const currencySym = { USD: '$', VES: 'Bs.', COP: '$' };
+  const statusBadge = { paid: 'bg-emerald-100 text-emerald-700', pending: 'bg-amber-100 text-amber-700', partial: 'bg-blue-100 text-blue-700' };
+  const statusLabel = { paid: 'Pagado', pending: 'Pendiente', partial: 'Parcial' };
+  const catBadge = { Compra: 'bg-sky-100 text-sky-700', Gasto: 'bg-orange-100 text-orange-700' };
+
+  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
+    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
+      <th class="px-4 py-3 font-semibold">Fecha</th>
+      <th class="px-4 py-3 font-semibold">Descripción</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Proveedor</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">N° Factura</th>
+      <th class="px-4 py-3 font-semibold">Monto</th>
+      <th class="px-4 py-3 font-semibold">Estado</th>
+      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
+    </tr></thead>
+    <tbody class="divide-y divide-slate-50">${rows.map(p => {
+      const sym = currencySym[p.currency] || '$';
+      const date = new Date(p.date).toLocaleDateString('es-VE');
+      const due = p.dueDate ? new Date(p.dueDate).toLocaleDateString('es-VE') : '';
+      const ivaText = p.iva ? ` +${p.iva}%` : '';
+      return `<tr class="hover:bg-sky-50/40 transition-all">
+        <td class="px-4 py-3 text-xs text-slate-500">
+          <div>${date}</div>
+          ${due ? `<div class="text-[0.55rem] text-slate-400">Vence: ${due}</div>` : ''}
+        </td>
+        <td class="px-4 py-3">
+          <div class="text-sm font-medium text-slate-800">${escHtml(p.description)}</div>
+          <span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${catBadge[p.category] || catBadge.Compra}">${p.category}</span>
+        </td>
+        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600">${escHtml(p.supplierName || '—')}</td>
+        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600 font-mono">${escHtml(p.invoiceNumber || '—')}</td>
+        <td class="px-4 py-3 text-sm font-bold text-slate-800">${sym} ${fmtNum(p.amount)}${ivaText ? `<span class="text-[0.55rem] text-slate-400 ml-0.5">${ivaText}</span>` : ''}</td>
+        <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[p.paymentStatus] || statusBadge.pending}">${statusLabel[p.paymentStatus] || 'Pendiente'}</span></td>
+        <td class="px-4 py-3 text-center">
+          <div class="flex items-center justify-center gap-1">
+            <button onclick="editPurchase('${p.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+            <button onclick="deletePurchase('${p.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function renderGastosSummary(rows) {
+  const el = document.getElementById('gastos-summary');
+  if (!el) return;
+  const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
+  const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
+  const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
+  const pending = rows.filter(p => p.paymentStatus === 'pending' || p.paymentStatus === 'partial').reduce((s, p) => s + (p.amount || 0), 0);
+  el.innerHTML = `
+    <div class="bg-white rounded-xl border border-slate-100 p-3">
+      <div class="text-[0.6rem] text-slate-400 uppercase font-semibold">Total</div>
+      <div class="text-sm font-bold text-slate-800 mt-0.5">$${fmtNum(totalAll)}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-sky-100 p-3">
+      <div class="text-[0.6rem] text-sky-500 uppercase font-semibold">Compras</div>
+      <div class="text-sm font-bold text-sky-700 mt-0.5">$${fmtNum(totalCompras)}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-orange-100 p-3">
+      <div class="text-[0.6rem] text-orange-500 uppercase font-semibold">Gastos</div>
+      <div class="text-sm font-bold text-orange-700 mt-0.5">$${fmtNum(totalGastos)}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-amber-100 p-3">
+      <div class="text-[0.6rem] text-amber-500 uppercase font-semibold">Por pagar</div>
+      <div class="text-sm font-bold text-amber-700 mt-0.5">$${fmtNum(pending)}</div>
+    </div>`;
+}
+
+function openPurchaseModal(id) {
+  const p = id ? db.purchases.find(x => x.id === id) : null;
+  document.getElementById('modal-purchase-title').textContent = p ? 'Editar Registro' : 'Nuevo Registro';
+  document.getElementById('purchase-id').value = p?.id || '';
+  document.getElementById('purchase-category').value = p?.category || 'Compra';
+  document.getElementById('purchase-description').value = p?.description || '';
+  document.getElementById('purchase-invoice').value = p?.invoiceNumber || '';
+  document.getElementById('purchase-currency').value = p?.currency || 'USD';
+  document.getElementById('purchase-amount').value = p?.amount || '';
+  document.getElementById('purchase-iva').value = p?.iva || '';
+  document.getElementById('purchase-date').value = p ? (p.date||'').slice(0,10) : new Date().toISOString().slice(0,10);
+  document.getElementById('purchase-due-date').value = p?.dueDate ? p.dueDate.slice(0,10) : '';
+  document.getElementById('purchase-status').value = p?.paymentStatus || 'pending';
+  document.getElementById('purchase-method').value = p?.paymentMethod || '';
+  document.getElementById('purchase-notes').value = p?.notes || '';
+
+  const supSel = document.getElementById('purchase-supplier');
+  supSel.innerHTML = '<option value="">Sin proveedor</option>' +
+    db.suppliers.filter(s => s.active !== false).map(s =>
+      `<option value="${s.id}" ${s.id === (p?.supplierId || '') ? 'selected' : ''}>${escHtml(s.name)}</option>`
+    ).join('');
+
+  openModal('modal-purchase');
+}
+
+function editPurchase(id) { openPurchaseModal(id); }
+
+function savePurchase() {
+  const id = document.getElementById('purchase-id').value;
+  const description = document.getElementById('purchase-description').value.trim();
+  const amount = parseFloat(document.getElementById('purchase-amount').value) || 0;
+  if (!description) { showToast('La descripción es requerida', 'error'); return; }
+  if (amount <= 0) { showToast('El monto debe ser mayor a 0', 'error'); return; }
+
+  const supplierId = document.getElementById('purchase-supplier').value;
+  const supplier = supplierId ? db.suppliers.find(s => s.id === supplierId) : null;
+  const dateVal = document.getElementById('purchase-date').value;
+  const dueVal = document.getElementById('purchase-due-date').value;
+
+  const purchase = {
+    id: id || generateId(), supplierId, supplierName: supplier ? supplier.name : '',
+    description, invoiceNumber: document.getElementById('purchase-invoice').value.trim(),
+    amount, currency: document.getElementById('purchase-currency').value,
+    iva: parseFloat(document.getElementById('purchase-iva').value) || 0,
+    category: document.getElementById('purchase-category').value,
+    paymentStatus: document.getElementById('purchase-status').value,
+    paymentMethod: document.getElementById('purchase-method').value,
+    date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+    dueDate: dueVal ? new Date(dueVal).toISOString() : null,
+    notes: document.getElementById('purchase-notes').value.trim()
+  };
+
+  if (id) {
+    const idx = db.purchases.findIndex(x => x.id === id);
+    if (idx !== -1) db.purchases[idx] = purchase;
+  } else {
+    db.purchases.push(purchase);
+  }
+  saveDB();
+  if (sbReady) {
+    sb.from('purchases').upsert({
+      id: purchase.id, supplier_id: purchase.supplierId || null, supplier_name: purchase.supplierName || '',
+      description: purchase.description, invoice_number: purchase.invoiceNumber || '',
+      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
+      category: purchase.category, payment_status: purchase.paymentStatus,
+      payment_method: purchase.paymentMethod, date: purchase.date,
+      due_date: purchase.dueDate || null, notes: purchase.notes || ''
+    }).catch(e => console.warn('sync purchase:', e));
+  }
+  closeModal('modal-purchase');
+  renderPurchasesTable();
+  showToast(id ? 'Registro actualizado' : 'Registro creado', 'success');
+}
+
+function deletePurchase(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  db.purchases = db.purchases.filter(p => p.id !== id);
+  saveDB();
+  if (sbReady) sb.from('purchases').delete().eq('id', id).catch(e => console.warn(e));
+  renderPurchasesTable();
+  showToast('Registro eliminado', 'warning');
+}
+
+function exportPurchasesCSV() {
+  const from = document.getElementById('gastos-from')?.value || '';
+  const to = document.getElementById('gastos-to')?.value || '';
+  const cat = document.getElementById('gastos-category')?.value || '';
+  const status = document.getElementById('gastos-status')?.value || '';
+  let rows = [...db.purchases];
+  if (from) rows = rows.filter(p => (p.date||'') >= from);
+  if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
+  if (cat) rows = rows.filter(p => p.category === cat);
+  if (status) rows = rows.filter(p => p.paymentStatus === status);
+
+  if (!rows.length) { showToast('Sin datos para exportar', 'warning'); return; }
+  const header = 'Fecha,Descripción,Proveedor,N° Factura,Monto,Moneda,IVA %,Categoría,Estado,Método Pago,Fecha Vencimiento,Notas';
+  const body = rows.map(p => {
+    const d = new Date(p.date).toLocaleDateString('es-VE');
+    const due = p.dueDate ? new Date(p.dueDate).toLocaleDateString('es-VE') : '';
+    return `"${d}","${(p.description||'').replace(/"/g,'""')}","${(p.supplierName||'').replace(/"/g,'""')}","${p.invoiceNumber||''}","${p.amount}","${p.currency}","${p.iva||0}","${p.category}","${p.paymentStatus}","${p.paymentMethod||''}","${due}","${(p.notes||'').replace(/"/g,'""')}"`;
+  }).join('\n');
+  const blob = new Blob(['\uFEFF' + header + '\n' + body], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `compras_gastos_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('CSV exportado', 'success');
 }
 
 // ===================================================================

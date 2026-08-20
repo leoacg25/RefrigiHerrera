@@ -162,3 +162,43 @@ ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_quotes_date ON quotes(date);
 CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
 ALTER PUBLICATION supabase_realtime ADD TABLE quotes;
+
+-- Tabla de proveedores
+CREATE TABLE IF NOT EXISTS suppliers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT DEFAULT '',
+  email TEXT DEFAULT '',
+  address TEXT DEFAULT '',
+  id_number TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE suppliers DISABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
+ALTER PUBLICATION supabase_realtime ADD TABLE suppliers;
+
+-- Tabla de compras y gastos
+CREATE TABLE IF NOT EXISTS purchases (
+  id TEXT PRIMARY KEY,
+  supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL,
+  supplier_name TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  invoice_number TEXT DEFAULT '',
+  amount NUMERIC DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
+  iva NUMERIC DEFAULT 0,
+  category TEXT DEFAULT 'Compra',
+  payment_status TEXT DEFAULT 'pending',
+  payment_method TEXT DEFAULT '',
+  date TIMESTAMPTZ DEFAULT now(),
+  due_date TIMESTAMPTZ,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE purchases DISABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(date);
+CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON purchases(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_category ON purchases(category);
+ALTER PUBLICATION supabase_realtime ADD TABLE purchases;
