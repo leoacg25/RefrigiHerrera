@@ -146,6 +146,10 @@
       <i onclick="event.stopPropagation();toggleComprasSubmenu()" id="compras-submenu-toggle" class="fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all"></i>
     </button>
     <div id="compras-submenu" class="hidden pl-8 space-y-0.5 -mt-1 mb-1">
+      <button onclick="showTab('compras');closeMobileMenu()" id="nav-compras-sub"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-cart-shopping w-4 text-center"></i><span>Nueva Compra</span>
+      </button>
       <button onclick="showTab('proveedores');closeMobileMenu()" id="nav-proveedores"
         class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
         <i class="fa-solid fa-address-book w-4 text-center"></i><span>Proveedores</span>
@@ -258,6 +262,9 @@
       <i onclick="event.stopPropagation();toggleComprasSubmenuMobile()" class="fa-solid fa-plus text-[0.72rem] opacity-60 ml-auto p-1"></i>
     </button>
     <div id="compras-submenu-mobile" class="hidden pl-8 space-y-0.5 -mt-0.5 mb-0.5">
+      <button onclick="showTab('compras');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="compras">
+        <i class="fa-solid fa-cart-shopping w-4 text-center"></i><span>Nueva Compra</span>
+      </button>
       <button onclick="showTab('proveedores');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="proveedores">
         <i class="fa-solid fa-address-book w-4 text-center"></i><span>Proveedores</span>
       </button>
@@ -711,6 +718,134 @@
       <div id="suppliers-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <p class="text-slate-400 text-xs text-center py-10">Sin proveedores</p>
       </div>
+    </div>
+
+    <!-- ======== TAB: NUEVA COMPRA ======== -->
+    <div id="tab-compras" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Nueva Orden de Compra</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Registro de compras al proveedor</p>
+        </div>
+        <div class="text-xs text-slate-500 hidden sm:block">
+          <i class="fa-solid fa-calendar mr-1"></i><span id="compra-fecha"></span>
+        </div>
+      </div>
+
+      <!-- 1. Proveedor -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">1</span>
+          Información del Proveedor
+        </h3>
+        <div id="compra-proveedor-buscar" class="flex gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="compra-proveedor-input" placeholder="Buscar proveedor por nombre o RIF..." autocomplete="off"
+              oninput="onCompraProveedorSearch(this.value)"
+              class="w-full pl-7 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+            <div id="compra-proveedor-dropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto"></div>
+          </div>
+          <button onclick="openSupplierModal()" title="Nuevo proveedor"
+            class="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-all flex items-center gap-1 flex-shrink-0">
+            <i class="fa-solid fa-plus"></i><span class="hidden sm:inline">Nuevo</span>
+          </button>
+        </div>
+        <div id="compra-proveedor-info" class="hidden mt-3 bg-sky-50 p-3 rounded-xl border border-sky-100 flex justify-between items-start">
+          <div>
+            <p class="font-bold text-sky-900 text-sm" id="compra-prov-nombre"></p>
+            <p class="text-xs text-sky-700" id="compra-prov-rif"></p>
+            <p class="text-xs text-sky-600" id="compra-prov-contacto"></p>
+          </div>
+          <button onclick="compraLimpiarProveedor()" class="text-red-400 hover:text-red-600 transition-all p-1" title="Cambiar proveedor">
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. Detalle -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">2</span>
+          Detalle de Compra
+        </h3>
+        <form id="compra-articulo-form" onsubmit="compraAgregarArticulo(event)" class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-3">
+          <div class="md:col-span-5">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Descripción</label>
+            <input type="text" id="compra-art-desc" required placeholder="Ej. Resma de papel A4"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Cantidad</label>
+            <input type="number" id="compra-art-cant" required min="0.01" step="0.01" value="1"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all text-right">
+          </div>
+          <div class="md:col-span-3">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Precio Unit. ($)</label>
+            <input type="number" id="compra-art-precio" required min="0" step="0.01" placeholder="0.00"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all text-right">
+          </div>
+          <div class="md:col-span-2">
+            <button type="submit"
+              class="w-full px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-1"
+              style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+              <i class="fa-solid fa-plus"></i> Agregar
+            </button>
+          </div>
+        </form>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-100">
+              <tr class="text-[0.6rem] text-slate-400 uppercase">
+                <th class="px-3 py-2 text-left font-semibold">#</th>
+                <th class="px-3 py-2 text-left font-semibold">Descripción</th>
+                <th class="px-3 py-2 text-right font-semibold">Cant.</th>
+                <th class="px-3 py-2 text-right font-semibold">Precio Unit.</th>
+                <th class="px-3 py-2 text-right font-semibold">Subtotal</th>
+                <th class="px-3 py-2 text-center font-semibold">Acc.</th>
+              </tr>
+            </thead>
+            <tbody id="compra-items-body" class="divide-y divide-slate-50">
+              <tr id="compra-items-empty">
+                <td colspan="6" class="px-3 py-8 text-center text-slate-300">
+                  <i class="fa-solid fa-box-open text-2xl block mb-1"></i>
+                  <span class="text-xs">Sin artículos</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. Totales y Acciones -->
+      <section class="flex flex-col md:flex-row gap-3">
+        <div class="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+          <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Observaciones</label>
+          <textarea id="compra-notas" rows="3" placeholder="Instrucciones especiales, términos..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all resize-none"></textarea>
+        </div>
+        <div class="w-full md:w-72 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+          <div class="flex justify-between items-center mb-2 text-sm">
+            <span class="text-slate-500">Subtotal:</span>
+            <span class="font-medium text-slate-700">$<span id="compra-subtotal">0.00</span></span>
+          </div>
+          <div class="flex justify-between items-center mb-2 text-sm">
+            <span class="text-slate-500">IVA (16%):</span>
+            <span class="font-medium text-slate-700">$<span id="compra-iva">0.00</span></span>
+          </div>
+          <hr class="my-2 border-slate-200">
+          <div class="flex justify-between items-center text-lg font-bold text-sky-700">
+            <span>Total:</span>
+            <span>$<span id="compra-total">0.00</span></span>
+          </div>
+          <button onclick="compraGuardar()"
+            class="mt-4 w-full px-4 py-2.5 text-sm text-white rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2"
+            style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+            <i class="fa-solid fa-save"></i> Guardar Compra
+          </button>
+        </div>
+      </section>
     </div>
 
     <!-- ======== TAB: COMPRAS Y GASTOS ======== -->
@@ -1862,6 +1997,7 @@ function showTab(tab) {
     case 'cotizaciones': renderCotizaciones();    break;
     case 'cotizaciones-lista': cotiConvertingId = null; renderCotizacionesLista(); break;
     case 'proveedores':  renderSuppliersTable();break;
+    case 'compras':      initCompraTab();       break;
     case 'gastos':       renderPurchasesTable();break;
     case 'reportes':     renderReportes();      break;
     case 'clientes':     renderClientsTable();  break;
@@ -2585,6 +2721,9 @@ document.addEventListener('click', function(e) {
   const dd = document.getElementById('pos-client-dropdown');
   const inp = document.getElementById('pos-client-search');
   if (dd && inp && !dd.contains(e.target) && e.target !== inp) dd.classList.add('hidden');
+  const cdd = document.getElementById('compra-proveedor-dropdown');
+  const cinp = document.getElementById('compra-proveedor-input');
+  if (cdd && cinp && !cdd.contains(e.target) && e.target !== cinp) cdd.classList.add('hidden');
 });
 
 function updateTotalVESDisplay() {
@@ -4049,6 +4188,152 @@ function deleteSupplier(id) {
   if (sbReady) sb.from('suppliers').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
   renderSuppliersTable();
   showToast('Proveedor eliminado', 'warning');
+}
+
+// ===================================================================
+// NUEVA ORDEN DE COMPRA (TAB)
+// ===================================================================
+let compraProveedor = null;
+let compraItems = [];
+
+function initCompraTab() {
+  document.getElementById('compra-fecha').textContent = new Date().toLocaleDateString('es-VE', { year:'numeric', month:'2-digit', day:'2-digit' });
+  compraProveedor = null;
+  compraItems = [];
+  document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
+  document.getElementById('compra-proveedor-info').classList.add('hidden');
+  document.getElementById('compra-proveedor-input').value = '';
+  document.getElementById('compra-art-desc').value = '';
+  document.getElementById('compra-art-cant').value = '1';
+  document.getElementById('compra-art-precio').value = '';
+  document.getElementById('compra-notas').value = '';
+  renderCompraItems();
+}
+
+function onCompraProveedorSearch(q) {
+  const dd = document.getElementById('compra-proveedor-dropdown');
+  dd.innerHTML = '';
+  if (q.length < 2) { dd.classList.add('hidden'); return; }
+  const hits = db.suppliers.filter(s => s.active !== false && (
+    (s.name||'').toLowerCase().includes(q.toLowerCase()) ||
+    (s.idNumber||'').toLowerCase().includes(q.toLowerCase())
+  ));
+  if (!hits.length) {
+    dd.innerHTML = '<div class="p-3 text-xs text-slate-400">Sin resultados</div>';
+  } else {
+    hits.forEach(s => {
+      const d = document.createElement('div');
+      d.className = 'p-2.5 hover:bg-sky-50 cursor-pointer border-b border-slate-50 last:border-0 transition-all';
+      d.innerHTML = `<div class="text-sm font-medium text-slate-700">${escHtml(s.name)}</div><div class="text-[0.6rem] text-slate-400">RIF: ${escHtml(s.idNumber||'—')}</div>`;
+      d.onclick = () => compraSeleccionarProveedor(s);
+      dd.appendChild(d);
+    });
+  }
+  dd.classList.remove('hidden');
+}
+
+function compraSeleccionarProveedor(s) {
+  compraProveedor = s;
+  document.getElementById('compra-proveedor-buscar').classList.add('hidden');
+  document.getElementById('compra-proveedor-dropdown').classList.add('hidden');
+  document.getElementById('compra-prov-nombre').textContent = s.name;
+  document.getElementById('compra-prov-rif').textContent = 'RIF: ' + (s.idNumber || '—');
+  document.getElementById('compra-prov-contacto').textContent = 'Contacto: ' + (s.phone || s.email || 'N/A');
+  document.getElementById('compra-proveedor-info').classList.remove('hidden');
+}
+
+function compraLimpiarProveedor() {
+  compraProveedor = null;
+  document.getElementById('compra-proveedor-info').classList.add('hidden');
+  document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
+  document.getElementById('compra-proveedor-input').value = '';
+  document.getElementById('compra-proveedor-input').focus();
+}
+
+function compraAgregarArticulo(e) {
+  e.preventDefault();
+  const desc = document.getElementById('compra-art-desc').value.trim();
+  const cant = parseFloat(document.getElementById('compra-art-cant').value);
+  const precio = parseFloat(document.getElementById('compra-art-precio').value);
+  if (!desc || cant <= 0 || precio < 0) { showToast('Datos inválidos', 'error'); return; }
+  compraItems.push({ desc, cant, precio, subtotal: cant * precio });
+  renderCompraItems();
+  document.getElementById('compra-art-desc').value = '';
+  document.getElementById('compra-art-cant').value = '1';
+  document.getElementById('compra-art-precio').value = '';
+  document.getElementById('compra-art-desc').focus();
+}
+
+function compraEliminarArticulo(i) {
+  compraItems.splice(i, 1);
+  renderCompraItems();
+}
+
+function renderCompraItems() {
+  const tbody = document.getElementById('compra-items-body');
+  if (!compraItems.length) {
+    tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="6" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
+  } else {
+    tbody.innerHTML = compraItems.map((it, i) => `
+      <tr class="hover:bg-sky-50/40 transition-all">
+        <td class="px-3 py-2 text-xs text-slate-500">${i + 1}</td>
+        <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant.toFixed(2)}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">$${fmtNum(it.precio)}</td>
+        <td class="px-3 py-2 text-xs font-medium text-slate-700 text-right">$${fmtNum(it.subtotal)}</td>
+        <td class="px-3 py-2 text-center">
+          <button onclick="compraEliminarArticulo(${i})" class="text-red-400 hover:text-red-600 transition-all p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+        </td>
+      </tr>`).join('');
+  }
+  const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
+  const iva = sub * 0.16;
+  document.getElementById('compra-subtotal').textContent = fmtNum(sub);
+  document.getElementById('compra-iva').textContent = fmtNum(iva);
+  document.getElementById('compra-total').textContent = fmtNum(sub + iva);
+}
+
+function compraGuardar() {
+  if (!compraProveedor) { showToast('Selecciona un proveedor', 'error'); return; }
+  if (!compraItems.length) { showToast('Agrega al menos un artículo', 'error'); return; }
+
+  const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
+  const iva = sub * 0.16;
+  const total = sub + iva;
+  const notas = document.getElementById('compra-notas').value.trim();
+
+  const purchase = {
+    id: generateId(),
+    supplierId: compraProveedor.id,
+    supplierName: compraProveedor.name,
+    description: 'Compra a ' + compraProveedor.name,
+    invoiceNumber: '',
+    amount: total,
+    currency: 'USD',
+    iva: 16,
+    category: 'Compra',
+    paymentStatus: 'pending',
+    paymentMethod: '',
+    date: new Date().toISOString(),
+    dueDate: null,
+    notes: JSON.stringify({ items: compraItems, observaciones: notas })
+  };
+
+  db.purchases.push(purchase);
+  saveDB();
+  if (typeof sb !== 'undefined' && sbReady) {
+    sb.from('purchases').upsert({
+      id: purchase.id, supplier_id: purchase.supplierId, supplier_name: purchase.supplierName,
+      description: purchase.description, invoice_number: purchase.invoiceNumber,
+      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
+      category: purchase.category, payment_status: purchase.paymentStatus,
+      payment_method: purchase.paymentMethod, date: purchase.date,
+      due_date: purchase.dueDate, notes: purchase.notes
+    }).then(() => {}).catch(e => console.warn('sync purchase:', e));
+  }
+
+  showToast('¡Compra guardada exitosamente!', 'success');
+  setTimeout(() => initCompraTab(), 800);
 }
 
 // ===================================================================
