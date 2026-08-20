@@ -1403,7 +1403,7 @@
       <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
         <button onclick="closeModal('modal-supplier')"
           class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
-        <button onclick="saveSupplier()"
+        <button type="button" onclick="saveSupplier()"
           class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
           <i class="fa-solid fa-save mr-1.5"></i>Guardar
         </button>
@@ -1859,7 +1859,7 @@ function showTab(tab) {
     case 'dashboard':    renderDashboard();     break;
     case 'inventario':   renderInventario();    break;
     case 'ventas':       renderPOS();           break;
-    case 'cotizaciones': renderQuotesList();    break;
+    case 'cotizaciones': renderCotizaciones();    break;
     case 'cotizaciones-lista': cotiConvertingId = null; renderCotizacionesLista(); break;
     case 'proveedores':  renderSuppliersTable();break;
     case 'gastos':       renderPurchasesTable();break;
@@ -4007,37 +4007,39 @@ function openSupplierModal(id) {
 function editSupplier(id) { openSupplierModal(id); }
 
 function saveSupplier() {
-  const id = document.getElementById('supplier-id').value;
-  const name = document.getElementById('supplier-name').value.trim();
-  if (!name) { showToast('El nombre es requerido', 'error'); return; }
+  try {
+    const id = document.getElementById('supplier-id').value;
+    const name = document.getElementById('supplier-name').value.trim();
+    if (!name) { showToast('El nombre es requerido', 'error'); return; }
 
-  const supplier = {
-    id: id || generateId(), name,
-    idNumber: document.getElementById('supplier-id-number').value.trim(),
-    phone: document.getElementById('supplier-phone').value.trim(),
-    email: document.getElementById('supplier-email').value.trim(),
-    address: document.getElementById('supplier-address').value.trim(),
-    notes: document.getElementById('supplier-notes').value.trim(),
-    active: true
-  };
+    const supplier = {
+      id: id || generateId(), name,
+      idNumber: document.getElementById('supplier-id-number').value.trim(),
+      phone: document.getElementById('supplier-phone').value.trim(),
+      email: document.getElementById('supplier-email').value.trim(),
+      address: document.getElementById('supplier-address').value.trim(),
+      notes: document.getElementById('supplier-notes').value.trim(),
+      active: true
+    };
 
-  if (id) {
-    const idx = db.suppliers.findIndex(s => s.id === id);
-    if (idx !== -1) db.suppliers[idx] = supplier;
-  } else {
-    db.suppliers.push(supplier);
-  }
-  saveDB();
-  if (sbReady) {
-    sb.from('suppliers').upsert({
-      id: supplier.id, name: supplier.name, phone: supplier.phone || '',
-      email: supplier.email || '', address: supplier.address || '',
-      id_number: supplier.idNumber || '', notes: supplier.notes || '', active: true
-    }).catch(e => console.warn('sync supplier:', e));
-  }
-  closeModal('modal-supplier');
-  renderSuppliersTable();
-  showToast(id ? 'Proveedor actualizado' : 'Proveedor creado', 'success');
+    if (id) {
+      const idx = db.suppliers.findIndex(s => s.id === id);
+      if (idx !== -1) db.suppliers[idx] = supplier;
+    } else {
+      db.suppliers.push(supplier);
+    }
+    saveDB();
+    if (typeof sb !== 'undefined' && sbReady) {
+      sb.from('suppliers').upsert({
+        id: supplier.id, name: supplier.name, phone: supplier.phone || '',
+        email: supplier.email || '', address: supplier.address || '',
+        id_number: supplier.idNumber || '', notes: supplier.notes || '', active: true
+      }).catch(e => console.warn('sync supplier:', e));
+    }
+    closeModal('modal-supplier');
+    renderSuppliersTable();
+    showToast(id ? 'Proveedor actualizado' : 'Proveedor creado', 'success');
+  } catch(e) { console.error('saveSupplier error:', e); showToast('Error al guardar: ' + e.message, 'error'); }
 }
 
 function deleteSupplier(id) {

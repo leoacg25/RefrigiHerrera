@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RefriHerrera - Tienda de Refrigeración</title>
+  <meta name="description" content="Artículos de refrigeración y aire acondicionado: compresores, condensadores, evaporadores, controles y más." />
+  <style>
+    :root {
+      --navy: #0B1F5C;
+      --light-blue: #4FB6E6;
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-500: #64748b;
+      --gray-700: #334155;
+      --gray-900: #0f172a;
+      --red: #ef4444;
+      --red-light: #fee2e2;
+      --radius: 0.625rem;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.5;
+    }
+
+    img { max-width: 100%; display: block; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input { font-family: inherit; }
+
+    .container {
+      width: 100%;
+      max-width: 80rem;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background-color: var(--navy);
+      color: var(--white);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      box-shadow: var(--shadow);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--white);
+    }
+    .brand img { height: 3rem; width: auto; border-radius: 0.375rem; }
+    .brand-text .title { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }
+    .brand-text .subtitle { font-size: 0.75rem; opacity: 0.9; }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { opacity: 0.9; }
+    .btn-primary { background-color: var(--light-blue); color: var(--navy); }
+    .btn-secondary { background-color: rgba(255,255,255,0.15); color: var(--white); }
+    .btn-secondary:hover { background-color: rgba(255,255,255,0.25); }
+    .cart-badge {
+      position: absolute;
+      top: -0.25rem;
+      right: -0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.25rem;
+      width: 1.25rem;
+      border-radius: 9999px;
+      background-color: var(--red);
+      color: var(--white);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .relative { position: relative; }
+    .hidden-mobile { display: none; }
+    @media (min-width: 640px) {
+      .hidden-mobile { display: inline; }
+      .brand-text { display: block; }
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, #143a8c 100%);
+      color: var(--white);
+      padding: 4rem 1rem;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.025em; }
+    .hero p { max-width: 42rem; margin: 1rem auto 0; font-size: 1.125rem; opacity: 0.9; }
+    .hero-actions { margin-top: 2rem; display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+    .btn-hero {
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-hero-main { background-color: var(--light-blue); color: var(--navy); }
+    .btn-hero-main:hover { background-color: #3aa8d8; }
+    .btn-hero-outline {
+      border: 1px solid rgba(255,255,255,0.3);
+      background-color: transparent;
+      color: var(--white);
+    }
+    .btn-hero-outline:hover { background-color: rgba(255,255,255,0.1); }
+    @media (min-width: 640px) { .hero h1 { font-size: 3rem; } }
+
+    /* Catalog */
+    .catalog { padding: 3rem 1rem; }
+    .catalog-header {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (min-width: 640px) {
+      .catalog-header { flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+    .catalog-title { font-size: 1.5rem; font-weight: 700; }
+    .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .filter-btn {
+      padding: 0.375rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background-color: var(--gray-100);
+      color: var(--gray-500);
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { background-color: var(--gray-200); }
+    .filter-btn.active { background-color: var(--navy); color: var(--white); }
+
+    .products-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 640px) { .products-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .products-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 1rem;
+      border: 1px solid var(--gray-200);
+      background-color: var(--white);
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s;
+    }
+    .product-card:hover { box-shadow: var(--shadow-md); }
+    .product-image {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      background-color: var(--gray-100);
+    }
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .product-card:hover .product-image img { transform: scale(1.05); }
+    .product-category {
+      position: absolute;
+      left: 0.5rem;
+      top: 0.5rem;
+      background-color: rgba(11, 31, 92, 0.9);
+      color: var(--white);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .product-body { flex: 1; display: flex; flex-direction: column; padding: 1rem; }
+    .product-name { font-size: 1rem; font-weight: 600; color: var(--gray-900); }
+    .product-desc {
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 1rem;
+    }
+    .product-price { font-size: 1.125rem; font-weight: 700; color: var(--navy); }
+    .btn-add {
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      background-color: var(--navy);
+      color: var(--white);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .btn-add:hover { background-color: #0a2a7a; }
+
+    /* Features */
+    .features {
+      border-top: 1px solid var(--gray-200);
+      background-color: var(--gray-100);
+      padding: 3rem 1rem;
+    }
+    .features-title { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; }
+    .features-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 640px) { .features-grid { grid-template-columns: repeat(3, 1fr); } }
+    .feature-card {
+      border-radius: 1rem;
+      background-color: var(--white);
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .feature-icon {
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 3rem;
+      width: 3rem;
+      border-radius: 9999px;
+      color: var(--white);
+    }
+    .feature-icon.navy { background-color: var(--navy); }
+    .feature-icon.blue { background-color: var(--light-blue); }
+    .feature-card h3 { font-weight: 600; }
+    .feature-card p { margin-top: 0.5rem; font-size: 0.875rem; color: var(--gray-500); }
+
+    /* Footer */
+    .footer {
+      background-color: var(--navy);
+      color: var(--white);
+      padding: 2.5rem 1rem;
+    }
+    .footer-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    @media (min-width: 640px) {
+      .footer-inner { flex-direction: row; justify-content: space-between; }
+    }
+    .footer-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .footer-brand img { height: 2.5rem; width: auto; border-radius: 0.375rem; }
+    .footer-brand .name { font-weight: 700; }
+    .footer-brand .rif { font-size: 0.75rem; opacity: 0.8; }
+    .footer-contact { text-align: center; font-size: 0.875rem; opacity: 0.8; }
+    @media (min-width: 640px) { .footer-contact { text-align: right; } }
+    .footer-copy { margin-top: 1.5rem; text-align: center; font-size: 0.75rem; opacity: 0.6; }
+
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      background-color: rgba(15, 23, 42, 0.6);
+    }
+    .overlay-cart { justify-content: flex-end; }
+    .overlay-center { align-items: center; justify-content: center; padding: 1rem; }
+
+    .backdrop { position: absolute; inset: 0; }
+    .drawer {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      max-width: 28rem;
+      background-color: var(--white);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-2xl);
+    }
+    .modal {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 28rem;
+      background-color: var(--white);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-2xl);
+    }
+    .drawer-header, .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .drawer-title, .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); }
+    .btn-close {
+      padding: 0.25rem;
+      border-radius: var(--radius);
+      color: var(--gray-500);
+      transition: all 0.2s;
+    }
+    .btn-close:hover { background-color: var(--gray-100); color: var(--gray-700); }
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+    .icon-xl { width: 4rem; height: 4rem; }
+
+    .cart-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--gray-500);
+    }
+    .cart-empty p { margin-top: 1rem; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 0.5rem 0; }
+    .cart-item {
+      display: flex;
+      gap: 0.75rem;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .cart-item img { height: 4rem; width: 4rem; border-radius: 0.375rem; object-fit: cover; }
+    .cart-item-info { flex: 1; display: flex; flex-direction: column; }
+    .cart-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .cart-item-name { font-size: 0.875rem; font-weight: 600; color: var(--gray-900); }
+    .btn-remove { font-size: 0.75rem; color: var(--red); }
+    .btn-remove:hover { text-decoration: underline; }
+    .cart-item-price { font-size: 0.875rem; font-weight: 700; color: var(--navy); margin-top: 0.25rem; }
+    .cart-item-qty { margin-top: auto; display: flex; align-items: center; gap: 0.5rem; }
+    .qty-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.75rem;
+      width: 1.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      background-color: var(--gray-100);
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+    .qty-btn:hover { background-color: var(--gray-200); }
+    .qty-value { width: 1.5rem; text-align: center; font-size: 0.875rem; }
+    .cart-footer { border-top: 1px solid var(--gray-200); padding-top: 1rem; }
+    .cart-total { display: flex; justify-content: space-between; font-size: 1.125rem; font-weight: 700; color: var(--gray-900); margin-bottom: 1rem; }
+    .btn-checkout {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      background-color: var(--navy);
+      color: var(--white);
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .btn-checkout:hover { background-color: #0a2a7a; }
+
+    /* Forms */
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: var(--gray-700); }
+    .form-input {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-300);
+      background-color: var(--white);
+      color: var(--gray-900);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--light-blue);
+      box-shadow: 0 0 0 3px rgba(79, 182, 230, 0.25);
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 0.625rem;
+      border-radius: var(--radius);
+      background-color: var(--navy);
+      color: var(--white);
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .btn-submit:hover { background-color: #0a2a7a; }
+    .auth-error {
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      background-color: var(--red-light);
+      color: var(--red);
+      font-size: 0.875rem;
+    }
+    .auth-switch {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+    .auth-switch button { color: var(--navy); font-weight: 600; }
+    .auth-switch button:hover { text-decoration: underline; }
+
+    .profile-info { display: flex; flex-direction: column; gap: 0.75rem; }
+    .profile-field {
+      border-radius: var(--radius);
+      background-color: var(--gray-100);
+      padding: 0.75rem;
+      font-size: 0.875rem;
+    }
+    .profile-field .label { color: var(--gray-500); display: block; }
+    .profile-field .value { font-weight: 600; color: var(--gray-900); }
+    .btn-logout {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.625rem;
+      border-radius: var(--radius);
+      background-color: var(--red);
+      color: var(--white);
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .btn-logout:hover { background-color: #dc2626; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="#" class="brand">
+        <img src="logo_refrigiherrera.png" alt="RefriHerrera" />
+        <div class="brand-text">
+          <div class="title">RefriHerrera</div>
+          <div class="subtitle">Inversiones RefriHerrera J18835723-3</div>
+        </div>
+      </a>
+      <div class="header-actions">
+        <button id="btn-account" class="btn-icon btn-secondary" onclick="openAuth('login')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span class="hidden-mobile" id="account-label">Iniciar sesión</span>
+        </button>
+        <button class="btn-icon btn-primary relative" onclick="openCart()">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
+          <span class="hidden-mobile">Carrito</span>
+          <span id="cart-badge" class="cart-badge hidden">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>Todo en refrigeración</h1>
+        <p>Encuentra compresores, condensadores, controles y accesorios para tus sistemas de refrigeración y aire acondicionado.</p>
+        <div class="hero-actions">
+          <button class="btn-hero btn-hero-main" onclick="scrollToCatalog()">Ver catálogo</button>
+          <button id="btn-register-hero" class="btn-hero btn-hero-outline" onclick="openAuth('register')">Registrarse</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo" class="catalog">
+      <div class="container">
+        <div class="catalog-header">
+          <h2 class="catalog-title">Catálogo de productos</h2>
+          <div class="filters" id="filters"></div>
+        </div>
+        <div class="products-grid" id="products-grid"></div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <h2 class="features-title">¿Por qué comprar con nosotros?</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon navy">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="2" x2="12" y2="22" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+              </svg>
+            </div>
+            <h3>Especialistas en frío</h3>
+            <p>Más de 10 años de experiencia en artículos de refrigeración.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon blue">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3>Productos de calidad</h3>
+            <p>Trabajamos con las mejores marcas del mercado.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon navy">
+              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13" />
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                <circle cx="5.5" cy="18.5" r="2.5" />
+                <circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+            </div>
+            <h3>Envío rápido</h3>
+            <p>Entregas a nivel nacional con seguridad garantizada.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img src="logo_refrigiherrera.png" alt="RefriHerrera" />
+          <div>
+            <div class="name">Inversiones RefriHerrera</div>
+            <div class="rif">RIF: J18835723-3</div>
+          </div>
+        </div>
+        <div class="footer-contact">
+          <p>Caracas, Venezuela</p>
+          <p>refriherrera@email.com · +58 424-0000000</p>
+        </div>
+      </div>
+      <p class="footer-copy">© <span id="year"></span> Inversiones RefriHerrera. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Cart Drawer -->
+  <div id="cart-overlay" class="overlay overlay-cart hidden">
+    <div class="backdrop" onclick="closeCart()"></div>
+    <div class="drawer">
+      <div class="drawer-header">
+        <h2 class="drawer-title">Tu carrito</h2>
+        <button class="btn-close" onclick="closeCart()">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div id="cart-empty" class="cart-empty">
+        <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+        <p>Tu carrito está vacío.</p>
+        <button class="btn-add" style="margin-top: 1rem;" onclick="closeCart()">Seguir comprando</button>
+      </div>
+      <div id="cart-items" class="cart-items hidden"></div>
+      <div id="cart-footer" class="cart-footer hidden">
+        <div class="cart-total">
+          <span>Total</span>
+          <span id="cart-total">$0.00</span>
+        </div>
+        <button class="btn-checkout" onclick="checkout()">Finalizar pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="auth-overlay" class="overlay overlay-center hidden">
+    <div class="backdrop" onclick="closeAuth()"></div>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="auth-title">Iniciar sesión</h2>
+        <button class="btn-close" onclick="closeAuth()">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div id="auth-message" class="auth-error hidden"></div>
+      <form id="auth-form" onsubmit="handleAuth(event)">
+        <div id="register-fields" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input class="form-input" name="name" type="text" placeholder="Tu nombre" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input class="form-input" name="phone" type="tel" placeholder="0412-0000000" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input class="form-input" name="email" type="email" placeholder="correo@ejemplo.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" name="password" type="password" placeholder="••••••••" required />
+        </div>
+        <div id="confirm-field" class="form-group hidden">
+          <label class="form-label">Confirmar contraseña</label>
+          <input class="form-input" name="confirm" type="password" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn-submit" id="auth-submit">Entrar</button>
+      </form>
+      <p class="auth-switch" id="auth-switch">
+        ¿No tienes cuenta? <button onclick="switchAuthMode('register')">Regístrate</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-overlay" class="overlay overlay-center hidden">
+    <div class="backdrop" onclick="closeProfile()"></div>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Mi cuenta</h2>
+        <button class="btn-close" onclick="closeProfile()">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="profile-info" id="profile-info"></div>
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <script>
+    // Data
+    const PRODUCTS = [
+      { id: "1", name: "Compresor 1/3 HP", category: "Compresores", price: 85.0, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Compresor", stock: 12, description: "Compresor hermético para refrigeración doméstica y comercial." },
+      { id: "2", name: "Condensador 1/4 HP", category: "Condensadores", price: 45.5, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Condensador", stock: 20, description: "Intercambiador de calor para sistemas de refrigeración." },
+      { id: "3", name: "Evaporador 1/2 HP", category: "Evaporadores", price: 62.0, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Evaporador", stock: 8, description: "Serpentín de aluminio para congelador vertical." },
+      { id: "4", name: "Termostato Digital", category: "Controles", price: 28.9, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Termostato", stock: 35, description: "Control de temperatura digital con sonda." },
+      { id: "5", name: "Gas R134A 1kg", category: "Refrigerantes", price: 18.0, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=R134A", stock: 50, description: "Gas refrigerante ecológico para sistemas comerciales." },
+      { id: "6", name: "Filtro Deshidratador", category: "Accesorios", price: 7.5, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Filtro", stock: 100, description: "Elimina humedad y partículas del circuito frigorífico." },
+      { id: "7", name: "Manómetro Doble", category: "Herramientas", price: 38.0, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Manometro", stock: 15, description: "Set de manómetros para carga y diagnóstico." },
+      { id: "8", name: "Manguera de Vacío", category: "Accesorios", price: 12.0, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Manguera", stock: 60, description: "Manguera resistente para bomba de vacío." },
+    ];
+
+    const CATEGORIES = ["Todos", "Compresores", "Condensadores", "Evaporadores", "Controles", "Refrigerantes", "Accesorios", "Herramientas"];
+
+    // State
+    let cart = [];
+    let session = null;
+    let authMode = "login";
+    let activeCategory = "Todos";
+
+    // Helpers
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("es-VE", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(value);
+    }
+
+    function getUsers() {
+      const raw = localStorage.getItem("refriherrera_users");
+      return raw ? JSON.parse(raw) : [];
+    }
+    function saveUsers(users) { localStorage.setItem("refriherrera_users", JSON.stringify(users)); }
+    function getSession() {
+      const raw = localStorage.getItem("refriherrera_session");
+      return raw ? JSON.parse(raw) : null;
+    }
+    function saveSession(s) {
+      if (s) localStorage.setItem("refriherrera_session", JSON.stringify(s));
+      else localStorage.removeItem("refriherrera_session");
+    }
+    function getCart() {
+      const raw = localStorage.getItem("refriherrera_cart");
+      return raw ? JSON.parse(raw) : [];
+    }
+    function saveCart(c) { localStorage.setItem("refriherrera_cart", JSON.stringify(c)); }
+
+    // Render
+    function renderFilters() {
+      const container = document.getElementById("filters");
+      container.innerHTML = CATEGORIES.map(cat =>
+        `<button class="filter-btn ${cat === activeCategory ? "active" : ""}" onclick="setCategory('${cat}')">${cat}</button>`
+      ).join("");
+    }
+
+    function renderProducts() {
+      const container = document.getElementById("products-grid");
+      const filtered = activeCategory === "Todos" ? PRODUCTS : PRODUCTS.filter(p => p.category === activeCategory);
+      container.innerHTML = filtered.map(product => `
+        <div class="product-card">
+          <div class="product-image">
+            <img src="${product.image}" alt="${product.name}" loading="lazy" />
+            <span class="product-category">${product.category}</span>
+          </div>
+          <div class="product-body">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-desc">${product.description}</p>
+            <div class="product-footer">
+              <span class="product-price">${formatCurrency(product.price)}</span>
+              <button class="btn-add" onclick="addToCart('${product.id}')">Agregar</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function setCategory(cat) {
+      activeCategory = cat;
+      renderFilters();
+      renderProducts();
+    }
+
+    function renderCart() {
+      const emptyEl = document.getElementById("cart-empty");
+      const itemsEl = document.getElementById("cart-items");
+      const footerEl = document.getElementById("cart-footer");
+      const totalEl = document.getElementById("cart-total");
+      const badge = document.getElementById("cart-badge");
+
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      badge.textContent = count;
+      badge.classList.toggle("hidden", count === 0);
+      totalEl.textContent = formatCurrency(total);
+
+      if (cart.length === 0) {
+        emptyEl.classList.remove("hidden");
+        itemsEl.classList.add("hidden");
+        footerEl.classList.add("hidden");
+      } else {
+        emptyEl.classList.add("hidden");
+        itemsEl.classList.remove("hidden");
+        footerEl.classList.remove("hidden");
+        itemsEl.innerHTML = cart.map(item => `
+          <div class="cart-item">
+            <img src="${item.image}" alt="${item.name}" />
+            <div class="cart-item-info">
+              <div class="cart-item-top">
+                <span class="cart-item-name">${item.name}</span>
+                <button class="btn-remove" onclick="removeFromCart('${item.id}')">Quitar</button>
+              </div>
+              <span class="cart-item-price">${formatCurrency(item.price)}</span>
+              <div class="cart-item-qty">
+                <button class="qty-btn" onclick="updateQuantity('${item.id}', -1)">-</button>
+                <span class="qty-value">${item.quantity}</span>
+                <button class="qty-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
+    function renderSession() {
+      const btn = document.getElementById("btn-account");
+      const label = document.getElementById("account-label");
+      const heroBtn = document.getElementById("btn-register-hero");
+      session = getSession();
+      if (session) {
+        btn.setAttribute("onclick", "openProfile()");
+        btn.classList.remove("btn-secondary");
+        btn.classList.add("btn-primary");
+        label.textContent = session.name;
+        if (heroBtn) heroBtn.classList.add("hidden");
+      } else {
+        btn.setAttribute("onclick", "openAuth('login')");
+        btn.classList.add("btn-secondary");
+        btn.classList.remove("btn-primary");
+        label.textContent = "Iniciar sesión";
+        if (heroBtn) heroBtn.classList.remove("hidden");
+      }
+    }
+
+    function renderProfile() {
+      const info = document.getElementById("profile-info");
+      if (!session) return;
+      const user = getUsers().find(u => u.email === session.email);
+      const date = user ? new Date(user.createdAt).toLocaleDateString("es-VE") : new Date().toLocaleDateString("es-VE");
+      info.innerHTML = `
+        <div class="profile-field"><span class="label">Nombre:</span><span class="value">${session.name}</span></div>
+        <div class="profile-field"><span class="label">Correo:</span><span class="value">${session.email}</span></div>
+        <div class="profile-field"><span class="label">Teléfono:</span><span class="value">${user?.phone || "No registrado"}</span></div>
+        <div class="profile-field"><span class="label">Miembro desde:</span><span class="value">${date}</span></div>
+      `;
+    }
+
+    // Actions
+    function addToCart(id) {
+      const product = PRODUCTS.find(p => p.id === id);
+      if (!product) return;
+      const existing = cart.find(item => item.id === id);
+      if (existing) existing.quantity += 1;
+      else cart.push({ ...product, quantity: 1 });
+      saveCart(cart);
+      renderCart();
+    }
+
+    function updateQuantity(id, delta) {
+      cart = cart.map(item => item.id === id ? { ...item, quantity: item.quantity + delta } : item).filter(item => item.quantity > 0);
+      saveCart(cart);
+      renderCart();
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      saveCart(cart);
+      renderCart();
+    }
+
+    function openCart() {
+      document.getElementById("cart-overlay").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeCart() {
+      document.getElementById("cart-overlay").classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+
+    function openAuth(mode) {
+      authMode = mode;
+      document.getElementById("auth-message").classList.add("hidden");
+      document.getElementById("auth-overlay").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      updateAuthUI();
+    }
+
+    function closeAuth() {
+      document.getElementById("auth-overlay").classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+
+    function updateAuthUI() {
+      document.getElementById("auth-title").textContent = authMode === "login" ? "Iniciar sesión" : "Crear cuenta";
+      document.getElementById("auth-submit").textContent = authMode === "login" ? "Entrar" : "Registrarme";
+      document.getElementById("register-fields").classList.toggle("hidden", authMode === "login");
+      document.getElementById("confirm-field").classList.toggle("hidden", authMode === "login");
+      const switchEl = document.getElementById("auth-switch");
+      switchEl.innerHTML = authMode === "login"
+        ? `¿No tienes cuenta? <button onclick="switchAuthMode('register')">Regístrate</button>`
+        : `¿Ya tienes cuenta? <button onclick="switchAuthMode('login')">Inicia sesión</button>`;
+      // Reset required attrs
+      const regInputs = document.querySelectorAll("#register-fields input, #confirm-field input");
+      regInputs.forEach(input => input.required = authMode === "register");
+    }
+
+    function switchAuthMode(mode) {
+      authMode = mode;
+      document.getElementById("auth-message").classList.add("hidden");
+      updateAuthUI();
+    }
+
+    function handleAuth(e) {
+      e.preventDefault();
+      const form = e.target;
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      const msg = document.getElementById("auth-message");
+
+      if (authMode === "login") {
+        const users = getUsers();
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+          const newSession = { email: user.email, name: user.name };
+          saveSession(newSession);
+          session = newSession;
+          renderSession();
+          closeAuth();
+          msg.classList.add("hidden");
+        } else {
+          msg.textContent = "Correo o contraseña incorrectos.";
+          msg.classList.remove("hidden");
+        }
+      } else {
+        const name = form.name.value.trim();
+        const phone = form.phone.value.trim();
+        const confirm = form.confirm.value;
+        if (password !== confirm) {
+          msg.textContent = "Las contraseñas no coinciden.";
+          msg.classList.remove("hidden");
+          return;
+        }
+        const users = getUsers();
+        if (users.some(u => u.email === email)) {
+          msg.textContent = "Este correo ya está registrado.";
+          msg.classList.remove("hidden");
+          return;
+        }
+        const newUser = { name, email, phone, password, createdAt: new Date().toISOString() };
+        users.push(newUser);
+        saveUsers(users);
+        const newSession = { email, name };
+        saveSession(newSession);
+        session = newSession;
+        renderSession();
+        closeAuth();
+        form.reset();
+      }
+    }
+
+    function openProfile() {
+      renderProfile();
+      document.getElementById("profile-overlay").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeProfile() {
+      document.getElementById("profile-overlay").classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+
+    function logout() {
+      saveSession(null);
+      session = null;
+      renderSession();
+      closeProfile();
+    }
+
+    function checkout() {
+      alert("Aquí se conectará el proceso de pago con tu base de datos.");
+    }
+
+    function scrollToCatalog() {
+      document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
+    }
+
+    // Init
+    document.getElementById("year").textContent = new Date().getFullYear();
+    cart = getCart();
+    session = getSession();
+    renderFilters();
+    renderProducts();
+    renderCart();
+    renderSession();
+  </script>
+</body>
+</html>
