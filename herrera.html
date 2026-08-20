@@ -128,7 +128,11 @@
     <div id="pos-submenu" class="hidden pl-8 space-y-0.5 -mt-1 mb-1">
       <button onclick="showTab('cotizaciones');closeMobileMenu()" id="nav-cotizaciones"
         class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
-        <i class="fa-solid fa-file-invoice w-4 text-center"></i><span>Cotizaciones</span>
+        <i class="fa-solid fa-plus w-4 text-center"></i><span>Nueva Cotización</span>
+      </button>
+      <button onclick="showTab('cotizaciones-lista');closeMobileMenu()" id="nav-cotizaciones-lista"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-list w-4 text-center"></i><span>Lista de Cotizaciones</span>
         <span id="quotes-count-badge" class="text-[0.5rem] bg-sky-400 text-white px-1 py-px rounded-full font-bold hidden ml-auto">0</span>
       </button>
     </div>
@@ -240,7 +244,10 @@
     </button>
     <div id="pos-submenu-mobile" class="hidden pl-8 space-y-0.5 -mt-0.5 mb-0.5">
       <button onclick="showTab('cotizaciones');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="cotizaciones">
-        <i class="fa-solid fa-file-invoice w-4 text-center"></i><span>Cotizaciones</span>
+        <i class="fa-solid fa-plus w-4 text-center"></i><span>Nueva Cotización</span>
+      </button>
+      <button onclick="showTab('cotizaciones-lista');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="cotizaciones-lista">
+        <i class="fa-solid fa-list w-4 text-center"></i><span>Lista de Cotizaciones</span>
       </button>
     </div>
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
@@ -571,18 +578,117 @@
 
     <!-- ======== TAB: COTIZACIONES ======== -->
     <div id="tab-cotizaciones" class="tab-content">
-      <div class="mb-3 flex items-center justify-between">
-        <div>
-          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Cotizaciones</h2>
-          <p class="text-slate-500 text-xs mt-0.5">Gestión de cotizaciones para clientes</p>
+      <div class="flex flex-col lg:flex-row gap-3 min-h-0">
+        <!-- Izquierda: Grid productos -->
+        <div class="flex-1 min-w-0">
+          <div class="mb-2 flex items-center gap-2">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="coti-search" placeholder="Buscar por nombre o SKU..." oninput="cotiOnSearch(this.value)"
+                class="w-full pl-7 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+            </div>
+            <select id="coti-category" onchange="cotiOnCategory(this.value)"
+              class="px-2 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div id="coti-product-grid" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 overflow-y-auto max-h-[calc(100vh-10rem)]"></div>
         </div>
-        <button onclick="openQuoteModal()"
-          class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
-          <i class="fa-solid fa-plus mr-1.5"></i>Nueva Cotización
-        </button>
+        <!-- Derecha: Carrito cotización -->
+        <div class="lg:w-80 xl:w-96 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-100">
+          <!-- Header -->
+          <div class="px-3 py-2.5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice text-sky-500"></i>
+              <span id="coti-title">Nueva Cotización</span>
+            </h3>
+            <button onclick="cotiClear()" class="text-xs text-red-400 hover:text-red-600 transition-all">
+              <i class="fa-solid fa-trash-can mr-0.5"></i>Limpiar
+            </button>
+          </div>
+          <!-- Cliente -->
+          <div class="px-3 py-2 border-b border-slate-100">
+            <label class="text-[0.65rem] font-medium text-slate-500 mb-1 block">Cliente</label>
+            <div class="flex items-center gap-1.5">
+              <div class="relative flex-1">
+                <input type="text" id="coti-client-search" placeholder="Buscar por nombre, teléfono o cédula..." oninput="cotiClientSearch(this.value)"
+                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-sky-400 outline-none">
+                <div id="coti-client-dd" class="hidden absolute z-20 top-full left-0 right-0 mt-0.5 bg-white border border-slate-200 rounded-lg shadow-lg max-h-32 overflow-y-auto"></div>
+              </div>
+              <input type="hidden" id="coti-client-id">
+              <span id="coti-client-name" class="text-xs text-slate-500 truncate max-w-[70px]"></span>
+              <button onclick="cotiNewClient()" class="w-6 h-6 flex items-center justify-center rounded-lg bg-sky-100 text-sky-600 hover:bg-sky-200 transition-all flex-shrink-0" title="Nuevo cliente">
+                <i class="fa-solid fa-plus" style="font-size:0.6rem"></i>
+              </button>
+              <button onclick="cotiEditClient()" id="coti-edit-client-btn" class="w-6 h-6 items-center justify-center rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-all flex-shrink-0 hidden" title="Editar cliente">
+                <i class="fa-solid fa-pen" style="font-size:0.55rem"></i>
+              </button>
+            </div>
+          </div>
+          <!-- Moneda -->
+          <div class="px-3 py-2 border-b border-slate-100">
+            <label class="text-[0.65rem] font-medium text-slate-500 mb-1 block">Moneda</label>
+            <div class="flex gap-1.5">
+              <label class="flex-1 flex items-center justify-center gap-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[0.65rem] font-medium quote-currency-opt" data-val="USD">
+                <input type="radio" name="coti-currency" value="USD" checked class="hidden">
+                <span>$ USD</span>
+              </label>
+              <label class="flex-1 flex items-center justify-center gap-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[0.65rem] font-medium quote-currency-opt" data-val="VES">
+                <input type="radio" name="coti-currency" value="VES" class="hidden">
+                <span>Bs. VES</span>
+              </label>
+              <label class="flex-1 flex items-center justify-center gap-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[0.65rem] font-medium quote-currency-opt" data-val="COP">
+                <input type="radio" name="coti-currency" value="COP" class="hidden">
+                <span>$COP</span>
+              </label>
+            </div>
+          </div>
+          <!-- Items -->
+          <div id="coti-cart-items" class="flex-1 overflow-y-auto max-h-48 lg:max-h-56 divide-y divide-slate-50 p-1.5">
+            <p class="text-slate-400 text-xs text-center py-6"><i class="fa-solid fa-cart-shopping text-2xl mb-1 block text-slate-200"></i>Sin artículos</p>
+          </div>
+          <!-- Totales + acciones -->
+          <div class="border-t border-slate-100 p-3">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-400">Subtotal</span>
+              <span id="coti-subtotal" class="font-medium">$0.00</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold mb-2">
+              <span class="text-slate-700">Total</span>
+              <span id="coti-total" class="text-sky-600">$0.00</span>
+            </div>
+            <textarea id="coti-notes" rows="1" placeholder="Notas..." class="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-xl focus:border-sky-400 outline-none resize-none mb-2"></textarea>
+            <div class="flex gap-2">
+              <button onclick="cotiSave()" class="flex-1 py-2.5 text-white rounded-xl font-semibold text-sm shadow-lg transition-all" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+                <i class="fa-solid fa-save mr-1.5"></i>Guardar
+              </button>
+              <button onclick="cotiSendWhatsApp()" id="coti-whatsapp-btn" class="px-3 py-2.5 bg-emerald-500 text-white rounded-xl font-semibold text-sm shadow-lg hover:bg-emerald-600 transition-all hidden">
+                <i class="fa-brands fa-whatsapp"></i>
+              </button>
+            </div>
+        </div>
       </div>
-      <div id="quotes-list" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <p class="text-slate-400 text-xs text-center py-10">Sin cotizaciones</p>
+    </div>
+
+    </div>
+
+    <!-- ======== TAB: COTIZACIONES LISTA ======== -->
+    <div id="tab-cotizaciones-lista" class="tab-content">
+      <div class="mb-3">
+        <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Cotizaciones</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Historial de cotizaciones emitidas</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-3 border-b border-slate-100 flex items-center gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="coti-list-search" placeholder="Buscar por cliente, moneda o notas..." oninput="cotiRenderList()"
+              class="w-full pl-7 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+        </div>
+        <div id="coti-list" class="p-1">
+          <p class="text-slate-400 text-xs text-center py-10">Sin cotizaciones</p>
+        </div>
       </div>
     </div>
 
@@ -1461,6 +1567,9 @@ let posCategoryFilter = '';
 let invServiceFilter = false;
 let cart = [];
 let posClientId = null;
+let cotiConvertingId = null;
+let logoBase64 = '';
+fetch('logo.png').then(r=>r.blob()).then(b=>{const fr=new FileReader();fr.onload=()=>logoBase64=fr.result;fr.readAsDataURL(b)});
 let chartMode = 'weekly';
 let salesChart = null;
 let currentReceiptSale = null;
@@ -1718,7 +1827,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', compras:'Compras', proveedores:'Proveedores', gastos:'Compras y Gastos', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', 'cotizaciones-lista':'Lista de Cotizaciones', compras:'Compras', proveedores:'Proveedores', gastos:'Compras y Gastos', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -1730,7 +1839,7 @@ function showTab(tab) {
   const navEl = document.getElementById('nav-' + tab);
   if (navEl) { navEl.classList.add('active'); navEl.classList.add('bg-white/20'); }
 
-  if (tab === 'cotizaciones') {
+  if (tab === 'cotizaciones' || tab === 'cotizaciones-lista') {
     const sub = document.getElementById('pos-submenu');
     const icon = document.getElementById('pos-submenu-toggle');
     if (sub) sub.classList.remove('hidden');
@@ -1751,6 +1860,7 @@ function showTab(tab) {
     case 'inventario':   renderInventario();    break;
     case 'ventas':       renderPOS();           break;
     case 'cotizaciones': renderQuotesList();    break;
+    case 'cotizaciones-lista': cotiConvertingId = null; renderCotizacionesLista(); break;
     case 'proveedores':  renderSuppliersTable();break;
     case 'gastos':       renderPurchasesTable();break;
     case 'reportes':     renderReportes();      break;
@@ -2397,7 +2507,6 @@ function renderPOS() {
   renderProductGrid();
   renderCart();
   initPosClient();
-  updateQuotesBadge();
   const rate = db.settings.exchangeRate;
   if (rate) {
     const inp = document.getElementById('pos-exchange-rate');
@@ -2599,6 +2708,7 @@ function removeFromCart(idx) {
 function clearCart() {
   if (!cart.length || !confirm('¿Limpiar el carrito?')) return;
   cart = [];
+  cotiConvertingId = null;
   renderCart();
   updateTotalVESDisplay();
   document.getElementById('payment-method').value = 'Efectivo';
@@ -2791,6 +2901,13 @@ function processPayment() {
   document.getElementById('transfer-ves').value = '';
 
   currentReceiptSale = sale;
+
+  if (cotiConvertingId) {
+    const cq = db.quotes.find(q => q.id === cotiConvertingId);
+    if (cq) { cq.status = 'converted'; saveDB(); }
+    cotiConvertingId = null;
+  }
+
   openReceipt(sale);
   showToast('¡Venta registrada!', 'success');
 }
@@ -3151,6 +3268,7 @@ function saveClient() {
   saveDB();
   closeModal('modal-client');
   renderClientsTable();
+  if (typeof window._cotiClientSaveHook === 'function') { window._cotiClientSaveHook(); window._cotiClientSaveHook = null; }
   showToast(id ? 'Cliente actualizado' : 'Cliente creado');
 }
 
@@ -3165,8 +3283,10 @@ function deleteClient(id) {
 // ===================================================================
 // COTIZACIONES
 // ===================================================================
-let quoteItems = [];
-let quotesExpanded = false;
+let cotiCart = [];
+let cotiEditId = null;
+let cotiSearchVal = '';
+let cotiCategoryVal = '';
 
 function togglePosSubmenu() {
   const sub = document.getElementById('pos-submenu');
@@ -3183,300 +3303,392 @@ function togglePosSubmenuMobile() {
   sub.classList.toggle('hidden');
 }
 
-function updateQuotesBadge() {
-  const pending = db.quotes.filter(q => q.status === 'pending').length;
-  const badges = document.querySelectorAll('#quotes-count-badge');
-  badges.forEach(b => { b.textContent = pending; b.classList.toggle('hidden', pending === 0); });
-}
-
-function renderQuotesList() {
-  updateQuotesBadge();
-  const body = document.getElementById('quotes-list');
-  if (!body) return;
-  const quotes = [...db.quotes].sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (!quotes.length) {
-    body.innerHTML = `<div class="text-center py-12">
-      <i class="fa-solid fa-file-invoice text-4xl text-slate-200 block mb-3"></i>
-      <p class="text-slate-400 text-sm">Sin cotizaciones</p>
-      <p class="text-slate-300 text-xs mt-1">Crea una nueva desde el botón superior</p>
-    </div>`;
-    return;
-  }
-  const currencySymbol = { USD: '$', VES: 'Bs.', COP: '$' };
-  const statusBadge = { pending: 'bg-amber-100 text-amber-700', converted: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-600' };
-  const statusLabel = { pending: 'Pendiente', converted: 'Convertida', cancelled: 'Anulada' };
-  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
-    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
-      <th class="px-4 py-3 font-semibold">Cliente</th>
-      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Fecha</th>
-      <th class="px-4 py-3 font-semibold">Moneda</th>
-      <th class="px-4 py-3 font-semibold">Total</th>
-      <th class="px-4 py-3 font-semibold">Estado</th>
-      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
-    </tr></thead>
-    <tbody class="divide-y divide-slate-50">${quotes.map(q => {
-      const client = db.clients.find(c => c.id === q.clientId);
-      const sym = currencySymbol[q.currency] || '$';
-      const date = new Date(q.date).toLocaleDateString('es-VE');
-      const itemsCount = (q.items || []).length;
-      return `<tr class="hover:bg-sky-50/40 transition-all">
-        <td class="px-4 py-3">
-          <div class="text-sm font-medium text-slate-800">${client ? escHtml(client.name) : '<span class="text-slate-400 italic">Sin cliente</span>'}</div>
-          <div class="text-[0.6rem] text-slate-400">${itemsCount} artículo${itemsCount !== 1 ? 's' : ''}</div>
-        </td>
-        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-500">${date}</td>
-        <td class="px-4 py-3 text-xs font-medium text-slate-600">${q.currency}</td>
-        <td class="px-4 py-3 text-sm font-bold text-sky-600">${sym} ${fmtNum(q.total)}</td>
-        <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[q.status] || statusBadge.pending}">${statusLabel[q.status] || 'Pendiente'}</span></td>
-        <td class="px-4 py-3 text-center">
-          <div class="flex items-center justify-center gap-1">
-            ${q.status === 'pending' ? `
-              <button onclick="editQuote('${q.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
-              <button onclick="convertQuoteToSale('${q.id}')" title="Convertir a factura" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-file-invoice text-xs"></i></button>
-              <button onclick="deleteQuote('${q.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
-            ` : ''}
-            <button onclick="sendQuoteWhatsApp('${q.id}')" title="WhatsApp" class="p-1.5 rounded-lg hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp text-xs"></i></button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
-}
-
-function openQuoteModal(id) {
-  const q = id ? db.quotes.find(x => x.id === id) : null;
-  document.getElementById('modal-quote-title').textContent = q ? 'Editar Cotización' : 'Nueva Cotización';
-  document.getElementById('quote-id').value = q?.id || '';
-  document.getElementById('quote-notes').value = q?.notes || '';
-
-  const clientSel = document.getElementById('quote-client');
-  clientSel.innerHTML = db.clients.filter(c => c.active !== false).map(c =>
-    `<option value="${c.id}" ${c.id === (q?.clientId || posClientId) ? 'selected' : ''}>${escHtml(c.name)}</option>`
-  ).join('');
-
-  const curr = q?.currency || 'USD';
-  document.querySelectorAll('input[name="quote-currency"]').forEach(r => {
-    r.checked = r.value === curr;
-  });
-  updateQuoteCurrencyStyles();
-
-  quoteItems = q ? JSON.parse(JSON.stringify(q.items || [])) : [];
-  if (!quoteItems.length) addQuoteItem();
-  renderQuoteItems();
-  updateQuoteTotals();
-  openModal('modal-quote');
-}
-
-function addQuoteItem() {
-  quoteItems.push({ productId: '', name: '', sku: '', qty: 1, unitPrice: 0, isCombo: false });
-  renderQuoteItems();
-}
-
-function removeQuoteItem(idx) {
-  quoteItems.splice(idx, 1);
-  renderQuoteItems();
-  updateQuoteTotals();
-}
-
-function renderQuoteItems() {
-  const el = document.getElementById('quote-items');
-  if (!quoteItems.length) {
-    el.innerHTML = '<p class="text-slate-400 text-xs text-center py-3">Sin artículos. Presiona "Agregar"</p>';
-    return;
-  }
-  const allProducts = [...db.products.map(p => ({ id: p.id, name: p.name, sku: p.sku, price: p.price, isCombo: false })),
-                       ...db.combos.map(c => ({ id: c.id, name: c.name, sku: c.code, price: c.price, isCombo: true }))];
-  el.innerHTML = quoteItems.map((item, idx) => {
-    const optHtml = allProducts.map(p =>
-      `<option value="${p.id}" data-name="${escHtml(p.name)}" data-sku="${escHtml(p.sku)}" data-price="${p.price}" data-combo="${p.isCombo}" ${p.id === item.productId ? 'selected' : ''}>${escHtml(p.sku)} - ${escHtml(p.name)}</option>`
-    ).join('');
-    return `<div class="flex items-center gap-1.5 p-2 bg-slate-50 rounded-lg border border-slate-100">
-      <select onchange="onQuoteProductChange(${idx}, this)"
-        class="flex-1 text-[0.65rem] px-1.5 py-1.5 border border-slate-200 rounded-lg bg-white focus:border-sky-400 outline-none">
-        <option value="">Seleccionar...</option>
-        ${optHtml}
-      </select>
-      <input type="number" value="${item.qty}" min="1" onchange="onQuoteItemField(${idx},'qty',this.value)"
-        class="w-10 text-[0.65rem] text-center px-1 py-1.5 border border-slate-200 rounded-lg bg-white focus:border-sky-400 outline-none">
-      <input type="number" value="${item.unitPrice}" min="0" step="0.01" onchange="onQuoteItemField(${idx},'unitPrice',this.value)"
-        class="w-16 text-[0.65rem] text-center px-1 py-1.5 border border-slate-200 rounded-lg bg-white focus:border-sky-400 outline-none">
-      <button onclick="removeQuoteItem(${idx})" class="text-red-300 hover:text-red-500 transition-all flex-shrink-0">
-        <i class="fa-solid fa-times text-[0.55rem]"></i>
-      </button>
-    </div>`;
-  }).join('');
-}
-
-function onQuoteProductChange(idx, sel) {
-  const opt = sel.options[sel.selectedIndex];
-  if (!opt.value) { quoteItems[idx].productId = ''; quoteItems[idx].name = ''; quoteItems[idx].sku = ''; return; }
-  quoteItems[idx].productId = opt.value;
-  quoteItems[idx].name = opt.dataset.name;
-  quoteItems[idx].sku = opt.dataset.sku;
-  quoteItems[idx].unitPrice = parseFloat(opt.dataset.price) || 0;
-  quoteItems[idx].isCombo = opt.dataset.combo === 'true';
-  renderQuoteItems();
-  updateQuoteTotals();
-}
-
-function onQuoteItemField(idx, field, val) {
-  quoteItems[idx][field] = field === 'name' ? val : (parseFloat(val) || 0);
-  if (field === 'qty' && quoteItems[idx].qty < 1) quoteItems[idx].qty = 1;
-  updateQuoteTotals();
-}
-
-function updateQuoteCurrencyStyles() {
+function cotiUpdateCurrencyStyles() {
   document.querySelectorAll('.quote-currency-opt').forEach(el => {
-    el.style.borderColor = el.querySelector('input').checked ? '#0D7BC1' : '#e2e8f0';
-    el.style.background = el.querySelector('input').checked ? '#eef6fc' : '';
-    el.style.color = el.querySelector('input').checked ? '#04154B' : '#64748b';
+    const input = el.querySelector('input');
+    const checked = input && input.checked;
+    el.style.borderColor = checked ? '#0D7BC1' : '#e2e8f0';
+    el.style.background = checked ? '#eef6fc' : '';
+    el.style.color = checked ? '#04154B' : '#64748b';
   });
 }
 
-document.querySelectorAll('input[name="quote-currency"]').forEach(r => {
-  r.addEventListener('change', () => { updateQuoteCurrencyStyles(); updateQuoteTotals(); });
+document.addEventListener('change', e => {
+  if (e.target.name === 'coti-currency') { cotiUpdateCurrencyStyles(); cotiRenderCart(); }
 });
 
-function getQuoteCurrency() {
-  const checked = document.querySelector('input[name="quote-currency"]:checked');
-  return checked ? checked.value : 'USD';
+function cotiGetCurrency() {
+  const r = document.querySelector('input[name="coti-currency"]:checked');
+  return r ? r.value : 'USD';
 }
 
-function getQuoteCurrencySymbol(cur) {
+function cotiCurrencySym(cur) {
   return { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
 }
 
-function fmtQuotePrice(n, currency) {
-  if (currency === 'COP') return '$' + fmtNum(n) + ' COP';
-  if (currency === 'VES') return 'Bs. ' + fmtNum(n);
-  return '$' + fmtNum(n);
+function cotiToCurrency(usd, cur) {
+  cur = cur || cotiGetCurrency();
+  const rate = db.settings.exchangeRate || 0;
+  if (cur === 'VES') return usd * rate;
+  if (cur === 'COP') return usd * rate * COP_FACTOR;
+  return usd;
 }
 
-function updateQuoteTotals() {
-  const cur = getQuoteCurrency();
-  const total = quoteItems.reduce((s, i) => s + (i.qty || 0) * (i.unitPrice || 0), 0);
-  document.getElementById('quote-subtotal').textContent = fmtQuotePrice(total, cur);
-  document.getElementById('quote-total').textContent = fmtQuotePrice(total, cur);
+function cotiFromCurrency(val, cur) {
+  cur = cur || cotiGetCurrency();
+  const rate = db.settings.exchangeRate || 0;
+  if (cur === 'VES' && rate) return val / rate;
+  if (cur === 'COP' && rate) return val / (rate * COP_FACTOR);
+  return val;
 }
 
-function saveQuote() {
-  const id = document.getElementById('quote-id').value;
-  const clientId = document.getElementById('quote-client').value;
-  const currency = getQuoteCurrency();
-  const validItems = quoteItems.filter(i => i.productId && i.qty > 0);
+function cotiUnitPrice(item) {
+  return cotiToCurrency(item.baseUSD || item.unitPrice || 0);
+}
+
+function cotiFmt(usd, cur) {
+  cur = cur || cotiGetCurrency();
+  const converted = cotiToCurrency(usd, cur);
+  if (cur === 'COP') return '$' + fmtNum(converted) + ' COP';
+  if (cur === 'VES') return 'Bs. ' + fmtNum(converted);
+  return '$' + fmtNum(converted);
+}
+
+function cotiFmtVal(val, cur) {
+  cur = cur || cotiGetCurrency();
+  if (cur === 'COP') return '$' + fmtNum(val) + ' COP';
+  if (cur === 'VES') return 'Bs. ' + fmtNum(val);
+  return '$' + fmtNum(val);
+}
+
+function cotiRenderGrid() {
+  const grid = document.getElementById('coti-product-grid');
+  if (!grid) return;
+  const items = [];
+  db.products.forEach(p => {
+    if (cotiSearchVal && !(p.name||'').toLowerCase().includes(cotiSearchVal) && !(p.sku||'').toLowerCase().includes(cotiSearchVal)) return;
+    if (cotiCategoryVal && p.category !== cotiCategoryVal) return;
+    items.push({ type: 'product', data: p });
+  });
+  db.combos.forEach(c => {
+    if (cotiSearchVal && !(c.name||'').toLowerCase().includes(cotiSearchVal) && !(c.code||'').toLowerCase().includes(cotiSearchVal)) return;
+    items.push({ type: 'combo', data: c });
+  });
+  if (!items.length) {
+    grid.innerHTML = `<div class="col-span-3 text-center py-8 text-slate-400 text-xs">
+      <i class="fa-solid fa-magnifying-glass text-2xl mb-2 block opacity-30"></i>Sin productos
+    </div>`;
+    return;
+  }
+  grid.innerHTML = items.map(item => {
+    if (item.type === 'product') {
+      const p = item.data;
+      return `<div class="bg-white rounded-xl border ${p.isService ? 'border-purple-200' : 'border-slate-100'} p-2 cursor-pointer hover:border-sky-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
+        onclick="cotiAddItem('${p.id}',false)">
+        ${p.isService ? `<span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-purple-500 text-white px-1 py-px rounded-full font-bold leading-tight">SERVICIO</span>` : ''}
+        <div class="text-[0.55rem] text-slate-400 font-mono leading-none">${escHtml(p.sku)}</div>
+        <div class="text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(p.name)}</div>
+        <div class="flex items-end justify-between mt-0.5">
+          <div>
+            <span class="text-xs font-bold text-sky-600">${fmt(p.price)}</span>
+            ${p.priceVES ? `<div class="text-[0.5rem] text-amber-600 leading-none mt-0.5">Bs. ${fmtNum(p.priceVES)}</div>` : ''}
+            ${p.priceCOP ? `<div class="text-[0.5rem] text-emerald-600 leading-none mt-0.5">$${fmtNum(p.priceCOP)} COP</div>` : ''}
+          </div>
+          <span class="text-[0.55rem] ${p.isService ? 'text-purple-400' : 'text-slate-400'}">${p.isService ? '∞' : p.stock}</span>
+        </div>
+      </div>`;
+    } else {
+      const c = item.data;
+      return `<div class="bg-white rounded-xl border border-purple-100 p-2 cursor-pointer hover:border-purple-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
+        onclick="cotiAddItem('${c.id}',true)">
+        <span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-purple-600 text-white px-1 py-px rounded-full font-bold leading-tight">COMBO</span>
+        <div class="text-[0.55rem] text-purple-500 font-mono leading-none">${escHtml(c.code)}</div>
+        <div class="text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(c.name)}</div>
+        <div class="mt-0.5"><span class="text-xs font-bold text-purple-600">${fmt(c.price)}</span></div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function cotiOnSearch(val) { cotiSearchVal = val.toLowerCase(); cotiRenderGrid(); }
+function cotiOnCategory(val) { cotiCategoryVal = val; cotiRenderGrid(); }
+
+function cotiAddItem(id, isCombo) {
+  const src = isCombo ? db.combos.find(c => c.id === id) : db.products.find(p => p.id === id);
+  if (!src) return;
+  const existing = cotiCart.find(c => c.productId === id && c.isCombo === isCombo);
+  if (existing) { cotiUpdateQty(cotiCart.indexOf(existing), 1); return; }
+  cotiCart.push({
+    id: generateId(), productId: src.id, name: src.name, sku: isCombo ? src.code : src.sku,
+    baseUSD: src.price, unitPrice: src.price, qty: 1, isCombo
+  });
+  cotiRenderCart();
+}
+
+function cotiUpdateQty(idx, delta) {
+  if (!cotiCart[idx]) return;
+  cotiCart[idx].qty = Math.max(1, cotiCart[idx].qty + delta);
+  cotiRenderCart();
+}
+
+function cotiEditPrice(idx) {
+  if (!cotiCart[idx]) return;
+  const cur = cotiGetCurrency();
+  const currentDisplay = cotiUnitPrice(cotiCart[idx]);
+  const val = prompt(`Precio unitario (${cur}):`, fmtNum(currentDisplay));
+  if (val === null) return;
+  const entered = parseFloat(val) || 0;
+  cotiCart[idx].baseUSD = cotiFromCurrency(entered);
+  cotiCart[idx].unitPrice = cotiCart[idx].baseUSD;
+  cotiRenderCart();
+}
+
+function cotiRemoveItem(idx) {
+  cotiCart.splice(idx, 1);
+  cotiRenderCart();
+}
+
+function cotiClear() {
+  cotiCart = [];
+  cotiEditId = null;
+  document.getElementById('coti-title').textContent = 'Nueva Cotización';
+  document.getElementById('coti-client-id').value = '';
+  document.getElementById('coti-client-name').textContent = '';
+  document.getElementById('coti-client-search').value = '';
+  document.getElementById('coti-client-dd').classList.add('hidden');
+  document.getElementById('coti-edit-client-btn').classList.add('hidden');
+  document.getElementById('coti-notes').value = '';
+  document.getElementById('coti-whatsapp-btn').classList.add('hidden');
+  document.querySelector('input[name="coti-currency"][value="USD"]').checked = true;
+  cotiUpdateCurrencyStyles();
+  cotiRenderCart();
+}
+
+function cotiRenderCart() {
+  const el = document.getElementById('coti-cart-items');
+  if (!cotiCart.length) {
+    el.innerHTML = '<p class="text-slate-400 text-xs text-center py-6"><i class="fa-solid fa-cart-shopping text-2xl mb-1 block text-slate-200"></i>Sin artículos</p>';
+    cotiUpdateTotals();
+    return;
+  }
+  el.innerHTML = cotiCart.map((item, idx) => {
+    const up = cotiUnitPrice(item);
+    const lt = up * item.qty;
+    return `<div class="flex items-center gap-1.5 p-1.5 hover:bg-slate-50 rounded-lg transition-all">
+      <div class="flex-1 min-w-0">
+        ${item.isCombo ? `<span class="text-[0.5rem] bg-purple-100 text-purple-700 px-1 rounded font-bold">COMBO</span>` : ''}
+        <div class="text-xs font-medium text-slate-700 truncate">${escHtml(item.name)}</div>
+        <div class="text-[0.6rem] text-slate-400 cursor-pointer hover:text-sky-600" onclick="cotiEditPrice(${idx})">${cotiFmt(item.baseUSD)} c/u</div>
+      </div>
+      <div class="flex items-center gap-0.5 flex-shrink-0">
+        <button onclick="cotiUpdateQty(${idx},-1)" class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-600 transition-all">
+          <i class="fa-solid fa-minus" style="font-size:.5rem"></i>
+        </button>
+        <span class="w-5 text-center text-xs font-bold text-slate-700">${item.qty}</span>
+        <button onclick="cotiUpdateQty(${idx},1)" class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-green-100 hover:text-green-600 text-slate-600 transition-all">
+          <i class="fa-solid fa-plus" style="font-size:.5rem"></i>
+        </button>
+      </div>
+      <div class="text-xs font-bold text-slate-800 w-14 text-right flex-shrink-0">${cotiFmtVal(lt)}</div>
+      <button onclick="cotiRemoveItem(${idx})" class="text-red-300 hover:text-red-500 transition-all flex-shrink-0">
+        <i class="fa-solid fa-times text-xs"></i>
+      </button>
+    </div>`;
+  }).join('');
+  cotiUpdateTotals();
+}
+
+function cotiUpdateTotals() {
+  const total = cotiCart.reduce((s, i) => s + cotiUnitPrice(i) * i.qty, 0);
+  document.getElementById('coti-subtotal').textContent = cotiFmtVal(total);
+  document.getElementById('coti-total').textContent = cotiFmtVal(total);
+}
+
+function cotiClientSearch(val) {
+  const dd = document.getElementById('coti-client-dd');
+  if (!val.trim()) { dd.classList.add('hidden'); return; }
+  const q = val.toLowerCase();
+  const matches = db.clients.filter(c =>
+    c.active !== false && (
+      (c.name||'').toLowerCase().includes(q) ||
+      (c.phone||'').toLowerCase().includes(q) ||
+      (c.idNumber||'').toLowerCase().includes(q)
+    )
+  ).slice(0, 8);
+  if (!matches.length) { dd.innerHTML = '<div class="px-3 py-2 text-xs text-slate-400">Sin resultados</div>'; dd.classList.remove('hidden'); return; }
+  dd.innerHTML = matches.map(c =>
+    `<div class="px-3 py-2 text-xs cursor-pointer hover:bg-sky-50 transition-all border-b border-slate-50 last:border-0" onclick="cotiSelectClient('${c.id}','${escHtml(c.name)}')">
+      <div class="font-medium text-slate-700">${escHtml(c.name)}</div>
+      <div class="text-[0.6rem] text-slate-400">${c.phone || ''} ${c.idNumber || ''}</div>
+    </div>`
+  ).join('');
+  dd.classList.remove('hidden');
+}
+
+function cotiSelectClient(id, name) {
+  document.getElementById('coti-client-id').value = id;
+  document.getElementById('coti-client-name').textContent = name;
+  document.getElementById('coti-client-search').value = '';
+  document.getElementById('coti-client-dd').classList.add('hidden');
+  document.getElementById('coti-edit-client-btn').classList.remove('hidden');
+}
+
+function cotiNewClient() {
+  const tempOnClose = window._cotiClientCallback;
+  window._cotiClientCallback = null;
+  openClientModal();
+  const orig = window._cotiClientSaveHook;
+  window._cotiClientSaveHook = () => {
+    const clients = [...db.clients].sort((a, b) => (b.name||'').localeCompare(a.name||''));
+    const newest = clients[0];
+    if (newest) cotiSelectClient(newest.id, newest.name);
+  };
+}
+
+function cotiEditClient() {
+  const id = document.getElementById('coti-client-id').value;
+  if (!id) return;
+  openClientModal(id);
+}
+
+function cotiSave() {
+  const validItems = cotiCart.filter(i => i.productId && i.qty > 0);
   if (!validItems.length) { showToast('Agrega al menos un artículo', 'warning'); return; }
-  const total = validItems.reduce((s, i) => s + i.qty * i.unitPrice, 0);
+  const currency = cotiGetCurrency();
+  const clientId = document.getElementById('coti-client-id').value;
   const client = db.clients.find(c => c.id === clientId);
+  const total = validItems.reduce((s, i) => s + cotiUnitPrice(i) * i.qty, 0);
 
   const quote = {
-    id: id || generateId(),
+    id: cotiEditId || generateId(),
     clientId, clientName: client ? client.name : '',
-    items: validItems, currency, subtotal: total, total,
+    items: validItems.map(i => ({
+      productId: i.productId, name: i.name, sku: i.sku,
+      unitPrice: cotiUnitPrice(i), baseUSD: i.baseUSD,
+      qty: i.qty, isCombo: i.isCombo
+    })),
+    currency, subtotal: total, total,
     status: 'pending',
-    notes: document.getElementById('quote-notes').value.trim(),
-    date: id ? (db.quotes.find(q => q.id === id)?.date || new Date().toISOString()) : new Date().toISOString()
+    notes: document.getElementById('coti-notes').value.trim(),
+    date: cotiEditId ? (db.quotes.find(q => q.id === cotiEditId)?.date || new Date().toISOString()) : new Date().toISOString()
   };
 
-  if (id) {
-    const idx = db.quotes.findIndex(q => q.id === id);
+  if (cotiEditId) {
+    const idx = db.quotes.findIndex(q => q.id === cotiEditId);
     if (idx !== -1) db.quotes[idx] = quote;
   } else {
     db.quotes.push(quote);
   }
   saveDB();
-  closeModal('modal-quote');
-  renderQuotesList();
-  showToast(id ? 'Cotización actualizada' : 'Cotización creada', 'success');
+  if (sbReady) {
+    sb.from('quotes').upsert({
+      id: quote.id, client_id: quote.clientId || null, client_name: quote.clientName || '',
+      items: quote.items || [], currency: quote.currency || 'USD',
+      subtotal: quote.subtotal || 0, total: quote.total || 0,
+      status: quote.status || 'pending', notes: quote.notes || '',
+      date: quote.date, updated_at: new Date().toISOString()
+    }).then(() => console.log('Cotización sync Supabase')).catch(e => console.warn('Error sync cotización:', e));
+  }
+  showToast(cotiEditId ? 'Cotización actualizada' : 'Cotización creada', 'success');
+  const savedId = quote.id;
+  cotiClear();
+  updateQuotesBadge();
+  cotiRenderList();
+  const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
+  if (phone && confirm('Cotización guardada. ¿Enviar PDF por WhatsApp?')) {
+    cotiWhatsApp(savedId);
+  }
 }
 
-function editQuote(id) {
-  openQuoteModal(id);
+function cotiEdit(id) {
+  const q = db.quotes.find(x => x.id === id);
+  if (!q) return;
+  cotiEditId = id;
+  cotiCart = (q.items || []).map(item => ({
+    ...item,
+    baseUSD: item.baseUSD != null ? item.baseUSD : cotiFromCurrency(item.unitPrice || 0, q.currency)
+  }));
+  showTab('cotizaciones');
+  document.getElementById('coti-title').textContent = 'Editar Cotización';
+  if (q.clientId) cotiSelectClient(q.clientId, q.clientName || '');
+  document.getElementById('coti-notes').value = q.notes || '';
+  document.querySelector(`input[name="coti-currency"][value="${q.currency}"]`).checked = true;
+  cotiUpdateCurrencyStyles();
+  cotiRenderCart();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('coti-whatsapp-btn').classList.remove('hidden');
 }
 
-function deleteQuote(id) {
+function cotiDelete(id) {
   if (!confirm('¿Eliminar esta cotización?')) return;
+  const quote = db.quotes.find(q => q.id === id);
   db.quotes = db.quotes.filter(q => q.id !== id);
   saveDB();
   if (sbReady) {
-    sb.from('quotes').delete().eq('id', id).then(() => {
-      console.log('Cotización eliminada de Supabase:', id);
-    }).catch(e => console.warn('Error eliminando cotización de Supabase:', e));
+    sb.from('quotes').delete().eq('id', id).then(() => console.log('Cotización eliminada Supabase:', id)).catch(e => console.warn('Error:', e));
+    if (quote && quote.pdfUrl) {
+      const path = quote.pdfUrl.split('/storage/v1/object/public/cotizaciones/')[1];
+      if (path) sb.storage.from('cotizaciones').remove([path]).then(() => console.log('PDF eliminado:', path)).catch(e => console.warn('Storage:', e));
+    }
   }
-  renderQuotesList();
+  cotiRenderList();
   showToast('Cotización eliminada', 'warning');
 }
 
-function convertQuoteToSale(id) {
+function cotiConvert(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return;
-  if (!confirm(`¿Convertir cotización de ${q.clientName || 'sin cliente'} a factura?`)) return;
+  if (!confirm(`¿Convertir cotización de ${q.clientName || 'sin cliente'} a factura?\nSe cargarán los artículos en el Punto de Venta.`)) return;
 
-  const rate = parseFloat(document.getElementById('pos-exchange-rate')?.value) || db.settings.exchangeRate || 1;
-  let total = q.total;
-
-  if (q.currency === 'VES') total = total / rate;
-  else if (q.currency === 'COP') total = total / (rate * COP_FACTOR);
-
-  const sale = {
-    id: generateId(),
-    date: new Date().toISOString(),
-    items: q.items.map(item => ({
-      productId: item.productId, name: item.name, sku: item.sku,
-      qty: item.qty, unitPrice: item.unitPrice,
-      isCombo: item.isCombo || false, comboItems: [],
-      lineTotal: item.qty * item.unitPrice
-    })),
-    subtotal: total, total, method: 'Efectivo', cashAmount: total, transferAmount: 0,
-    copAmount: 0, copRate: rate * COP_FACTOR, exchangeRate: rate,
-    clientId: q.clientId || null
-  };
-
-  q.items.forEach(item => {
-    if (!item.isCombo) {
-      const p = db.products.find(x => x.id === item.productId);
-      if (p && !p.isService) p.stock = Math.max(0, (p.stock || 0) - item.qty);
-    }
+  cart = (q.items || []).map(item => {
+    const baseUSD = item.baseUSD != null ? item.baseUSD : cotiFromCurrency(item.unitPrice || 0, q.currency);
+    return {
+      id: generateId(), productId: item.productId, name: item.name, sku: item.sku,
+      qty: item.qty, unitPrice: baseUSD,
+      isCombo: item.isCombo || false, comboItems: item.comboItems || [],
+      lineTotal: item.qty * baseUSD
+    };
   });
 
-  db.sales.push(sale);
-  q.status = 'converted';
-  saveDB();
-  syncSaleToSupabase(sale);
-  renderQuotesList();
-  renderProductGrid();
-  showToast('Cotización convertida a factura', 'success');
+  cotiConvertingId = id;
+
+  if (q.clientId) {
+    posClientId = q.clientId;
+    renderPosClientSelected();
+  }
+
+  renderCart();
+  updateTotalVESDisplay();
+  showTab('ventas');
+  showToast('Artículos cargados. Completa el pago para facturar.', 'info');
 }
 
-// ===================================================================
-// COTIZACIONES PDF + WHATSAPP
-// ===================================================================
-function generateQuotePDF(id) {
+function cotiGeneratePDF(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return null;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const storeName = db.settings.storeName || 'RefrigiHerrera';
   const cur = q.currency;
-  const sym = getQuoteCurrencySymbol(cur);
+  const sym = cotiCurrencySym(cur);
 
-  // Header
   try {
-    const img = new Image();
-    img.src = 'logo.png';
-    doc.addImage(img, 'PNG', 15, 12, 20, 20);
+    if (logoBase64) {
+      doc.addImage(logoBase64, 'PNG', 15, 12, 25, 20);
+    }
   } catch(e) {}
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(storeName, 40, 20);
+  doc.text(storeName, 45, 20);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(120);
-  doc.text('Cotización', 40, 26);
+  doc.text('Cotización', 45, 26);
 
   doc.setDrawColor(13, 123, 193);
   doc.setLineWidth(0.5);
   doc.line(15, 36, 195, 36);
 
-  // Info
   doc.setTextColor(60);
   doc.setFontSize(9);
   doc.text(`Fecha: ${new Date(q.date).toLocaleDateString('es-VE')}`, 15, 42);
@@ -3484,7 +3696,6 @@ function generateQuotePDF(id) {
   doc.text(`Cliente: ${q.clientName || 'Sin cliente'}`, 15, 54);
   doc.text(`Moneda: ${cur === 'VES' ? 'Bolívares (Bs.)' : cur === 'COP' ? 'Pesos Colombianos' : 'Dólares (USD)'}`, 15, 60);
 
-  // Table header
   let y = 70;
   doc.setFillColor(4, 21, 75);
   doc.rect(15, y, 180, 8, 'F');
@@ -3497,7 +3708,6 @@ function generateQuotePDF(id) {
   doc.text('Total', 165, y + 5.5);
   y += 10;
 
-  // Items
   doc.setTextColor(40);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
@@ -3506,14 +3716,13 @@ function generateQuotePDF(id) {
     if (y > 265) { doc.addPage(); y = 20; }
     doc.text(item.name || '', 17, y + 4);
     doc.text(String(item.qty), 118, y + 4);
-    doc.text(fmtQuotePrice(item.unitPrice, cur), 135, y + 4);
-    doc.text(fmtQuotePrice(lt, cur), 165, y + 4);
+    doc.text(cotiFmtVal(item.unitPrice, cur), 135, y + 4);
+    doc.text(cotiFmtVal(lt, cur), 165, y + 4);
     doc.setDrawColor(220);
     doc.line(15, y + 6, 195, y + 6);
     y += 8;
   });
 
-  // Total
   y += 4;
   doc.setFillColor(238, 246, 252);
   doc.roundedRect(130, y, 65, 12, 2, 2, 'F');
@@ -3521,9 +3730,8 @@ function generateQuotePDF(id) {
   doc.setFontSize(11);
   doc.setTextColor(4, 21, 75);
   doc.text('Total:', 135, y + 8);
-  doc.text(fmtQuotePrice(q.total, cur), 155, y + 8);
+  doc.text(cotiFmtVal(q.total, cur), 155, y + 8);
 
-  // Notes
   if (q.notes) {
     y += 20;
     doc.setFont('helvetica', 'normal');
@@ -3534,7 +3742,6 @@ function generateQuotePDF(id) {
     doc.text(q.notes, 15, y);
   }
 
-  // Footer
   doc.setFontSize(7);
   doc.setTextColor(180);
   doc.text('Generado por RefrigiHerrera POS', 15, 290);
@@ -3542,51 +3749,184 @@ function generateQuotePDF(id) {
   return doc;
 }
 
-function sendQuoteWhatsApp(id) {
+function cotiSendWhatsApp() {
+  const validItems = cotiCart.filter(i => i.productId && i.qty > 0);
+  if (!validItems.length) { showToast('Agrega artículos primero', 'warning'); return; }
+  const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
+  if (!phone) { showToast('Configura el número de WhatsApp en Configuración', 'warning'); return; }
+
+  const cur = cotiGetCurrency();
+  const total = validItems.reduce((s, i) => s + cotiUnitPrice(i) * i.qty, 0);
+  const store = db.settings.storeName || 'RefrigiHerrera';
+  let msg = `📋 *${store} - Cotización*\n`;
+  msg += `─────────────────\n`;
+  msg += `📅 ${new Date().toLocaleDateString('es-VE')}\n`;
+  const clientId = document.getElementById('coti-client-id').value;
+  const client = db.clients.find(c => c.id === clientId);
+  if (client) msg += `👤 Cliente: ${escHtml(client.name)}\n`;
+  msg += `💱 Moneda: ${cur}\n`;
+  msg += `─────────────────\n`;
+  validItems.forEach(item => {
+    const up = cotiUnitPrice(item);
+    const lt = up * item.qty;
+    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmtVal(up, cur)} = *${cotiFmtVal(lt, cur)}*\n`;
+  });
+  msg += `─────────────────\n`;
+  msg += `💰 *Total: ${cotiFmtVal(total, cur)}*\n`;
+  const notes = document.getElementById('coti-notes').value.trim();
+  if (notes) msg += `\n📝 ${notes}\n`;
+  msg += `\n¡Gracias por su preferencia!`;
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+async function cotiWhatsApp(id) {
   const q = db.quotes.find(x => x.id === id);
   if (!q) return;
-  const phone = (db.settings.whatsapp || '').replace(/\D/g, '');
-  if (!phone) {
-    showToast('Configura el número de WhatsApp en Configuración', 'warning');
-    return;
-  }
+  const client = q.clientId ? db.clients.find(c => c.id === q.clientId) : null;
+  const phone = (client?.phone || db.settings.whatsapp || '').replace(/\D/g, '');
+  if (!phone) { showToast('El cliente no tiene teléfono registrado', 'warning'); return; }
 
-  const doc = generateQuotePDF(id);
+  const doc = cotiGeneratePDF(id);
   if (!doc) return;
 
+  const pdfBlob = doc.output('blob');
+  const fileName = `cotizacion_${q.id.slice(0,8)}_${Date.now()}.pdf`;
+  let pdfUrl = '';
+
+  try {
+    if (sbReady) {
+      console.log('Subiendo PDF a Supabase Storage...', fileName);
+      const { data, error } = await sb.storage.from('cotizaciones').upload(fileName, pdfBlob, {
+        contentType: 'application/pdf',
+        upsert: false
+      });
+      if (error) {
+        console.error('Error Supabase Storage:', error.message, error);
+      } else if (data) {
+        const { data: urlData } = sb.storage.from('cotizaciones').getPublicUrl(fileName);
+        if (urlData) {
+          pdfUrl = urlData.publicUrl;
+          q.pdfUrl = pdfUrl;
+          saveDB();
+          console.log('PDF subido:', pdfUrl);
+        }
+      }
+    } else {
+      console.warn('Supabase no listo, no se sube PDF');
+    }
+  } catch(e) { console.error('Excepción subiendo PDF:', e); }
+
+  const cur = q.currency;
   const store = db.settings.storeName || 'RefrigiHerrera';
   let msg = `📋 *${store} - Cotización*\n`;
   msg += `─────────────────\n`;
   msg += `📅 ${new Date(q.date).toLocaleDateString('es-VE')}\n`;
   msg += `👤 Cliente: ${q.clientName || 'Sin cliente'}\n`;
-  msg += `💱 Moneda: ${q.currency}\n`;
+  msg += `💱 Moneda: ${cur}\n`;
   msg += `─────────────────\n`;
   (q.items || []).forEach(item => {
     const lt = item.qty * item.unitPrice;
-    msg += `📦 ${item.name}\n   ${item.qty} × ${fmtQuotePrice(item.unitPrice, q.currency)} = *${fmtQuotePrice(lt, q.currency)}*\n`;
+    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmtVal(item.unitPrice, cur)} = *${cotiFmtVal(lt, cur)}*\n`;
   });
   msg += `─────────────────\n`;
-  msg += `💰 *Total: ${fmtQuotePrice(q.total, q.currency)}*\n`;
+  msg += `💰 *Total: ${cotiFmtVal(q.total, cur)}*\n`;
   if (q.notes) msg += `\n📝 ${q.notes}\n`;
+  if (pdfUrl) msg += `\n📄 PDF: ${pdfUrl}\n`;
   msg += `\n¡Gracias por su preferencia!`;
 
-  const pdfBlob = doc.output('blob');
-  const pdfFile = new File([pdfBlob], `Cotizacion_${q.id.slice(0,8)}.pdf`, { type: 'application/pdf' });
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  showToast(pdfUrl ? 'PDF subido y mensaje enviado' : 'PDF generado. Adjúntalo al mensaje.', pdfUrl ? 'success' : 'info');
+}
 
-  const formData = new FormData();
-  formData.append('file', pdfFile);
+function cotiDownloadPDF(id) {
+  const doc = cotiGeneratePDF(id);
+  if (!doc) return;
+  const q = db.quotes.find(x => x.id === id);
+  doc.save(`cotizacion_${q ? q.id.slice(0,8) : 'doc'}.pdf`);
+  showToast('PDF descargado', 'success');
+}
 
-  if (navigator.share && navigator.canShare) {
-    const url = URL.createObjectURL(pdfBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Cotizacion_${q.id.slice(0,8)}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+function cotiRenderList() {
+  const el = document.getElementById('coti-list');
+  if (!el) return;
+  const searchInput = document.getElementById('coti-list-search');
+  const q = searchInput ? searchInput.value.toLowerCase() : '';
+  let quotes = [...db.quotes].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (q) quotes = quotes.filter(x =>
+    (x.clientName||'').toLowerCase().includes(q) ||
+    (x.currency||'').toLowerCase().includes(q) ||
+    (x.notes||'').toLowerCase().includes(q)
+  );
+
+  const statusBadge = { pending: 'bg-amber-100 text-amber-700', converted: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-600' };
+  const statusLabel = { pending: 'Pendiente', converted: 'Facturada', cancelled: 'Anulada' };
+
+  if (!quotes.length) {
+    el.innerHTML = `<div class="text-center py-10">
+      <i class="fa-solid fa-file-invoice text-3xl text-slate-200 block mb-2"></i>
+      <p class="text-slate-400 text-sm">Sin cotizaciones</p>
+    </div>`;
+    return;
   }
 
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-  showToast('PDF descargado. Adjúntalo al mensaje de WhatsApp.', 'info');
+  el.innerHTML = quotes.map(q => {
+    const date = new Date(q.date).toLocaleDateString('es-VE');
+    const itemsCount = (q.items || []).length;
+    return `<div class="mb-2 p-3 bg-white border border-slate-100 rounded-xl hover:border-sky-200 transition-all">
+      <div class="flex items-start justify-between gap-2 mb-1.5">
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-800 truncate">${q.clientName ? escHtml(q.clientName) : '<span class="text-slate-400 italic">Sin cliente</span>'}</div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-[0.6rem] text-slate-400">${date}</span>
+            <span class="text-[0.6rem] text-slate-300">·</span>
+            <span class="text-[0.6rem] text-slate-400">${itemsCount} artículo${itemsCount !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-sm font-bold text-sky-600">${cotiFmtVal(q.total, q.currency)}</div>
+          <span class="text-[0.5rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[q.status] || statusBadge.pending}">${statusLabel[q.status] || 'Pendiente'}</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-1 border-t border-slate-50 pt-1.5">
+        ${q.status === 'pending' ? `
+          <button onclick="cotiEdit('${q.id}')" title="Editar" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil mr-0.5"></i>Editar</button>
+          <button onclick="cotiConvert('${q.id}')" title="Convertir a factura" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-file-invoice mr-0.5"></i>Factura</button>
+          <button onclick="cotiDelete('${q.id}')" title="Eliminar" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash mr-0.5"></i></button>
+        ` : ''}
+        <button onclick="cotiWhatsApp('${q.id}')" title="WhatsApp" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-green-50 text-green-500 hover:text-green-700 transition-all"><i class="fa-brands fa-whatsapp mr-0.5"></i>Enviar</button>
+        <button onclick="cotiDownloadPDF('${q.id}')" title="Descargar PDF" class="px-2 py-1 rounded-lg text-[0.65rem] font-medium hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-all"><i class="fa-solid fa-download mr-0.5"></i>PDF</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCotizaciones() {
+  updateCategoryLists();
+  const catEl = document.getElementById('coti-category');
+  if (catEl) {
+    const cur = catEl.value;
+    const cats = [...new Set(db.products.map(p => p.category).filter(Boolean))].sort();
+    catEl.innerHTML = '<option value="">Todas</option>' + cats.map(c => `<option value="${escHtml(c)}"${c === cur ? ' selected' : ''}>${escHtml(c)}</option>`).join('');
+  }
+  cotiUpdateCurrencyStyles();
+  if (!cotiCart.length && !cotiEditId) cotiClear();
+  cotiRenderGrid();
+  cotiRenderCart();
+}
+
+function updateQuotesBadge() {
+  const pending = db.quotes.filter(q => q.status === 'pending').length;
+  const badge = document.getElementById('quotes-count-badge');
+  if (badge) {
+    if (pending > 0) { badge.textContent = pending; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+}
+
+function renderCotizacionesLista() {
+  updateQuotesBadge();
+  cotiRenderList();
 }
 
 // ===================================================================
@@ -4188,6 +4528,25 @@ self.addEventListener('fetch',e=>{
 }
 
 // ===================================================================
+// CLEANUP: Borrar cotizaciones vieias (+ Storage PDFs) al iniciar
+// ===================================================================
+function cleanupOldQuotes() {
+  const ONE_MONTH = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const old = db.quotes.filter(q => (now - new Date(q.date).getTime()) > ONE_MONTH);
+  if (!old.length) return;
+  console.log('Borrando', old.length, 'cotizaciones viejas (>1 mes)');
+  const ids = old.map(q => q.id);
+  const pdfPaths = old.filter(q => q.pdfUrl).map(q => q.pdfUrl.split('/storage/v1/object/public/cotizaciones/')[1]).filter(Boolean);
+  db.quotes = db.quotes.filter(q => !ids.includes(q.id));
+  saveDB();
+  if (sbReady) {
+    ids.forEach(id => sb.from('quotes').delete().eq('id', id).catch(() => {}));
+    if (pdfPaths.length) sb.storage.from('cotizaciones').remove(pdfPaths).then(() => console.log('PDFs viejos borrados:', pdfPaths.length)).catch(() => {});
+  }
+}
+
+// ===================================================================
 // INIT
 // ===================================================================
 const SUPABASE_URL = 'https://muwthhwoxpooliatnmhk.supabase.co';
@@ -4206,6 +4565,7 @@ initSupabase().catch(()=>{}).finally(() => {
 registerPWA();
 updateConnectionStatus();
 ensureDemoClient();
+cleanupOldQuotes();
 
 // Inicializar nombre en sidebar
 const snEl = document.getElementById('sidebar-store-name');

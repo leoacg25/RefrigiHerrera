@@ -147,7 +147,7 @@ ALTER TABLE sales ADD COLUMN IF NOT EXISTS client_id TEXT REFERENCES clients(id)
 -- Tabla de cotizaciones
 CREATE TABLE IF NOT EXISTS quotes (
   id TEXT PRIMARY KEY,
-  client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
+  client_id TEXT,
   client_name TEXT DEFAULT '',
   items JSONB DEFAULT '[]'::jsonb,
   currency TEXT DEFAULT 'USD',
@@ -158,6 +158,11 @@ CREATE TABLE IF NOT EXISTS quotes (
   date TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+-- Eliminar FK si ya existía de una versión anterior
+DO $$ BEGIN
+  ALTER TABLE quotes DROP CONSTRAINT IF EXISTS quotes_client_id_fkey;
+EXCEPTION WHEN others THEN NULL;
+END $$;
 ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_quotes_date ON quotes(date);
 CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
@@ -202,3 +207,27 @@ CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(date);
 CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON purchases(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_category ON purchases(category);
 ALTER PUBLICATION supabase_realtime ADD TABLE purchases;
+
+-- ===================================================================
+-- STORAGE: Bucket cotizaciones para PDFs
+-- Ejecutar en Supabase SQL Editor si el bucket no existe
+-- ===================================================================
+INSERT INTO storage.buckets (id, name, public) VALUES ('cotizaciones', 'cotizaciones', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Allow anon upload cotizaciones" ON storage.objects;
+DROP POLICY IF EXISTS "Allow anon read cotizaciones" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated upload cotizaciones" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated read cotizaciones" ON storage.objects;
+
+CREATE POLICY "Allow anon upload cotizaciones" ON storage.objects
+  FOR INSERT TO anon WITH CHECK (bucket_id = 'cotizaciones');
+
+CREATE POLICY "Allow anon read cotizaciones" ON storage.objects
+  FOR SELECT TO anon USING (bucket_id = 'cotizaciones');
+
+CREATE POLICY "Allow authenticated upload cotizaciones" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'cotizaciones');
+
+CREATE POLICY "Allow authenticated read cotizaciones" ON storage.objects
+  FOR SELECT TO authenticated USING (bucket_id = 'cotizaciones');
