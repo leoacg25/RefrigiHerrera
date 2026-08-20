@@ -4034,7 +4034,7 @@ function saveSupplier() {
         id: supplier.id, name: supplier.name, phone: supplier.phone || '',
         email: supplier.email || '', address: supplier.address || '',
         id_number: supplier.idNumber || '', notes: supplier.notes || '', active: true
-      }).catch(e => console.warn('sync supplier:', e));
+      }, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync supplier:', e));
     }
     closeModal('modal-supplier');
     renderSuppliersTable();
@@ -4046,7 +4046,7 @@ function deleteSupplier(id) {
   if (!confirm('¿Eliminar este proveedor?')) return;
   db.suppliers = db.suppliers.filter(s => s.id !== id);
   saveDB();
-  if (sbReady) sb.from('suppliers').delete().eq('id', id).catch(e => console.warn(e));
+  if (sbReady) sb.from('suppliers').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
   renderSuppliersTable();
   showToast('Proveedor eliminado', 'warning');
 }
@@ -4225,7 +4225,7 @@ function deletePurchase(id) {
   if (!confirm('¿Eliminar este registro?')) return;
   db.purchases = db.purchases.filter(p => p.id !== id);
   saveDB();
-  if (sbReady) sb.from('purchases').delete().eq('id', id).catch(e => console.warn(e));
+  if (sbReady) sb.from('purchases').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
   renderPurchasesTable();
   showToast('Registro eliminado', 'warning');
 }
@@ -4543,7 +4543,7 @@ function cleanupOldQuotes() {
   db.quotes = db.quotes.filter(q => !ids.includes(q.id));
   saveDB();
   if (sbReady) {
-    ids.forEach(id => sb.from('quotes').delete().eq('id', id).catch(() => {}));
+    ids.forEach(id => sb.from('quotes').delete().eq('id', id).then(() => {}).catch(() => {}));
     if (pdfPaths.length) sb.storage.from('cotizaciones').remove(pdfPaths).then(() => console.log('PDFs viejos borrados:', pdfPaths.length)).catch(() => {});
   }
 }
