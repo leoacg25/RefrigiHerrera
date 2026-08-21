@@ -4571,7 +4571,16 @@ function compraGuardar() {
       const p = db.products.find(x => x.id === it.productId);
       if (p && !p.isService) {
         p.stock = (p.stock || 0) + (it.cant || 0);
-        if (it.precio) p.costPrice = Math.round(it.precio * 100) / 100;
+        if (it.precio) {
+          p.costPrice = Math.round(it.precio * 100) / 100;
+          p.price = Math.round(p.costPrice * (1 + (p.profitPercent || 0) / 100) * 100) / 100;
+          const rate = db.settings.exchangeRate || 0;
+          if (rate) {
+            p.priceVES = Math.round(p.price * rate * 100) / 100;
+            const COP_FACTOR = 3.5;
+            p.priceCOP = Math.round(p.price * rate * COP_FACTOR * 100) / 100;
+          }
+        }
         if (it.desc) p.name = it.desc;
       }
     }
@@ -4590,7 +4599,7 @@ function compraGuardar() {
 
     const updatedProducts = compraItems.filter(it => it.productId).map(it => {
       const p = db.products.find(x => x.id === it.productId);
-      return p ? { id: p.id, name: p.name, costPrice: p.costPrice, stock: p.stock } : null;
+      return p ? { id: p.id, name: p.name, costPrice: p.costPrice, price: p.price, priceVES: p.priceVES || 0, priceCOP: p.priceCOP || 0, stock: p.stock } : null;
     }).filter(Boolean);
     if (updatedProducts.length) {
       sb.from('products').upsert(updatedProducts, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync stock:', e));
