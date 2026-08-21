@@ -140,6 +140,10 @@
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Reportes</span>
     </button>
+    <button onclick="showTab('ofertas')" id="nav-ofertas"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-tags w-5 text-center"></i><span>Ofertas</span>
+    </button>
     <button onclick="showTab('compras')" id="nav-compras"
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-truck w-5 text-center"></i><span class="flex-1">Compras</span>
@@ -258,6 +262,9 @@
     </div>
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
       <i class="fa-solid fa-chart-line w-4 text-center text-xs"></i><span>Reportes</span>
+    </button>
+    <button onclick="showTab('ofertas');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="ofertas">
+      <i class="fa-solid fa-tags w-4 text-center text-xs"></i><span>Ofertas</span>
     </button>
     <button onclick="showTab('compras');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="compras">
       <i class="fa-solid fa-truck w-4 text-center text-xs"></i><span>Compras</span>
@@ -1104,6 +1111,66 @@
       </div>
     </div>
 
+    <!-- ======== TAB: OFERTAS ======== -->
+    <div id="tab-ofertas" class="tab-content">
+      <div class="mb-3">
+        <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Ofertas por Artículo</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Descuentos porcentuales con vigencia programada</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:col-span-1 h-fit">
+          <h3 class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-plus text-sky-500 mr-1"></i>Nueva Oferta</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[0.65rem] font-semibold text-slate-500 uppercase mb-1">Artículo</label>
+              <select id="offer-product" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"></select>
+            </div>
+            <div>
+              <label class="block text-[0.65rem] font-semibold text-slate-500 uppercase mb-1">Nombre (opcional)</label>
+              <input id="offer-name" type="text" placeholder="Ej: Liquidación mes" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+            </div>
+            <div>
+              <label class="block text-[0.65rem] font-semibold text-slate-500 uppercase mb-1">Descuento %</label>
+              <input id="offer-discount" type="number" min="0.01" max="100" step="0.01" placeholder="15" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[0.65rem] font-semibold text-slate-500 uppercase mb-1">Desde</label>
+                <input id="offer-from" type="date" class="w-full border border-slate-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+              </div>
+              <div>
+                <label class="block text-[0.65rem] font-semibold text-slate-500 uppercase mb-1">Hasta</label>
+                <input id="offer-to" type="date" class="w-full border border-slate-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+              </div>
+            </div>
+            <button onclick="saveOffer()" id="offer-save-btn"
+              class="w-full py-2 text-white rounded-xl transition-all font-medium text-sm shadow-sm flex items-center justify-center gap-2" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+              <i class="fa-solid fa-tag"></i><span id="offer-save-label">Crear Oferta</span>
+            </button>
+            <button onclick="resetOfferForm()" id="offer-cancel-btn" class="hidden w-full py-2 text-slate-600 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all font-medium text-sm">
+              Cancelar edición
+            </button>
+          </div>
+        </div>
+        <div class="lg:col-span-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+              <i class="fa-solid fa-filter"></i>
+              <select id="offer-status-filter" onchange="renderOffers()" class="border border-slate-200 rounded-lg px-2 py-1 text-xs">
+                <option value="">Todas</option>
+                <option value="vigente">Vigentes</option>
+                <option value="programada">Programadas</option>
+                <option value="expirada">Expiradas</option>
+                <option value="inactiva">Inactivas</option>
+              </select>
+            </div>
+            <span class="text-xs text-slate-400"><strong id="offers-active-count">0</strong> vigentes</span>
+          </div>
+          <div id="offers-list" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /p-3 lg:p-6 -->
 </main>
 
@@ -1806,6 +1873,7 @@ let db = {
   suppliers: [],
   purchases: [],
   payments: [],
+  offers: [],
   settings: {
     whatsapp: '',
     storeName: 'RefrigiHerrera',
@@ -1858,9 +1926,10 @@ async function loadFromSupabase() {
     sb.from('quotes').select('*').order('date', { ascending: false }),
     sb.from('suppliers').select('*').order('created_at', { ascending: false }),
     sb.from('purchases').select('*').order('date', { ascending: false }),
-    sb.from('payments').select('*').order('date', { ascending: true })
+    sb.from('payments').select('*').order('date', { ascending: true }),
+    sb.from('offers').select('*').order('created_at', { ascending: false })
   ]);
-  const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes, supplierRes, purchaseRes, paymentRes] = results;
+  const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes, supplierRes, purchaseRes, paymentRes, offerRes] = results;
   const ok = r => r.status === 'fulfilled';
   if (ok(prodRes) && prodRes.value.data) db.products = prodRes.value.data.map(p => ({
     id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
@@ -1913,6 +1982,12 @@ async function loadFromSupabase() {
     amount: p.amount || 0, amountUsd: p.amount_usd || 0,
     method: p.method || '', date: p.date
   }));
+  if (ok(offerRes) && offerRes.value.data) db.offers = offerRes.value.data.map(o => ({
+    id: o.id, productId: o.product_id, name: o.name || '',
+    discountPercent: o.discount_percent || 0,
+    dateFrom: o.date_from, dateTo: o.date_to,
+    active: o.active !== false, createdAt: o.created_at
+  }));
   const failed = results.filter(r => r.status === 'rejected');
   if (failed.length) console.warn('Supabase queries with errors:', failed.map(r => r.reason?.message || r.reason));
   saveDB();
@@ -1932,6 +2007,7 @@ function loadDB() {
       db.suppliers = parsed.suppliers || [];
       db.purchases = parsed.purchases || [];
       db.payments = parsed.payments || [];
+      db.offers = parsed.offers || [];
       db.settings = Object.assign({}, db.settings, parsed.settings || {});
     }
   } catch (e) { console.error('loadDB:', e); }
@@ -2006,6 +2082,14 @@ async function syncToSupabase() {
     }));
     if (payments.length) syncOps.push(sb.from('payments').upsert(payments, { onConflict: 'id' }).catch(e => console.warn('sync payments:', e)));
 
+    const offers = (db.offers || []).map(o => ({
+      id: o.id, product_id: o.productId, name: o.name || '',
+      discount_percent: o.discountPercent || 0,
+      date_from: o.dateFrom, date_to: o.dateTo,
+      active: o.active !== false
+    }));
+    if (offers.length) syncOps.push(sb.from('offers').upsert(offers, { onConflict: 'id' }).catch(e => console.warn('sync offers:', e)));
+
     syncOps.push(sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' }).catch(e => console.warn('sync settings:', e)));
     await Promise.allSettled(syncOps);
 
@@ -2031,6 +2115,15 @@ async function syncToSupabase() {
       if (serverPurchases.data) {
         for (const sp of serverPurchases.data.filter(x => !localPurchaseIds.includes(x.id))) {
           await sb.from('purchases').delete().eq('id', sp.id).catch(() => {});
+        }
+      }
+    }
+    if (db.offers) {
+      const localOfferIds = db.offers.map(o => o.id);
+      const serverOffers = await sb.from('offers').select('id');
+      if (serverOffers.data) {
+        for (const so of serverOffers.data.filter(x => !localOfferIds.includes(x.id))) {
+          await sb.from('offers').delete().eq('id', so.id).catch(() => {});
         }
       }
     }
@@ -2103,7 +2196,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', 'cotizaciones-lista':'Lista de Cotizaciones', compras:'Compras', proveedores:'Proveedores', gastos:'Compras y Gastos', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', 'cotizaciones-lista':'Lista de Cotizaciones', compras:'Compras', proveedores:'Proveedores', gastos:'Compras y Gastos', reportes:'Reportes', ofertas:'Ofertas', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -2132,18 +2225,213 @@ function showTab(tab) {
   document.getElementById('mobile-title').textContent = tabNames[tab] || tab;
 
   switch (tab) {
-    case 'dashboard':    renderDashboard();     break;
-    case 'inventario':   renderInventario();    break;
-    case 'ventas':       renderPOS();           break;
-    case 'cotizaciones': renderCotizaciones();    break;
-    case 'cotizaciones-lista': cotiConvertingId = null; renderCotizacionesLista(); break;
-    case 'proveedores':  renderSuppliersTable();break;
-    case 'compras':      initCompraTab();       break;
-    case 'gastos':       renderPurchasesTable();break;
-    case 'reportes':     renderReportes();      break;
-    case 'clientes':     renderClientsTable();  break;
-    case 'usuarios':     renderUsersTable();    break;
+    case 'dashboard':    renderDashboard();    break;
+    case 'inventario':   renderInventario();   break;
+    case 'ventas':       renderPOS();          break;
+    case 'cotizaciones':       renderCotizaciones();       break;
+    case 'cotizaciones-lista':  cotiConvertingId = null; renderCotizacionesLista();  break;
+    case 'reportes':     renderReportes();     break;
+    case 'ofertas':      initOfertasTab();     break;
+    case 'clientes':     renderClientsTable(); break;
+    case 'usuarios':     renderUsersTable();   break;
   }
+}
+
+// ===================================================================
+// MÓDULO OFERTAS POR ARTÍCULO
+// ===================================================================
+function offerToday() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+function getActiveOffer(productId, refDate) {
+  const d = refDate || offerToday();
+  return (db.offers || []).find(o =>
+    o.active !== false &&
+    o.productId === productId &&
+    d >= o.dateFrom && d <= o.dateTo
+  ) || null;
+}
+
+function offerStatus(o) {
+  if (o.active === false) return 'inactiva';
+  const t = offerToday();
+  if (t < o.dateFrom) return 'programada';
+  if (t > o.dateTo) return 'expirada';
+  return 'vigente';
+}
+
+function initOfertasTab() {
+  populateOfferProducts();
+  const f = document.getElementById('offer-from');
+  if (f && !f.value) f.value = offerToday();
+  renderOffers();
+}
+
+function populateOfferProducts() {
+  const sel = document.getElementById('offer-product');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Seleccionar artículo —</option>' +
+    db.products.map(p => `<option value="${p.id}">${escHtml(p.name)}${p.sku ? ' (' + escHtml(p.sku) + ')' : ''} — $${fmtNum(p.price)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function hasOverlappingOffer(productId, dateFrom, dateTo, excludeId) {
+  return (db.offers || []).find(o =>
+    o.productId === productId &&
+    o.id !== excludeId &&
+    !(o.active === false) &&
+    dateFrom <= o.dateTo && dateTo >= o.dateFrom
+  ) || null;
+}
+
+function saveOffer() {
+  const editingId = document.getElementById('offer-save-btn').dataset.editing || null;
+  const productId = document.getElementById('offer-product').value;
+  const name = document.getElementById('offer-name').value.trim();
+  const discount = parseFloat(document.getElementById('offer-discount').value);
+  const dateFrom = document.getElementById('offer-from').value;
+  const dateTo = document.getElementById('offer-to').value;
+
+  if (!productId) { showToast('Selecciona un artículo', 'warning'); return; }
+  if (!discount || discount <= 0 || discount > 100) { showToast('El descuento debe estar entre 0.01 y 100%', 'error'); return; }
+  if (!dateFrom || !dateTo) { showToast('Define fecha Desde y Hasta', 'warning'); return; }
+  if (dateFrom > dateTo) { showToast('La fecha Desde no puede ser mayor que Hasta', 'error'); return; }
+
+  const overlap = hasOverlappingOffer(productId, dateFrom, dateTo, editingId);
+  if (overlap) {
+    showToast(`Ya existe una oferta activa (${overlap.discountPercent}%, ${overlap.dateFrom} a ${overlap.dateTo}) que se solapa con estas fechas`, 'error');
+    return;
+  }
+
+  const offer = {
+    id: editingId || generateId(),
+    productId, name,
+    discountPercent: Math.round(discount * 100) / 100,
+    dateFrom, dateTo,
+    active: true
+  };
+
+  if (editingId) {
+    const idx = db.offers.findIndex(o => o.id === editingId);
+    if (idx !== -1) db.offers[idx] = offer;
+  } else {
+    db.offers.push(offer);
+  }
+  saveDB();
+  if (sbReady) {
+    sb.from('offers').upsert({
+      id: offer.id, product_id: offer.productId, name: offer.name,
+      discount_percent: offer.discountPercent,
+      date_from: offer.dateFrom, date_to: offer.dateTo, active: offer.active
+    }).catch(e => console.warn('sync oferta:', e));
+  }
+  showToast(editingId ? 'Oferta actualizada' : 'Oferta creada', 'success');
+  resetOfferForm();
+  renderOffers();
+}
+
+function editOffer(id) {
+  const o = db.offers.find(x => x.id === id);
+  if (!o) return;
+  populateOfferProducts();
+  document.getElementById('offer-product').value = o.productId;
+  document.getElementById('offer-name').value = o.name || '';
+  document.getElementById('offer-discount').value = o.discountPercent;
+  document.getElementById('offer-from').value = o.dateFrom;
+  document.getElementById('offer-to').value = o.dateTo;
+  document.getElementById('offer-save-btn').dataset.editing = id;
+  document.getElementById('offer-save-label').textContent = 'Guardar Cambios';
+  document.getElementById('offer-cancel-btn').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetOfferForm() {
+  ['offer-name','offer-discount'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const btn = document.getElementById('offer-save-btn');
+  delete btn.dataset.editing;
+  document.getElementById('offer-save-label').textContent = 'Crear Oferta';
+  document.getElementById('offer-cancel-btn').classList.add('hidden');
+}
+
+function toggleOffer(id) {
+  const o = db.offers.find(x => x.id === id);
+  if (!o) return;
+  if (o.active !== false) {
+    o.active = false;
+  } else {
+    const overlap = hasOverlappingOffer(o.productId, o.dateFrom, o.dateTo, o.id);
+    if (overlap) { showToast(`No se puede reactivar: se solapa con otra oferta (${overlap.dateFrom} a ${overlap.dateTo})`, 'error'); return; }
+    o.active = true;
+  }
+  saveDB();
+  if (sbReady) sb.from('offers').update({ active: o.active }).eq('id', id).catch(e => console.warn('sync oferta:', e));
+  renderOffers();
+}
+
+function deleteOffer(id) {
+  if (!confirm('¿Eliminar esta oferta? (las ventas ya realizadas conservan su precio)')) return;
+  db.offers = db.offers.filter(o => o.id !== id);
+  saveDB();
+  if (sbReady) sb.from('offers').delete().eq('id', id).catch(e => console.warn('sync oferta:', e));
+  const saveBtn = document.getElementById('offer-save-btn');
+  if (saveBtn && saveBtn.dataset.editing === id) resetOfferForm();
+  renderOffers();
+  showToast('Oferta eliminada', 'warning');
+}
+
+const OFFER_STATUS_STYLES = {
+  vigente:    'bg-emerald-100 text-emerald-700',
+  programada: 'bg-sky-100 text-sky-700',
+  expirada:   'bg-slate-100 text-slate-500',
+  inactiva:   'bg-red-100 text-red-600'
+};
+const OFFER_STATUS_LABELS = {
+  vigente: 'Vigente', programada: 'Programada', expirada: 'Expirada', inactiva: 'Inactiva'
+};
+
+function renderOffers() {
+  const wrap = document.getElementById('offers-list');
+  if (!wrap) return;
+  populateOfferProducts();
+  const filter = document.getElementById('offer-status-filter').value;
+  let offers = [...(db.offers || [])].sort((a, b) => (b.dateFrom || '').localeCompare(a.dateFrom || ''));
+  if (filter) offers = offers.filter(o => offerStatus(o) === filter);
+
+  document.getElementById('offers-active-count').textContent =
+    (db.offers || []).filter(o => offerStatus(o) === 'vigente').length;
+
+  if (!offers.length) {
+    wrap.innerHTML = '<div class="bg-white rounded-2xl border border-slate-100 p-8 text-center text-slate-400 text-xs"><i class="fa-solid fa-tags text-3xl mb-2 block text-slate-200"></i>No hay ofertas en esta vista</div>';
+    return;
+  }
+
+  wrap.innerHTML = offers.map(o => {
+    const st = offerStatus(o);
+    const prod = db.products.find(p => p.id === o.productId);
+    const price = prod ? prod.price : 0;
+    const finalPrice = price * (1 - o.discountPercent / 100);
+    return `<div class="bg-white rounded-xl shadow-sm border ${st==='vigente' ? 'border-emerald-200' : 'border-slate-100'} p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span class="text-lg font-black px-2 py-1 rounded-lg ${st==='vigente' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}">-${o.discountPercent}%</span>
+        <span class="text-[0.55rem] font-bold px-1.5 py-0.5 rounded-full ${OFFER_STATUS_STYLES[st]}">${OFFER_STATUS_LABELS[st]}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-bold text-slate-700 truncate">${escHtml(prod ? prod.name : 'Producto eliminado')}</div>
+        <div class="text-[0.6rem] text-slate-400">
+          ${o.dateFrom} → ${o.dateTo}${o.name ? ' · ' + escHtml(o.name) : ''}
+        </div>
+        ${prod ? `<div class="text-[0.6rem] mt-0.5">$${fmtNum(price)} → <strong class="text-emerald-600">$${fmtNum(finalPrice)}</strong></div>` : ''}
+      </div>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <button onclick="editOffer('${o.id}')" title="Editar" class="w-7 h-7 flex items-center justify-center rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-all"><i class="fa-solid fa-pen text-xs"></i></button>
+        <button onclick="toggleOffer('${o.id}')" title="${o.active===false ? 'Reactivar' : 'Desactivar'}" class="w-7 h-7 flex items-center justify-center rounded-lg ${o.active===false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'} transition-all"><i class="fa-solid ${o.active===false ? 'fa-play' : 'fa-pause'} text-xs"></i></button>
+        <button onclick="deleteOffer('${o.id}')" title="Eliminar" class="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ===================================================================
@@ -2907,14 +3195,17 @@ function renderProductGrid() {
   grid.innerHTML = items.map(item => {
     if (item.type === 'product') {
       const p = item.data;
-      return `<div class="product-card bg-white rounded-xl border ${p.isService ? 'border-purple-200' : 'border-slate-100'} p-2 cursor-pointer hover:border-sky-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
+      const gridOffer = getActiveOffer(p.id);
+      const offerFinal = gridOffer ? p.price * (1 - gridOffer.discountPercent / 100) : 0;
+      return `<div class="product-card bg-white rounded-xl border ${gridOffer ? 'border-emerald-300' : p.isService ? 'border-purple-200' : 'border-slate-100'} p-2 cursor-pointer hover:border-sky-300 hover:shadow-md transition-all active:scale-95 select-none relative flex flex-col"
         onclick="addToCart('${p.id}',false)">
+        ${gridOffer ? `<span class="absolute top-0.5 left-0.5 text-[0.45rem] bg-emerald-500 text-white px-1 py-px rounded-full font-bold leading-tight">-${gridOffer.discountPercent}%</span>` : ''}
         ${p.isService ? `<span class="absolute top-0.5 right-0.5 text-[0.45rem] bg-purple-500 text-white px-1 py-px rounded-full font-bold leading-tight">SERVICIO</span>` : ''}
         <div class="psku text-[0.55rem] text-slate-400 font-mono leading-none">${escHtml(p.sku)}</div>
         <div class="pname text-xs font-semibold text-slate-800 leading-tight line-clamp-2 flex-1">${escHtml(p.name)}</div>
         <div class="flex items-end justify-between mt-0.5">
           <div>
-            <span class="pprice text-xs font-bold text-sky-600">${fmt(p.price)}</span>
+            ${gridOffer ? `<s class="text-[0.55rem] text-slate-400 leading-none">${fmt(p.price)}</s> <span class="pprice text-xs font-bold text-emerald-600">${fmt(offerFinal)}</span>` : `<span class="pprice text-xs font-bold text-sky-600">${fmt(p.price)}</span>`}
             ${p.priceVES ? `<div class="text-[0.5rem] text-amber-600 leading-none mt-0.5">Bs. ${fmtNum(p.priceVES)}</div>` : ''}
             ${p.priceCOP ? `<div class="text-[0.5rem] text-emerald-600 leading-none mt-0.5">$${fmtNum(p.priceCOP)} COP</div>` : ''}
           </div>
@@ -2954,6 +3245,12 @@ function addToCart(id, isCombo) {
       id: generateId(), productId: prod.id, name: prod.name, sku: prod.sku,
       unitPrice: prod.price, qty: 1, isCombo: false, comboItems: []
     };
+    const offer = getActiveOffer(prod.id);
+    if (offer && prod.price > 0) {
+      newItem.offerPercent = offer.discountPercent;
+      newItem.originalPrice = prod.price;
+      newItem.unitPrice = Math.round(prod.price * (1 - offer.discountPercent / 100) * 100) / 100;
+    }
   }
   newItem.lineTotal = calcLineTotal(newItem);
   cart.push(newItem);
@@ -3024,9 +3321,10 @@ function renderCart() {
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-1 flex-wrap">
           ${item.isCombo ? `<span class="text-[0.5rem] bg-purple-100 text-purple-700 px-1 rounded font-bold">COMBO</span>` : ''}
+          ${item.offerPercent ? `<span class="text-[0.5rem] bg-emerald-500 text-white px-1 rounded font-bold">-${item.offerPercent}% OFERTA</span>` : ''}
         </div>
         <div class="text-xs font-medium text-slate-700 truncate">${escHtml(item.name)}</div>
-        <div class="text-[0.6rem] text-slate-400">${fmt(item.unitPrice)} c/u</div>
+        <div class="text-[0.6rem] text-slate-400">${item.offerPercent ? `<s>$${fmtNum(item.originalPrice)}</s> ` : ''}${fmt(item.unitPrice)} c/u</div>
         <div class="text-[0.55rem] font-medium text-sky-600">${refText}</div>
       </div>
       <div class="flex items-center gap-0.5 flex-shrink-0">
@@ -3161,7 +3459,9 @@ function processPayment() {
       productId: item.productId, name: item.name, sku: item.sku,
       qty: item.qty, unitPrice: item.unitPrice,
       isCombo: item.isCombo, comboItems: item.comboItems||[],
-      lineTotal: calcLineTotal(item)
+      lineTotal: calcLineTotal(item),
+      originalPrice: item.originalPrice || null,
+      offerPercent: item.offerPercent || null
     })),
     subtotal: total, total, method, cashAmount, transferAmount, copAmount: copAmount || 0, copRate: copRate, exchangeRate: rate,
     clientId: posClientId || null

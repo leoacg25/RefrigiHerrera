@@ -231,3 +231,33 @@ CREATE POLICY "Allow authenticated upload cotizaciones" ON storage.objects
 
 CREATE POLICY "Allow authenticated read cotizaciones" ON storage.objects
   FOR SELECT TO authenticated USING (bucket_id = 'cotizaciones');
+
+-- ===================================================================
+-- TABLA: OFFERS (Ofertas por artículo)
+-- Ejecutar en Supabase SQL Editor
+-- ===================================================================
+CREATE TABLE IF NOT EXISTS offers (
+  id               TEXT PRIMARY KEY,
+  product_id       TEXT NOT NULL,
+  name             TEXT DEFAULT '',
+  discount_percent NUMERIC(5,2) NOT NULL CHECK (discount_percent > 0 AND discount_percent <= 100),
+  date_from        DATE NOT NULL,
+  date_to          DATE NOT NULL,
+  active           BOOLEAN NOT NULL DEFAULT true,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT valid_offer_range CHECK (date_to >= date_from)
+);
+
+ALTER TABLE offers DISABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS idx_offers_product ON offers(product_id);
+CREATE INDEX IF NOT EXISTS idx_offers_dates ON offers(date_from, date_to);
+
+-- Opcional: bloquear solapamiento a nivel BD (recomendado)
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+ALTER TABLE offers DROP CONSTRAINT IF EXISTS no_overlap_offers;
+ALTER TABLE offers ADD CONSTRAINT no_overlap_offers
+  EXCLUDE USING gist (
+    product_id WITH =,
+    daterange(date_from, date_to, '[]') WITH &&
+  ) WHERE (active);
