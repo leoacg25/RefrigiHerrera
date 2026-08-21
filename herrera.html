@@ -3958,16 +3958,16 @@ function cotiGeneratePDF(id) {
 
   try {
     if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', 15, 12, 25, 20);
+      doc.addImage(logoBase64, 'PNG', 14, 9, 36, 15);
     }
   } catch(e) {}
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(storeName, 45, 20);
+  doc.text(storeName, 54, 17);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(120);
-  doc.text('Cotización', 45, 26);
+  doc.text('Cotización', 54, 23);
 
   doc.setDrawColor(13, 123, 193);
   doc.setLineWidth(0.5);
@@ -3996,11 +3996,12 @@ function cotiGeneratePDF(id) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   (q.items || []).forEach(item => {
-    const lt = item.qty * item.unitPrice;
+    const unit = item.baseUSD != null ? cotiToCurrency(item.baseUSD, cur) : (item.unitPrice || 0);
+    const lt = item.qty * unit;
     if (y > 265) { doc.addPage(); y = 20; }
     doc.text(item.name || '', 17, y + 4);
     doc.text(String(item.qty), 118, y + 4);
-    doc.text(cotiFmtVal(item.unitPrice, cur), 135, y + 4);
+    doc.text(cotiFmtVal(unit, cur), 135, y + 4);
     doc.text(cotiFmtVal(lt, cur), 165, y + 4);
     doc.setDrawColor(220);
     doc.line(15, y + 6, 195, y + 6);
@@ -4008,13 +4009,17 @@ function cotiGeneratePDF(id) {
   });
 
   y += 4;
+  const totalInCur = (q.items || []).reduce((s, item) => {
+    const unit = item.baseUSD != null ? cotiToCurrency(item.baseUSD, cur) : (item.unitPrice || 0);
+    return s + unit * (item.qty || 0);
+  }, 0) || q.total || 0;
   doc.setFillColor(238, 246, 252);
   doc.roundedRect(130, y, 65, 12, 2, 2, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(4, 21, 75);
   doc.text('Total:', 135, y + 8);
-  doc.text(cotiFmtVal(q.total, cur), 155, y + 8);
+  doc.text(cotiFmtVal(totalInCur, cur), 155, y + 8);
 
   if (q.notes) {
     y += 20;
@@ -4109,12 +4114,15 @@ async function cotiWhatsApp(id) {
   msg += `👤 Cliente: ${q.clientName || 'Sin cliente'}\n`;
   msg += `💱 Moneda: ${cur}\n`;
   msg += `─────────────────\n`;
+  let waTotal = 0;
   (q.items || []).forEach(item => {
-    const lt = item.qty * item.unitPrice;
-    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmtVal(item.unitPrice, cur)} = *${cotiFmtVal(lt, cur)}*\n`;
+    const unit = item.baseUSD != null ? cotiToCurrency(item.baseUSD, cur) : (item.unitPrice || 0);
+    const lt = item.qty * unit;
+    waTotal += lt;
+    msg += `📦 ${item.name}\n   ${item.qty} × ${cotiFmtVal(unit, cur)} = *${cotiFmtVal(lt, cur)}*\n`;
   });
   msg += `─────────────────\n`;
-  msg += `💰 *Total: ${cotiFmtVal(q.total, cur)}*\n`;
+  msg += `💰 *Total: ${cotiFmtVal(waTotal || q.total, cur)}*\n`;
   if (q.notes) msg += `\n📝 ${q.notes}\n`;
   if (pdfUrl) msg += `\n📄 PDF: ${pdfUrl}\n`;
   msg += `\n¡Gracias por su preferencia!`;
@@ -5042,17 +5050,17 @@ function printPurchasePdf(purchaseId) {
   const copRate = rate * COP_FACTOR;
 
   if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', 15, 10, 25, 20);
+    doc.addImage(logoBase64, 'PNG', 14, 8, 36, 15);
   }
 
   doc.setFontSize(16);
   doc.setTextColor(4, 21, 75);
-  doc.text('RefrigiHerrera', logoBase64 ? 45 : 15, 18);
+  doc.text('RefrigiHerrera', logoBase64 ? 54 : 15, 16);
 
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text(`RIF: ${db.settings.rif || 'N/A'}`, logoBase64 ? 45 : 15, 24);
-  doc.text(`Tel: ${db.settings.whatsapp || 'N/A'}`, logoBase64 ? 45 : 15, 29);
+  doc.text(`RIF: ${db.settings.rif || 'N/A'}`, logoBase64 ? 54 : 15, 22);
+  doc.text(`Tel: ${db.settings.whatsapp || 'N/A'}`, logoBase64 ? 54 : 15, 27);
 
   doc.setFontSize(14);
   doc.setTextColor(4, 21, 75);
