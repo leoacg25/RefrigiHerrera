@@ -815,13 +815,12 @@
                 <th class="px-3 py-2 text-left font-semibold">Descripción</th>
                 <th class="px-3 py-2 text-right font-semibold">Cant.</th>
                 <th class="px-3 py-2 text-right font-semibold">Precio Unit.</th>
-                <th class="px-3 py-2 text-right font-semibold">Subtotal</th>
                 <th class="px-3 py-2 text-center font-semibold">Acc.</th>
               </tr>
             </thead>
             <tbody id="compra-items-body" class="divide-y divide-slate-50">
               <tr id="compra-items-empty">
-                <td colspan="6" class="px-3 py-8 text-center text-slate-300">
+                <td colspan="5" class="px-3 py-8 text-center text-slate-300">
                   <i class="fa-solid fa-box-open text-2xl block mb-1"></i>
                   <span class="text-xs">Sin artículos</span>
                 </td>
@@ -4211,11 +4210,13 @@ function deleteSupplier(id) {
 // ===================================================================
 let compraProveedor = null;
 let compraItems = [];
+let compraEditIdx = -1;
 
 function initCompraTab() {
   document.getElementById('compra-fecha').textContent = new Date().toLocaleDateString('es-VE', { year:'numeric', month:'2-digit', day:'2-digit' });
   compraProveedor = null;
   compraItems = [];
+  compraEditIdx = -1;
   compraArtSeleccionado = null;
   document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
   document.getElementById('compra-proveedor-info').classList.add('hidden');
@@ -4334,18 +4335,34 @@ function compraEliminarArticulo(i) {
 function renderCompraItems() {
   const tbody = document.getElementById('compra-items-body');
   if (!compraItems.length) {
-    tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="6" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
+    tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="5" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
   } else {
     tbody.innerHTML = compraItems.map((it, i) => {
       const prod = it.productId ? db.products.find(p => p.id === it.productId) : null;
+      if (compraEditIdx === i) {
+        return `<tr class="bg-sky-50/60 transition-all">
+          <td class="px-3 py-1.5 text-xs text-slate-500">${i + 1}</td>
+          <td class="px-3 py-1.5"><input type="text" id="ce-desc-${i}" value="${escHtml(it.desc)}" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500"></td>
+          <td class="px-3 py-1.5"><input type="number" id="ce-cant-${i}" value="${it.cant}" min="0.01" step="0.01" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
+          <td class="px-3 py-1.5"><input type="number" id="ce-prec-${i}" value="${it.precio}" min="0" step="0.01" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
+          <td class="px-3 py-1.5 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button onclick="compraGuardarEdicion(${i})" title="Guardar" class="p-1 rounded-lg hover:bg-emerald-100 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-check text-xs"></i></button>
+              <button onclick="compraCancelarEdicion()" title="Cancelar" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+          </td>
+        </tr>`;
+      }
       return `<tr class="hover:bg-sky-50/40 transition-all">
         <td class="px-3 py-2 text-xs text-slate-500">${i + 1}</td>
         <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}${prod ? `<span class="text-[0.55rem] text-slate-400 ml-1.5">${escHtml(prod.sku)}</span>` : ''}</td>
         <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant.toFixed(2)}</td>
         <td class="px-3 py-2 text-xs text-slate-600 text-right">$${fmtNum(it.precio)}</td>
-        <td class="px-3 py-2 text-xs font-medium text-slate-700 text-right">$${fmtNum(it.subtotal)}</td>
         <td class="px-3 py-2 text-center">
-          <button onclick="compraEliminarArticulo(${i})" class="text-red-400 hover:text-red-600 transition-all p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+          <div class="flex items-center justify-center gap-1">
+            <button onclick="compraEditarFila(${i})" title="Editar" class="p-1 rounded-lg hover:bg-sky-100 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+            <button onclick="compraEliminarArticulo(${i})" title="Eliminar" class="p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
         </td>
       </tr>`}).join('');
   }
@@ -4354,6 +4371,31 @@ function renderCompraItems() {
   document.getElementById('compra-subtotal').textContent = fmtNum(sub);
   document.getElementById('compra-iva').textContent = fmtNum(iva);
   document.getElementById('compra-total').textContent = fmtNum(sub + iva);
+}
+
+function compraEditarFila(i) {
+  compraEditIdx = i;
+  renderCompraItems();
+  const descEl = document.getElementById('ce-desc-' + i);
+  if (descEl) descEl.focus();
+}
+
+function compraCancelarEdicion() {
+  compraEditIdx = -1;
+  renderCompraItems();
+}
+
+function compraGuardarEdicion(i) {
+  const desc = document.getElementById('ce-desc-' + i).value.trim();
+  const cant = parseFloat(document.getElementById('ce-cant-' + i).value);
+  const precio = parseFloat(document.getElementById('ce-prec-' + i).value);
+  if (!desc || cant <= 0 || precio < 0) { showToast('Datos inválidos', 'error'); return; }
+  compraItems[i].desc = desc;
+  compraItems[i].cant = cant;
+  compraItems[i].precio = precio;
+  compraItems[i].subtotal = cant * precio;
+  compraEditIdx = -1;
+  renderCompraItems();
 }
 
 function compraGuardar() {
