@@ -772,10 +772,21 @@
           Detalle de Compra
         </h3>
         <form id="compra-articulo-form" onsubmit="compraAgregarArticulo(event)" class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-3">
-          <div class="md:col-span-5">
-            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Descripción</label>
-            <input type="text" id="compra-art-desc" required placeholder="Ej. Resma de papel A4"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          <div class="md:col-span-5 relative">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Descripción / Artículo</label>
+            <div class="flex gap-1.5">
+              <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="compra-art-desc" required placeholder="Buscar por nombre o SKU..." autocomplete="off"
+                  oninput="onCompraArtSearch(this.value)"
+                  class="w-full pl-7 pr-2 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+                <div id="compra-art-dropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-52 overflow-y-auto"></div>
+              </div>
+              <button type="button" onclick="compraAbrirModalProducto()" title="Nuevo artículo en inventario"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition-all flex-shrink-0 shadow-sm">
+                <i class="fa-solid fa-plus text-xs"></i>
+              </button>
+            </div>
           </div>
           <div class="md:col-span-2">
             <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Cantidad</label>
@@ -2726,6 +2737,9 @@ document.addEventListener('click', function(e) {
   const cdd = document.getElementById('compra-proveedor-dropdown');
   const cinp = document.getElementById('compra-proveedor-input');
   if (cdd && cinp && !cdd.contains(e.target) && e.target !== cinp) cdd.classList.add('hidden');
+  const add = document.getElementById('compra-art-dropdown');
+  const ainp = document.getElementById('compra-art-desc');
+  if (add && ainp && !add.contains(e.target) && e.target !== ainp) add.classList.add('hidden');
 });
 
 function updateTotalVESDisplay() {
@@ -4202,6 +4216,7 @@ function initCompraTab() {
   document.getElementById('compra-fecha').textContent = new Date().toLocaleDateString('es-VE', { year:'numeric', month:'2-digit', day:'2-digit' });
   compraProveedor = null;
   compraItems = [];
+  compraArtSeleccionado = null;
   document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
   document.getElementById('compra-proveedor-info').classList.add('hidden');
   document.getElementById('compra-proveedor-input').value = '';
@@ -4252,14 +4267,59 @@ function compraLimpiarProveedor() {
   document.getElementById('compra-proveedor-input').focus();
 }
 
+// --- Búsqueda de artículos del inventario ---
+let compraArtSeleccionado = null;
+
+function onCompraArtSearch(q) {
+  compraArtSeleccionado = null;
+  const dd = document.getElementById('compra-art-dropdown');
+  dd.innerHTML = '';
+  if (q.length < 2) { dd.classList.add('hidden'); return; }
+  const lq = q.toLowerCase();
+  const hits = db.products.filter(p =>
+    (p.name||'').toLowerCase().includes(lq) ||
+    (p.sku||'').toLowerCase().includes(lq)
+  );
+  if (!hits.length) {
+    dd.innerHTML = `<div class="p-3 text-xs text-slate-400">Sin resultados. Puedes escribir manualmente o crear un artículo nuevo.</div>`;
+  } else {
+    hits.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'p-2.5 hover:bg-sky-50 cursor-pointer border-b border-slate-50 last:border-0 transition-all';
+      d.innerHTML = `<div class="flex items-center justify-between">
+        <div><span class="text-sm font-medium text-slate-700">${escHtml(p.name)}</span>
+        <span class="text-[0.6rem] text-slate-400 ml-2">${escHtml(p.sku)}</span></div>
+        <span class="text-xs font-semibold text-sky-600">$${fmtNum(p.costPrice || 0)}</span></div>
+        ${p.stock != null ? `<div class="text-[0.55rem] text-slate-400">Stock: ${p.stock}</div>` : ''}`;
+      d.onclick = () => compraSeleccionarArticulo(p);
+      dd.appendChild(d);
+    });
+  }
+  dd.classList.remove('hidden');
+}
+
+function compraSeleccionarArticulo(p) {
+  compraArtSeleccionado = p;
+  document.getElementById('compra-art-desc').value = p.name;
+  document.getElementById('compra-art-precio').value = p.costPrice || '';
+  document.getElementById('compra-art-dropdown').classList.add('hidden');
+  document.getElementById('compra-art-cant').focus();
+}
+
+function compraAbrirModalProducto() {
+  compraArtSeleccionado = null;
+  openProductModal();
+}
+
 function compraAgregarArticulo(e) {
   e.preventDefault();
   const desc = document.getElementById('compra-art-desc').value.trim();
   const cant = parseFloat(document.getElementById('compra-art-cant').value);
   const precio = parseFloat(document.getElementById('compra-art-precio').value);
   if (!desc || cant <= 0 || precio < 0) { showToast('Datos inválidos', 'error'); return; }
-  compraItems.push({ desc, cant, precio, subtotal: cant * precio });
+  compraItems.push({ desc, cant, precio, subtotal: cant * precio, productId: compraArtSeleccionado?.id || null });
   renderCompraItems();
+  compraArtSeleccionado = null;
   document.getElementById('compra-art-desc').value = '';
   document.getElementById('compra-art-cant').value = '1';
   document.getElementById('compra-art-precio').value = '';
@@ -4276,17 +4336,18 @@ function renderCompraItems() {
   if (!compraItems.length) {
     tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="6" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
   } else {
-    tbody.innerHTML = compraItems.map((it, i) => `
-      <tr class="hover:bg-sky-50/40 transition-all">
+    tbody.innerHTML = compraItems.map((it, i) => {
+      const prod = it.productId ? db.products.find(p => p.id === it.productId) : null;
+      return `<tr class="hover:bg-sky-50/40 transition-all">
         <td class="px-3 py-2 text-xs text-slate-500">${i + 1}</td>
-        <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}</td>
+        <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}${prod ? `<span class="text-[0.55rem] text-slate-400 ml-1.5">${escHtml(prod.sku)}</span>` : ''}</td>
         <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant.toFixed(2)}</td>
         <td class="px-3 py-2 text-xs text-slate-600 text-right">$${fmtNum(it.precio)}</td>
         <td class="px-3 py-2 text-xs font-medium text-slate-700 text-right">$${fmtNum(it.subtotal)}</td>
         <td class="px-3 py-2 text-center">
           <button onclick="compraEliminarArticulo(${i})" class="text-red-400 hover:text-red-600 transition-all p-1"><i class="fa-solid fa-trash text-xs"></i></button>
         </td>
-      </tr>`).join('');
+      </tr>`}).join('');
   }
   const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
   const iva = sub * 0.16;
