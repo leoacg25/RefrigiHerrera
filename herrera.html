@@ -4774,13 +4774,22 @@ function renderGastosSummary(rows) {
   const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
   const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
   const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
-  const pendingUsd = rows.filter(p => p.paymentStatus !== 'paid').reduce((s, p) => s + getPurchasePendingUsd(p), 0);
-  const pendingVes = pendingUsd * rate;
-  const pendingCop = pendingUsd * copRate;
 
-  let pendingLines = `$${fmtNum(pendingUsd)} USD`;
-  if (rate && pendingVes > 0) pendingLines += `<br><span class="text-amber-600">Bs.${fmtNum(pendingVes)}</span>`;
-  if (copRate && pendingCop > 0) pendingLines += `<br><span class="text-amber-600">$${fmtNum(pendingCop)} COP</span>`;
+  const pendingRows = rows.filter(p => p.paymentStatus !== 'paid');
+  let pendingUsd = 0, pendingVes = 0, pendingCop = 0;
+  pendingRows.forEach(p => {
+    const pend = getPurchasePendingOriginal(p);
+    const cur = p.currency || 'USD';
+    if (cur === 'USD') pendingUsd += pend;
+    else if (cur === 'VES') pendingVes += pend;
+    else if (cur === 'COP') pendingCop += pend;
+  });
+
+  let pendingLines = '';
+  if (pendingUsd > 0) pendingLines += `$${fmtNum(pendingUsd)} USD`;
+  if (pendingVes > 0) pendingLines += (pendingLines ? '<br>' : '') + `<span class="text-amber-600">Bs.${fmtNum(pendingVes)}</span>`;
+  if (pendingCop > 0) pendingLines += (pendingLines ? '<br>' : '') + `<span class="text-amber-600">$${fmtNum(pendingCop)} COP</span>`;
+  if (!pendingLines) pendingLines = '$0.00';
 
   el.innerHTML = `
     <div class="bg-white rounded-xl border border-slate-100 p-3">
@@ -4913,6 +4922,14 @@ function getPurchasePendingUsd(p) {
   const totalUsd = p.amountUsd || p.amount || 0;
   const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
   return Math.max(0, totalUsd - paid);
+}
+
+function getPurchasePendingOriginal(p) {
+  const totalUsd = p.amountUsd || p.amount || 0;
+  if (!totalUsd) return 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const fractionPaid = Math.min(paid / totalUsd, 1);
+  return Math.max(0, (p.amount || 0) * (1 - fractionPaid));
 }
 
 function openPaymentModal(purchaseId) {
