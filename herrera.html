@@ -298,7 +298,7 @@
       </div>
 
       <!-- KPIs -->
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-sky-100 hover:shadow-md transition-all">
           <div class="flex items-center justify-between mb-2">
             <div class="w-9 h-9 bg-sky-100 rounded-xl flex items-center justify-center">
@@ -337,37 +337,7 @@
             <span class="text-[0.65rem] text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full font-medium">Ingresos</span>
           </div>
           <div id="kpi-revenue" class="kpi-value text-2xl font-bold text-slate-800">$0.00</div>
-          <div class="text-slate-500 text-xs mt-0.5">Ventas totales USD</div>
-        </div>
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition-all">
-          <div class="flex items-center justify-between mb-2">
-            <div class="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
-              <i class="fa-solid fa-truck text-amber-600 text-sm"></i>
-            </div>
-            <span class="text-[0.65rem] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">Compras</span>
-          </div>
-          <div id="kpi-purchases-usd" class="kpi-value text-2xl font-bold text-slate-800">$0.00</div>
-          <div class="text-slate-500 text-xs mt-0.5">Compras USD</div>
-        </div>
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition-all">
-          <div class="flex items-center justify-between mb-2">
-            <div class="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
-              <i class="fa-solid fa-truck text-orange-600 text-sm"></i>
-            </div>
-            <span class="text-[0.65rem] text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-medium">Compras</span>
-          </div>
-          <div id="kpi-purchases-ves" class="kpi-value text-2xl font-bold text-slate-800">Bs.0.00</div>
-          <div class="text-slate-500 text-xs mt-0.5">Compras VES</div>
-        </div>
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-rose-100 hover:shadow-md transition-all">
-          <div class="flex items-center justify-between mb-2">
-            <div class="w-9 h-9 bg-rose-100 rounded-xl flex items-center justify-center">
-              <i class="fa-solid fa-truck text-rose-600 text-sm"></i>
-            </div>
-            <span class="text-[0.65rem] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full font-medium">Compras</span>
-          </div>
-          <div id="kpi-purchases-cop" class="kpi-value text-2xl font-bold text-slate-800">$0 COP</div>
-          <div class="text-slate-500 text-xs mt-0.5">Compras COP</div>
+          <div class="text-slate-500 text-xs mt-0.5">Ingresos totales USD</div>
         </div>
       </div>
 
@@ -964,7 +934,10 @@
       </div>
       <!-- Resumen -->
       <div id="gastos-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3"></div>
-      <div class="flex justify-end mb-2">
+      <div class="flex justify-end mb-2 gap-2">
+        <button onclick="generarReporteGastos()" class="text-xs text-violet-500 hover:text-violet-700 font-medium">
+          <i class="fa-solid fa-file-pdf mr-1"></i>Reporte
+        </button>
         <button onclick="exportPurchasesCSV()" class="text-xs text-sky-500 hover:text-sky-700 font-medium">
           <i class="fa-solid fa-download mr-1"></i>Exportar CSV
         </button>
@@ -2133,13 +2106,6 @@ function renderDashboard() {
   document.getElementById('kpi-stock').textContent = db.products.reduce((s, p) => s + (p.stock || 0), 0);
   document.getElementById('kpi-sales').textContent = db.sales.length;
   document.getElementById('kpi-revenue').textContent = fmt(db.sales.reduce((s, v) => s + (v.total || 0), 0));
-
-  const purchUSD = db.purchases.filter(p => p.currency === 'USD').reduce((s, p) => s + (p.amount || 0), 0);
-  const purchVES = db.purchases.filter(p => p.currency === 'VES').reduce((s, p) => s + (p.amount || 0), 0);
-  const purchCOP = db.purchases.filter(p => p.currency === 'COP').reduce((s, p) => s + (p.amount || 0), 0);
-  document.getElementById('kpi-purchases-usd').textContent = '$' + fmtNum(purchUSD);
-  document.getElementById('kpi-purchases-ves').textContent = 'Bs.' + fmtNum(purchVES);
-  document.getElementById('kpi-purchases-cop').textContent = '$' + fmtNum(purchCOP) + ' COP';
 
   // Alertas stock
   const alertsEl = document.getElementById('stock-alerts');
@@ -4750,6 +4716,105 @@ function exportPurchasesCSV() {
   a.href = url; a.download = `compras_gastos_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
   showToast('CSV exportado', 'success');
+}
+
+function generarReporteGastos() {
+  const from = document.getElementById('gastos-from')?.value || '';
+  const to = document.getElementById('gastos-to')?.value || '';
+  const cat = document.getElementById('gastos-category')?.value || '';
+  const status = document.getElementById('gastos-status')?.value || '';
+  let rows = [...db.purchases];
+  if (from) rows = rows.filter(p => (p.date||'') >= from);
+  if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
+  if (cat) rows = rows.filter(p => p.category === cat);
+  if (status) rows = rows.filter(p => p.paymentStatus === status);
+  rows.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!rows.length) { showToast('Sin datos para generar reporte', 'warning'); return; }
+
+  const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
+  const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
+  const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
+  const pending = rows.filter(p => p.paymentStatus === 'pending' || p.paymentStatus === 'partial').reduce((s, p) => s + (p.amount || 0), 0);
+
+  const byCurrency = {};
+  rows.forEach(p => {
+    const c = p.currency || 'USD';
+    byCurrency[c] = (byCurrency[c] || 0) + (p.amount || 0);
+  });
+
+  const statusLabel = { paid: 'Pagado', pending: 'Pendiente', partial: 'Parcial' };
+  const catLabel = { Compra: 'Compra', Gasto: 'Gasto' };
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' };
+
+  const fromStr = from ? new Date(from).toLocaleDateString('es-VE') : 'Inicio';
+  const toStr = to ? new Date(to).toLocaleDateString('es-VE') : 'Hoy';
+
+  const reportHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte de Gastos</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; font-size: 11px; color: #333; padding: 20px; }
+      .header { text-align: center; border-bottom: 2px solid #04154B; padding-bottom: 10px; margin-bottom: 15px; }
+      .header h1 { font-size: 18px; color: #04154B; }
+      .header p { font-size: 11px; color: #666; }
+      .summary { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
+      .summary-card { flex: 1; min-width: 120px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+      .summary-card .label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
+      .summary-card .value { font-size: 16px; font-weight: bold; color: #1e293b; margin-top: 2px; }
+      .summary-card .value.usd { color: #0ea5e9; }
+      .summary-card .value.ves { color: #f59e0b; }
+      .summary-card .value.cop { color: #10b981; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+      th { background: #f1f5f9; font-size: 9px; text-transform: uppercase; padding: 6px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569; }
+      td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10px; }
+      tr:nth-child(even) { background: #f8fafc; }
+      .badge { font-size: 8px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+      .badge-paid { background: #dcfce7; color: #166534; }
+      .badge-pending { background: #fef3c7; color: #92400e; }
+      .badge-partial { background: #dbeafe; color: #1e40af; }
+      .footer { text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 15px; }
+      @media print { body { padding: 10px; } }
+    </style></head><body>
+    <div class="header">
+      <h1>Reporte de Compras y Gastos</h1>
+      <p>RefrigiHerrera &mdash; Periodo: ${fromStr} al ${toStr}</p>
+    </div>
+    <div class="summary">
+      <div class="summary-card"><div class="label">Total General</div><div class="value usd">$${fmtNum(totalAll)}</div></div>
+      <div class="summary-card"><div class="label">Compras</div><div class="value usd">$${fmtNum(totalCompras)}</div></div>
+      <div class="summary-card"><div class="label">Gastos</div><div class="value usd">$${fmtNum(totalGastos)}</div></div>
+      <div class="summary-card"><div class="label">Por Pagar</div><div class="value" style="color:#f59e0b">$${fmtNum(pending)}</div></div>
+      ${Object.keys(byCurrency).map(c => `<div class="summary-card"><div class="label">Total ${c}</div><div class="value ${c.toLowerCase()}">${sym[c]||''}${fmtNum(byCurrency[c])}</div></div>`).join('')}
+    </div>
+    <table>
+      <thead><tr>
+        <th>Fecha</th><th>Descripción</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>Moneda</th><th>IVA</th><th>Categoría</th><th>Estado</th>
+      </tr></thead>
+      <tbody>${rows.map(p => {
+        const d = new Date(p.date).toLocaleDateString('es-VE');
+        const badgeCls = p.paymentStatus === 'paid' ? 'badge-paid' : p.paymentStatus === 'partial' ? 'badge-partial' : 'badge-pending';
+        return `<tr>
+          <td>${d}</td>
+          <td><strong>${escHtml(p.description||'')}</strong></td>
+          <td>${escHtml(p.supplierName||'—')}</td>
+          <td>${escHtml(p.invoiceNumber||'—')}</td>
+          <td style="text-align:right;font-weight:bold">${sym[p.currency]||'$'}${fmtNum(p.amount||0)}</td>
+          <td>${p.currency||'USD'}</td>
+          <td>${p.iva ? '$'+fmtNum(p.iva) : '—'}</td>
+          <td>${catLabel[p.category]||p.category}</td>
+          <td><span class="badge ${badgeCls}">${statusLabel[p.paymentStatus]||p.paymentStatus}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div class="footer">
+      Generado el ${new Date().toLocaleDateString('es-VE')} a las ${new Date().toLocaleTimeString('es-VE')} &mdash; RefrigiHerrera
+    </div>
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(reportHtml);
+  win.document.close();
+  win.print();
 }
 
 // ===================================================================
