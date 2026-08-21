@@ -2492,7 +2492,7 @@ function saveProduct() {
     id: id || generateId(), sku, name,
     isService,
     category:     document.getElementById('product-category').value.trim(),
-    costPrice:    cost,
+    costPrice:    Math.round(cost * 100) / 100,
     profitPercent:parseFloat(document.getElementById('product-profit').value)     || 0,
     price:        price,
     priceVES:     parseFloat(document.getElementById('product-price-ves').value)  || 0,
@@ -4571,7 +4571,7 @@ function compraGuardar() {
       const p = db.products.find(x => x.id === it.productId);
       if (p && !p.isService) {
         p.stock = (p.stock || 0) + (it.cant || 0);
-        if (it.precio) p.costPrice = it.precio;
+        if (it.precio) p.costPrice = Math.round(it.precio * 100) / 100;
         if (it.desc) p.name = it.desc;
       }
     }
