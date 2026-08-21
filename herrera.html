@@ -771,14 +771,20 @@
           <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">2</span>
           Datos de la Factura
         </h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div>
             <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Moneda *</label>
-            <select id="compra-moneda" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+            <select id="compra-moneda" onchange="compraMonedaChange()" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
               <option value="USD">$ USD Dólares</option>
               <option value="VES">Bs. VES Bolívares</option>
               <option value="COP">$ COP Pesos</option>
             </select>
+          </div>
+          <div id="compra-rate-wrap">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Tasa Cambiaria</label>
+            <input type="number" id="compra-tasa" min="0" step="0.01" placeholder="VES/USD"
+              oninput="compraRecalcTotal()"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
           </div>
           <div>
             <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">N° Factura</label>
@@ -4269,6 +4275,8 @@ function initCompraTab() {
   document.getElementById('compra-proveedor-info').classList.add('hidden');
   document.getElementById('compra-proveedor-input').value = '';
   document.getElementById('compra-moneda').value = 'USD';
+  document.getElementById('compra-tasa').value = db.settings.exchangeRate || '';
+  document.getElementById('compra-rate-wrap').classList.add('hidden');
   document.getElementById('compra-factura').value = '';
   document.getElementById('compra-guia').value = '';
   document.getElementById('compra-fecha-emision').value = '';
@@ -4399,15 +4407,45 @@ function compraLockCurrency() {
   }
 }
 
-function renderCompraItems() {
+function compraGetRate() {
+  return parseFloat(document.getElementById('compra-tasa')?.value) || db.settings.exchangeRate || 0;
+}
+
+function compraToCur(usdAmount) {
   const cur = document.getElementById('compra-moneda')?.value || 'USD';
-  const sym = { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
+  const rate = compraGetRate();
+  if (cur === 'VES') return usdAmount * rate;
+  if (cur === 'COP') return usdAmount * rate * COP_FACTOR;
+  return usdAmount;
+}
+
+function compraSym() {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  return { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
+}
+
+function compraMonedaChange() {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  const wrap = document.getElementById('compra-rate-wrap');
+  if (cur === 'USD') {
+    wrap.classList.add('hidden');
+  } else {
+    wrap.classList.remove('hidden');
+    const inp = document.getElementById('compra-tasa');
+    if (!inp.value && db.settings.exchangeRate) inp.value = db.settings.exchangeRate;
+  }
+  renderCompraItems();
+}
+
+function renderCompraItems() {
+  const sym = compraSym();
   const tbody = document.getElementById('compra-items-body');
   if (!compraItems.length) {
     tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="5" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
   } else {
     tbody.innerHTML = compraItems.map((it, i) => {
       const prod = it.productId ? db.products.find(p => p.id === it.productId) : null;
+      const precioConv = compraToCur(it.precio);
       if (compraEditIdx === i) {
         return `<tr class="bg-sky-50/60 transition-all">
           <td class="px-3 py-1.5 text-xs text-slate-500">${i + 1}</td>
@@ -4425,8 +4463,8 @@ function renderCompraItems() {
       return `<tr class="hover:bg-sky-50/40 transition-all">
         <td class="px-3 py-2 text-xs text-slate-500">${i + 1}</td>
         <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}${prod ? `<span class="text-[0.55rem] text-slate-400 ml-1.5">${escHtml(prod.sku)}</span>` : ''}</td>
-        <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant.toFixed(2)}</td>
-        <td class="px-3 py-2 text-xs text-slate-600 text-right">${sym}${fmtNum(it.precio)}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">${sym}${fmtNum(precioConv)}</td>
         <td class="px-3 py-2 text-center">
           <div class="flex items-center justify-center gap-1">
             <button onclick="compraEditarFila(${i})" title="Editar" class="p-1 rounded-lg hover:bg-sky-100 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
@@ -4471,12 +4509,11 @@ function compraCantStep(delta) {
 }
 
 function compraRecalcTotal() {
+  const sym = compraSym();
   const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
   const iva = parseFloat(document.getElementById('compra-iva-input')?.value) || 0;
-  const cur = document.getElementById('compra-moneda')?.value || 'USD';
-  const sym = { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
-  document.getElementById('compra-subtotal').textContent = sym + fmtNum(sub);
-  document.getElementById('compra-total').textContent = sym + fmtNum(sub + iva);
+  document.getElementById('compra-subtotal').textContent = sym + fmtNum(compraToCur(sub));
+  document.getElementById('compra-total').textContent = sym + fmtNum(compraToCur(sub) + compraToCur(iva));
 }
 
 function compraGuardar() {
@@ -4485,9 +4522,12 @@ function compraGuardar() {
 
   const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
   const iva = parseFloat(document.getElementById('compra-iva-input').value) || 0;
-  const total = sub + iva;
-  const notas = document.getElementById('compra-notas').value.trim();
+  const totalUsd = sub + iva;
   const moneda = document.getElementById('compra-moneda').value;
+  const rate = compraGetRate();
+  const totalConv = compraToCur(totalUsd);
+  const ivaConv = compraToCur(iva);
+  const notas = document.getElementById('compra-notas').value.trim();
   const factura = document.getElementById('compra-factura').value.trim();
   const guia = document.getElementById('compra-guia').value.trim();
   const fechaEmision = document.getElementById('compra-fecha-emision').value;
@@ -4499,9 +4539,12 @@ function compraGuardar() {
     supplierName: compraProveedor.name,
     description: 'Compra a ' + compraProveedor.name + (factura ? ' - Fct: ' + factura : ''),
     invoiceNumber: factura,
-    amount: total,
+    amount: totalConv,
+    amountUsd: totalUsd,
     currency: moneda,
-    iva: iva,
+    exchangeRate: rate,
+    iva: ivaConv,
+    ivaUsd: iva,
     category: 'Compra',
     paymentStatus: 'pending',
     paymentMethod: '',
