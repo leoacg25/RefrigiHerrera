@@ -4437,12 +4437,12 @@ function compraSym() {
 function compraMonedaChange() {
   const cur = document.getElementById('compra-moneda')?.value || 'USD';
   const wrap = document.getElementById('compra-rate-wrap');
-  if (cur === 'USD') {
-    wrap.classList.add('hidden');
-  } else {
+  if (cur === 'VES') {
     wrap.classList.remove('hidden');
     const inp = document.getElementById('compra-tasa');
     if (!inp.value && db.settings.exchangeRate) inp.value = db.settings.exchangeRate;
+  } else {
+    wrap.classList.add('hidden');
   }
   renderCompraItems();
 }
