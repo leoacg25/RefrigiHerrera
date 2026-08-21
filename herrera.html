@@ -140,6 +140,27 @@
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Reportes</span>
     </button>
+    <button onclick="showTab('compras')" id="nav-compras"
+      class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
+      <i class="fa-solid fa-truck w-5 text-center"></i><span class="flex-1">Compras</span>
+      <i onclick="event.stopPropagation();toggleComprasSubmenu()" id="compras-submenu-toggle" class="fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all"></i>
+    </button>
+    <div id="compras-submenu" class="hidden pl-8 space-y-0.5 -mt-1 mb-1">
+    <!-- 
+<button onclick="showTab('compras');closeMobileMenu()" id="nav-compras-sub"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-cart-shopping w-4 text-center"></i><span>Nueva Compra</span>
+</button>
+-->
+      <button onclick="showTab('proveedores');closeMobileMenu()" id="nav-proveedores"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-address-book w-4 text-center"></i><span>Proveedores</span>
+      </button>
+      <button onclick="showTab('gastos');closeMobileMenu()" id="nav-gastos"
+        class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-white/20 transition-all">
+        <i class="fa-solid fa-receipt w-4 text-center"></i><span>Compras y Gastos</span>
+      </button>
+    </div>
     <button onclick="showTab('clientes')" id="nav-clientes"
       class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium hover:bg-white/20 transition-all">
       <i class="fa-solid fa-users w-5 text-center"></i><span>Clientes</span>
@@ -238,6 +259,21 @@
     <button onclick="showTab('reportes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="reportes">
       <i class="fa-solid fa-chart-line w-4 text-center text-xs"></i><span>Reportes</span>
     </button>
+    <button onclick="showTab('compras');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="compras">
+      <i class="fa-solid fa-truck w-4 text-center text-xs"></i><span>Compras</span>
+      <i onclick="event.stopPropagation();toggleComprasSubmenuMobile()" class="fa-solid fa-plus text-[0.72rem] opacity-60 ml-auto p-1"></i>
+    </button>
+    <div id="compras-submenu-mobile" class="hidden pl-8 space-y-0.5 -mt-0.5 mb-0.5">
+      <button onclick="showTab('compras');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="compras">
+        <i class="fa-solid fa-cart-shopping w-4 text-center"></i><span>Nueva Compra</span>
+      </button>
+      <button onclick="showTab('proveedores');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="proveedores">
+        <i class="fa-solid fa-address-book w-4 text-center"></i><span>Proveedores</span>
+      </button>
+      <button onclick="showTab('gastos');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all" data-tab="gastos">
+        <i class="fa-solid fa-receipt w-4 text-center"></i><span>Compras y Gastos</span>
+      </button>
+    </div>
     <button onclick="showTab('clientes');closeMobileMenu()" class="mnav-item w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-white/20 transition-all" data-tab="clientes">
       <i class="fa-solid fa-users w-4 text-center text-xs"></i><span>Clientes</span>
     </button>
@@ -662,6 +698,261 @@
         <div id="coti-list" class="p-1">
           <p class="text-slate-400 text-xs text-center py-10">Sin cotizaciones</p>
         </div>
+      </div>
+    </div>
+
+    <!-- ======== TAB: PROVEEDORES ======== -->
+    <div id="tab-proveedores" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Proveedores</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Gestión de proveedores del negocio</p>
+        </div>
+        <button onclick="openSupplierModal()"
+          class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-plus mr-1.5"></i>Nuevo
+        </button>
+      </div>
+      <div class="mb-2">
+        <input type="text" id="supplier-search" placeholder="Buscar proveedor..." oninput="renderSuppliersTable()"
+          class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+      </div>
+      <div id="suppliers-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <p class="text-slate-400 text-xs text-center py-10">Sin proveedores</p>
+      </div>
+    </div>
+
+    <!-- ======== TAB: NUEVA COMPRA ======== -->
+    <div id="tab-compras" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Nueva Orden de Compra</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Registro de compras al proveedor</p>
+        </div>
+        <div class="text-xs text-slate-500 hidden sm:block">
+          <i class="fa-solid fa-calendar mr-1"></i><span id="compra-fecha"></span>
+        </div>
+      </div>
+
+      <!-- 1. Proveedor -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">1</span>
+          Información del Proveedor
+        </h3>
+        <div id="compra-proveedor-buscar" class="flex gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="compra-proveedor-input" placeholder="Buscar proveedor por nombre o RIF..." autocomplete="off"
+              oninput="onCompraProveedorSearch(this.value)"
+              class="w-full pl-7 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+            <div id="compra-proveedor-dropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto"></div>
+          </div>
+          <button onclick="openSupplierModal()" title="Nuevo proveedor"
+            class="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-all flex items-center gap-1 flex-shrink-0">
+            <i class="fa-solid fa-plus"></i><span class="hidden sm:inline">Nuevo</span>
+          </button>
+        </div>
+        <div id="compra-proveedor-info" class="hidden mt-3 bg-sky-50 p-3 rounded-xl border border-sky-100 flex justify-between items-start">
+          <div>
+            <p class="font-bold text-sky-900 text-sm" id="compra-prov-nombre"></p>
+            <p class="text-xs text-sky-700" id="compra-prov-rif"></p>
+            <p class="text-xs text-sky-600" id="compra-prov-contacto"></p>
+          </div>
+          <button onclick="compraLimpiarProveedor()" class="text-red-400 hover:text-red-600 transition-all p-1" title="Cambiar proveedor">
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- 1b. Datos de la factura -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">2</span>
+          Datos de la Factura
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Moneda *</label>
+            <select id="compra-moneda" onchange="compraMonedaChange()" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+              <option value="USD">$ USD Dólares</option>
+              <option value="VES">Bs. VES Bolívares</option>
+              <option value="COP">$ COP Pesos</option>
+            </select>
+          </div>
+          <div id="compra-rate-wrap">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Tasa Cambiaria</label>
+            <input type="number" id="compra-tasa" min="0" step="0.01" placeholder="VES/USD"
+              oninput="compraRecalcTotal()"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">N° Factura</label>
+            <input type="text" id="compra-factura" placeholder="000-000000"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">N° Guía</label>
+            <input type="text" id="compra-guia" placeholder="N° de guía / remisión"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Fecha Emisión</label>
+            <input type="date" id="compra-fecha-emision"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Fecha Recepción</label>
+            <input type="date" id="compra-fecha-recepcion"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Detalle -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">3</span>
+          Detalle de Compra
+        </h3>
+        <form id="compra-articulo-form" onsubmit="compraAgregarArticulo(event)" class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-3">
+          <div class="md:col-span-5 relative">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Descripción / Artículo</label>
+            <div class="flex gap-1.5">
+              <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="compra-art-desc" required placeholder="Buscar por nombre o SKU..." autocomplete="off"
+                  oninput="onCompraArtSearch(this.value)"
+                  class="w-full pl-7 pr-2 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+                <div id="compra-art-dropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-52 overflow-y-auto"></div>
+              </div>
+              <button type="button" onclick="compraAbrirModalProducto()" title="Nuevo artículo en inventario"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition-all flex-shrink-0 shadow-sm">
+                <i class="fa-solid fa-plus text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Cantidad (Unid.)</label>
+            <div class="flex items-center">
+              <button type="button" onclick="compraCantStep(-1)" class="w-8 h-9 flex items-center justify-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all text-sm font-bold">−</button>
+              <input type="number" id="compra-art-cant" required min="1" step="1" value="1"
+                class="flex-1 min-w-0 px-2 py-2 text-sm border border-slate-200 bg-white focus:border-sky-400 outline-none transition-all text-center font-semibold">
+              <button type="button" onclick="compraCantStep(1)" class="w-8 h-9 flex items-center justify-center rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all text-sm font-bold">+</button>
+            </div>
+          </div>
+          <div class="md:col-span-3">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Precio Unit.</label>
+            <input type="number" id="compra-art-precio" required min="0" step="0.01" placeholder="0.00"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all text-right">
+          </div>
+          <div class="md:col-span-2">
+            <button type="submit"
+              class="w-full px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-1"
+              style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+              <i class="fa-solid fa-plus"></i> Agregar
+            </button>
+          </div>
+        </form>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-100">
+              <tr class="text-[0.6rem] text-slate-400 uppercase">
+                <th class="px-3 py-2 text-left font-semibold">#</th>
+                <th class="px-3 py-2 text-left font-semibold">Descripción</th>
+                <th class="px-3 py-2 text-right font-semibold">Cant.</th>
+                <th class="px-3 py-2 text-right font-semibold">Precio Unit.</th>
+                <th class="px-3 py-2 text-center font-semibold">Acc.</th>
+              </tr>
+            </thead>
+            <tbody id="compra-items-body" class="divide-y divide-slate-50">
+              <tr id="compra-items-empty">
+                <td colspan="5" class="px-3 py-8 text-center text-slate-300">
+                  <i class="fa-solid fa-box-open text-2xl block mb-1"></i>
+                  <span class="text-xs">Sin artículos</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4. Totales y Acciones -->
+      <section class="flex flex-col md:flex-row gap-3">
+        <div class="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+          <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Observaciones</label>
+          <textarea id="compra-notas" rows="3" placeholder="Instrucciones especiales, términos..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all resize-none"></textarea>
+        </div>
+        <div class="w-full md:w-72 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+          <div class="flex justify-between items-center mb-2 text-sm">
+            <span class="text-slate-500">Subtotal:</span>
+            <span class="font-medium text-slate-700"><span id="compra-subtotal">0.00</span></span>
+          </div>
+          <div class="flex items-center justify-between mb-2 text-sm">
+            <span class="text-slate-500">IVA:</span>
+            <input type="number" id="compra-iva-input" min="0" step="0.01" value="0" placeholder="0.00"
+              oninput="compraRecalcTotal()"
+              class="w-28 px-2 py-1 text-sm border border-slate-200 rounded-lg bg-white focus:border-sky-400 outline-none transition-all text-right font-medium">
+          </div>
+          <hr class="my-2 border-slate-200">
+          <div class="flex justify-between items-center text-lg font-bold text-sky-700">
+            <span>Total:</span>
+            <span><span id="compra-total">0.00</span></span>
+          </div>
+          <button onclick="compraGuardar()"
+            class="mt-4 w-full px-4 py-2.5 text-sm text-white rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2"
+            style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+            <i class="fa-solid fa-save"></i> Guardar Compra
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======== TAB: COMPRAS Y GASTOS ======== -->
+    <div id="tab-gastos" class="tab-content">
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Compras y Gastos</h2>
+          <p class="text-slate-500 text-xs mt-0.5">Registro de compras y gastos del negocio</p>
+        </div>
+        <button onclick="openPurchaseModal()"
+          class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-plus mr-1.5"></i>Nuevo
+        </button>
+      </div>
+      <!-- Filtros -->
+      <div class="mb-3 flex flex-wrap gap-2">
+        <input type="date" id="gastos-from" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        <input type="date" id="gastos-to" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        <select id="gastos-category" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          <option value="">Todas</option>
+          <option value="Compra">Compras</option>
+          <option value="Gasto">Gastos</option>
+        </select>
+        <select id="gastos-status" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          <option value="">Todos</option>
+          <option value="paid">Pagado</option>
+          <option value="pending">Pendiente</option>
+          <option value="partial">Parcial</option>
+        </select>
+        <select id="gastos-supplier" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          <option value="">Todos proveedores</option>
+        </select>
+      </div>
+      <!-- Resumen -->
+      <div id="gastos-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3"></div>
+      <div class="flex justify-end mb-2 gap-2">
+        <button onclick="generarReporteGastos()" class="text-xs text-violet-500 hover:text-violet-700 font-medium">
+          <i class="fa-solid fa-file-pdf mr-1"></i>Reporte
+        </button>
+        <button onclick="exportPurchasesCSV()" class="text-xs text-sky-500 hover:text-sky-700 font-medium">
+          <i class="fa-solid fa-download mr-1"></i>Exportar CSV
+        </button>
+      </div>
+      <div id="purchases-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <p class="text-slate-400 text-xs text-center py-10">Sin registros</p>
       </div>
     </div>
 
@@ -1195,6 +1486,301 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: COTIZACION ===================== -->
+<div id="modal-quote" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-quote')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-quote-title" class="font-bold text-base text-slate-800">Nueva Cotización</h3>
+        <button onclick="closeModal('modal-quote')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="quote-id">
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Cliente</label>
+          <select id="quote-client"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Moneda</label>
+          <div class="flex gap-2">
+            <label class="flex-1 flex items-center justify-center gap-1.5 py-2 border-2 rounded-xl cursor-pointer transition-all text-sm font-medium quote-currency-opt" data-val="USD">
+              <input type="radio" name="quote-currency" value="USD" checked class="hidden">
+              <span>$ Dólares</span>
+            </label>
+            <label class="flex-1 flex items-center justify-center gap-1.5 py-2 border-2 rounded-xl cursor-pointer transition-all text-sm font-medium quote-currency-opt" data-val="VES">
+              <input type="radio" name="quote-currency" value="VES" class="hidden">
+              <span>Bs. Bolívares</span>
+            </label>
+            <label class="flex-1 flex items-center justify-center gap-1.5 py-2 border-2 rounded-xl cursor-pointer transition-all text-sm font-medium quote-currency-opt" data-val="COP">
+              <input type="radio" name="quote-currency" value="COP" class="hidden">
+              <span>$ Pesos COP</span>
+            </label>
+          </div>
+        </div>
+        <!-- Items de la cotización -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-medium text-slate-500">Artículos</label>
+            <button onclick="addQuoteItem()" type="button" class="text-[0.65rem] text-sky-500 hover:text-sky-700 font-medium">
+              <i class="fa-solid fa-plus mr-0.5"></i>Agregar
+            </button>
+          </div>
+          <div id="quote-items" class="space-y-2 max-h-48 overflow-y-auto">
+            <p class="text-slate-400 text-xs text-center py-3">Sin artículos. Presiona "Agregar"</p>
+          </div>
+        </div>
+        <!-- Subtotales -->
+        <div class="bg-slate-50 rounded-xl p-3 space-y-1 border border-slate-100">
+          <div class="flex justify-between text-xs text-slate-400"><span>Subtotal</span><span id="quote-subtotal">$0.00</span></div>
+          <div class="flex justify-between text-sm font-bold"><span class="text-slate-700">Total</span><span id="quote-total" class="text-sky-600">$0.00</span></div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Notas (opcional)</label>
+          <textarea id="quote-notes" rows="2" placeholder="Observaciones..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-quote')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="saveQuote()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: PROVEEDOR ===================== -->
+<div id="modal-supplier" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-supplier')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-supplier-title" class="font-bold text-base text-slate-800">Nuevo Proveedor</h3>
+        <button onclick="closeModal('modal-supplier')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="supplier-id">
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Nombre *</label>
+          <input type="text" id="supplier-name" placeholder="Nombre del proveedor"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">RIF / Cédula</label>
+          <input type="text" id="supplier-id-number" placeholder="J-12345678-9"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Teléfono</label>
+            <input type="text" id="supplier-phone" placeholder="0412-1234567"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Email</label>
+            <input type="email" id="supplier-email" placeholder="correo@ejemplo.com"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Dirección</label>
+          <input type="text" id="supplier-address" placeholder="Dirección"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Notas</label>
+          <textarea id="supplier-notes" rows="2" placeholder="Observaciones..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-supplier')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button type="button" onclick="saveSupplier()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: COMPRA / GASTO ===================== -->
+<div id="modal-purchase" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-purchase')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 id="modal-purchase-title" class="font-bold text-base text-slate-800">Nuevo Registro</h3>
+        <button onclick="closeModal('modal-purchase')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="purchase-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Categoría *</label>
+            <select id="purchase-category"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="Compra">Compra</option>
+              <option value="Gasto">Gasto</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Proveedor</label>
+            <select id="purchase-supplier"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="">Sin proveedor</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Descripción *</label>
+          <input type="text" id="purchase-description" placeholder="Descripción del gasto/compra"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">N° Factura</label>
+            <input type="text" id="purchase-invoice" placeholder="000-000000"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Moneda</label>
+            <select id="purchase-currency"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="USD">$ Dólares</option>
+              <option value="VES">Bs. Bolívares</option>
+              <option value="COP">$ Pesos COP</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Monto *</label>
+            <input type="number" id="purchase-amount" min="0" step="0.01" placeholder="0.00"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">IVA % (opcional)</label>
+            <input type="number" id="purchase-iva" min="0" max="100" step="0.1" placeholder="0"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Fecha emisión</label>
+            <input type="date" id="purchase-date"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Fecha vencimiento</label>
+            <input type="date" id="purchase-due-date"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Estado de pago</label>
+            <select id="purchase-status"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="pending">Pendiente</option>
+              <option value="partial">Parcial</option>
+              <option value="paid">Pagado</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Método de pago</label>
+            <select id="purchase-method"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+              <option value="">--</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Tarjeta">Tarjeta</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Notas</label>
+          <textarea id="purchase-notes" rows="2" placeholder="Observaciones..."
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-purchase')"
+          class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="savePurchase()"
+          class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
+          <i class="fa-solid fa-save mr-1.5"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== MODAL: PAGAR FACTURA ======== -->
+<div id="modal-payment" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-payment')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-money-bill-wave mr-2 text-emerald-500"></i>Pagar Factura</h3>
+        <button onclick="closeModal('modal-payment')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="payment-purchase-id">
+        <div class="bg-slate-50 rounded-xl p-3 space-y-1">
+          <div class="text-xs text-slate-500">Proveedor: <span id="payment-supplier" class="font-medium text-slate-700">—</span></div>
+          <div class="text-xs text-slate-500">Factura: <span id="payment-invoice" class="font-medium text-slate-700">—</span></div>
+          <div class="text-xs text-slate-500">Monto total: <span id="payment-total" class="font-bold text-slate-800">—</span></div>
+          <div class="text-xs text-slate-500">Ya pagado: <span id="payment-paid" class="font-bold text-emerald-600">$0.00</span></div>
+          <div class="text-xs text-slate-500">Pendiente: <span id="payment-pending" class="font-bold text-amber-600">$0.00</span></div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Método de pago *</label>
+          <select id="payment-method" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+            <option value="Efectivo USD">Efectivo USD</option>
+            <option value="Efectivo COP">Efectivo COP</option>
+            <option value="Efectivo Bs">Efectivo Bs</option>
+            <option value="Transferencia Bs">Transferencia Bs</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Monto a pagar *</label>
+          <input type="number" id="payment-amount" min="0" step="0.01" placeholder="0.00"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none text-right font-bold text-lg">
+        </div>
+        <div class="text-[0.65rem] text-slate-400 text-right" id="payment-equiv"></div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Fecha de pago</label>
+          <input type="date" id="payment-date"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div class="text-xs text-slate-400">El pago se registra en la moneda seleccionada. El sistema convertirá automáticamente al USD.</div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-payment')" class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="processPayment()" class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#059669,#047857)">
+          <i class="fa-solid fa-check mr-1.5"></i>Pagar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
 
@@ -1217,6 +1803,9 @@ let db = {
   users: [],
   clients: [],
   quotes: [],
+  suppliers: [],
+  purchases: [],
+  payments: [],
   settings: {
     whatsapp: '',
     storeName: 'RefrigiHerrera',
@@ -1266,41 +1855,63 @@ async function loadFromSupabase() {
     sb.from('settings').select('*').eq('key', 'app').limit(1),
     sb.from('users').select('*').order('created_at', { ascending: true }),
     sb.from('clients').select('*').order('created_at', { ascending: false }),
-    sb.from('quotes').select('*').order('date', { ascending: false })
+    sb.from('quotes').select('*').order('date', { ascending: false }),
+    sb.from('suppliers').select('*').order('created_at', { ascending: false }),
+    sb.from('purchases').select('*').order('date', { ascending: false }),
+    sb.from('payments').select('*').order('date', { ascending: true })
   ]);
-  const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes] = results;
-  if (prodRes.status === 'fulfilled' && prodRes.value.data) db.products = prodRes.value.data.map(p => ({
+  const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes, supplierRes, purchaseRes, paymentRes] = results;
+  const ok = r => r.status === 'fulfilled';
+  if (ok(prodRes) && prodRes.value.data) db.products = prodRes.value.data.map(p => ({
     id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
     costPrice: p.cost_price, profitPercent: p.profit_percent,
     price: p.price, stock: p.stock, minStock: p.min_stock,
     priceVES: p.price_ves || 0, priceCOP: p.price_cop || 0
   }));
-  if (salesRes.status === 'fulfilled' && salesRes.value.data) db.sales = salesRes.value.data.map(s => ({
+  if (ok(salesRes) && salesRes.value.data) db.sales = salesRes.value.data.map(s => ({
     id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
     total: s.total, method: s.method, cashAmount: s.cash_amount,
     transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate, clientId: s.client_id,
     copAmount: s.cop_amount || 0, copRate: s.cop_rate || 0
   }));
-  if (comboRes.status === 'fulfilled' && comboRes.value.data) db.combos = comboRes.value.data.map(c => ({
+  if (ok(comboRes) && comboRes.value.data) db.combos = comboRes.value.data.map(c => ({
     id: c.id, code: c.code, name: c.name, price: c.price, items: c.items
   }));
-  if (setRes.status === 'fulfilled' && setRes.value.data && setRes.value.data.length) {
+  if (ok(setRes) && setRes.value.data && setRes.value.data.length) {
     db.settings = Object.assign(db.settings, setRes.value.data[0].value || {});
   }
-  if (userRes.status === 'fulfilled' && userRes.value.data) db.users = userRes.value.data.map(u => ({
+  if (ok(userRes) && userRes.value.data) db.users = userRes.value.data.map(u => ({
     id: u.id, username: u.username, passwordHash: u.password_hash,
     fullName: u.full_name, role: u.role, active: u.active
   }));
-  if (clientRes.status === 'fulfilled' && clientRes.value.data) db.clients = clientRes.value.data.map(c => ({
+  if (ok(clientRes) && clientRes.value.data) db.clients = clientRes.value.data.map(c => ({
     id: c.id, name: c.name, phone: c.phone, email: c.email,
     address: c.address, idNumber: c.id_number, notes: c.notes, active: c.active
   }));
-  if (quoteRes.status === 'fulfilled' && quoteRes.value.data) db.quotes = quoteRes.value.data.map(q => ({
+  if (ok(quoteRes) && quoteRes.value.data) db.quotes = quoteRes.value.data.map(q => ({
     id: q.id, clientId: q.client_id, clientName: q.client_name || '',
     items: q.items || [], currency: q.currency || 'USD',
     subtotal: q.subtotal || 0, total: q.total || 0,
     status: q.status || 'pending', notes: q.notes || '',
     date: q.date
+  }));
+  if (ok(supplierRes) && supplierRes.value.data) db.suppliers = supplierRes.value.data.map(s => ({
+    id: s.id, name: s.name, phone: s.phone || '', email: s.email || '',
+    address: s.address || '', idNumber: s.id_number || '', notes: s.notes || '',
+    active: s.active !== false
+  }));
+  if (ok(purchaseRes) && purchaseRes.value.data) db.purchases = purchaseRes.value.data.map(p => ({
+    id: p.id, supplierId: p.supplier_id, supplierName: p.supplier_name || '',
+    description: p.description || '', invoiceNumber: p.invoice_number || '',
+    amount: p.amount || 0, amountUsd: p.amount_usd || p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+    category: p.category || 'Compra', paymentStatus: p.payment_status || 'pending',
+    paymentMethod: p.payment_method || '', date: p.date,
+    dueDate: p.due_date || null, notes: p.notes || ''
+  }));
+  if (ok(paymentRes) && paymentRes.value.data) db.payments = paymentRes.value.data.map(p => ({
+    id: p.id, purchaseId: p.purchase_id,
+    amount: p.amount || 0, amountUsd: p.amount_usd || 0,
+    method: p.method || '', date: p.date
   }));
   const failed = results.filter(r => r.status === 'rejected');
   if (failed.length) console.warn('Supabase queries with errors:', failed.map(r => r.reason?.message || r.reason));
@@ -1318,6 +1929,9 @@ function loadDB() {
       db.users = parsed.users || [];
       db.clients = parsed.clients || [];
       db.quotes = parsed.quotes || [];
+      db.suppliers = parsed.suppliers || [];
+      db.purchases = parsed.purchases || [];
+      db.payments = parsed.payments || [];
       db.settings = Object.assign({}, db.settings, parsed.settings || {});
     }
   } catch (e) { console.error('loadDB:', e); }
@@ -1367,15 +1981,57 @@ async function syncToSupabase() {
       date: q.date, updated_at: new Date().toISOString()
     }));
     if (quotes.length) syncOps.push(sb.from('quotes').upsert(quotes, { onConflict: 'id' }).catch(e => console.warn('sync quotes:', e)));
+
+    const suppliers = (db.suppliers || []).map(s => ({
+      id: s.id, name: s.name, phone: s.phone || '', email: s.email || '',
+      address: s.address || '', id_number: s.idNumber || '', notes: s.notes || '',
+      active: s.active !== false
+    }));
+    if (suppliers.length) syncOps.push(sb.from('suppliers').upsert(suppliers, { onConflict: 'id' }).catch(e => console.warn('sync suppliers:', e)));
+
+    const purchases = (db.purchases || []).map(p => ({
+      id: p.id, supplier_id: p.supplierId || null, supplier_name: p.supplierName || '',
+      description: p.description || '', invoice_number: p.invoiceNumber || '',
+      amount: p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+      category: p.category || 'Compra', payment_status: p.paymentStatus || 'pending',
+      payment_method: p.paymentMethod || '', date: p.date,
+      due_date: p.dueDate || null, notes: p.notes || ''
+    }));
+    if (purchases.length) syncOps.push(sb.from('purchases').upsert(purchases, { onConflict: 'id' }).catch(e => console.warn('sync purchases:', e)));
+
+    const payments = (db.payments || []).map(p => ({
+      id: p.id, purchase_id: p.purchaseId,
+      amount: p.amount || 0, amount_usd: p.amountUsd || 0,
+      method: p.method || '', date: p.date
+    }));
+    if (payments.length) syncOps.push(sb.from('payments').upsert(payments, { onConflict: 'id' }).catch(e => console.warn('sync payments:', e)));
+
     syncOps.push(sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' }).catch(e => console.warn('sync settings:', e)));
     await Promise.allSettled(syncOps);
 
     const localQuoteIds = db.quotes.map(q => q.id);
     const serverQuotes = await sb.from('quotes').select('id');
     if (serverQuotes.data) {
-      const toDelete = serverQuotes.data.filter(sq => !localQuoteIds.includes(sq.id));
-      for (const sq of toDelete) {
+      for (const sq of serverQuotes.data.filter(x => !localQuoteIds.includes(x.id))) {
         await sb.from('quotes').delete().eq('id', sq.id).catch(() => {});
+      }
+    }
+    if (db.suppliers) {
+      const localSupplierIds = db.suppliers.map(s => s.id);
+      const serverSuppliers = await sb.from('suppliers').select('id');
+      if (serverSuppliers.data) {
+        for (const ss of serverSuppliers.data.filter(x => !localSupplierIds.includes(x.id))) {
+          await sb.from('suppliers').delete().eq('id', ss.id).catch(() => {});
+        }
+      }
+    }
+    if (db.purchases) {
+      const localPurchaseIds = db.purchases.map(p => p.id);
+      const serverPurchases = await sb.from('purchases').select('id');
+      if (serverPurchases.data) {
+        for (const sp of serverPurchases.data.filter(x => !localPurchaseIds.includes(x.id))) {
+          await sb.from('purchases').delete().eq('id', sp.id).catch(() => {});
+        }
       }
     }
   } catch (e) { console.warn('syncToSupabase:', e); }
@@ -1447,7 +2103,7 @@ function showToast(msg, type = 'success') {
 // ===================================================================
 // ROUTING
 // ===================================================================
-const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Nueva Cotización', 'cotizaciones-lista':'Lista de Cotizaciones', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
+const tabNames = { dashboard:'Dashboard', inventario:'Inventario', ventas:'Punto de Venta', cotizaciones:'Cotizaciones', 'cotizaciones-lista':'Lista de Cotizaciones', compras:'Compras', proveedores:'Proveedores', gastos:'Compras y Gastos', reportes:'Reportes', clientes:'Clientes', usuarios:'Usuarios' };
 
 function showTab(tab) {
   currentTab = tab;
@@ -1466,17 +2122,27 @@ function showTab(tab) {
     if (icon) icon.className = 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
   }
 
+  if (tab === 'proveedores' || tab === 'gastos' || tab === 'compras') {
+    const sub = document.getElementById('compras-submenu');
+    const icon = document.getElementById('compras-submenu-toggle');
+    if (sub) sub.classList.remove('hidden');
+    if (icon) icon.className = 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
+  }
+
   document.getElementById('mobile-title').textContent = tabNames[tab] || tab;
 
   switch (tab) {
-    case 'dashboard':    renderDashboard();    break;
-    case 'inventario':   renderInventario();   break;
-    case 'ventas':       renderPOS();          break;
-    case 'cotizaciones':       renderCotizaciones();       break;
-    case 'cotizaciones-lista':  cotiConvertingId = null; renderCotizacionesLista();  break;
-    case 'reportes':     renderReportes();     break;
-    case 'clientes':     renderClientsTable(); break;
-    case 'usuarios':     renderUsersTable();   break;
+    case 'dashboard':    renderDashboard();     break;
+    case 'inventario':   renderInventario();    break;
+    case 'ventas':       renderPOS();           break;
+    case 'cotizaciones': renderCotizaciones();    break;
+    case 'cotizaciones-lista': cotiConvertingId = null; renderCotizacionesLista(); break;
+    case 'proveedores':  renderSuppliersTable();break;
+    case 'compras':      initCompraTab();       break;
+    case 'gastos':       renderPurchasesTable();break;
+    case 'reportes':     renderReportes();      break;
+    case 'clientes':     renderClientsTable();  break;
+    case 'usuarios':     renderUsersTable();    break;
   }
 }
 
@@ -1902,7 +2568,7 @@ function saveProduct() {
     id: id || generateId(), sku, name,
     isService,
     category:     document.getElementById('product-category').value.trim(),
-    costPrice:    cost,
+    costPrice:    Math.round(cost * 100) / 100,
     profitPercent:parseFloat(document.getElementById('product-profit').value)     || 0,
     price:        price,
     priceVES:     parseFloat(document.getElementById('product-price-ves').value)  || 0,
@@ -2196,6 +2862,12 @@ document.addEventListener('click', function(e) {
   const dd = document.getElementById('pos-client-dropdown');
   const inp = document.getElementById('pos-client-search');
   if (dd && inp && !dd.contains(e.target) && e.target !== inp) dd.classList.add('hidden');
+  const cdd = document.getElementById('compra-proveedor-dropdown');
+  const cinp = document.getElementById('compra-proveedor-input');
+  if (cdd && cinp && !cdd.contains(e.target) && e.target !== cinp) cdd.classList.add('hidden');
+  const add = document.getElementById('compra-art-dropdown');
+  const ainp = document.getElementById('compra-art-desc');
+  if (add && ainp && !add.contains(e.target) && e.target !== ainp) add.classList.add('hidden');
 });
 
 function updateTotalVESDisplay() {
@@ -3542,6 +4214,1103 @@ function renderCotizacionesLista() {
 }
 
 // ===================================================================
+// COMPRAS - SUB-MENÚ TOGGLE
+// ===================================================================
+function toggleComprasSubmenu() {
+  const sub = document.getElementById('compras-submenu');
+  const icon = document.getElementById('compras-submenu-toggle');
+  const isVisible = !sub.classList.contains('hidden');
+  sub.classList.toggle('hidden', isVisible);
+  icon.className = isVisible
+    ? 'fa-solid fa-plus text-[0.55rem] opacity-60 hover:opacity-100 transition-all'
+    : 'fa-solid fa-minus text-[0.55rem] opacity-60 hover:opacity-100 transition-all';
+}
+
+function toggleComprasSubmenuMobile() {
+  const sub = document.getElementById('compras-submenu-mobile');
+  sub.classList.toggle('hidden');
+}
+
+// ===================================================================
+// PROVEEDORES
+// ===================================================================
+function renderSuppliersTable() {
+  const search = (document.getElementById('supplier-search')?.value || '').toLowerCase();
+  let rows = [...db.suppliers];
+  if (search) rows = rows.filter(s =>
+    (s.name||'').toLowerCase().includes(search) ||
+    (s.phone||'').toLowerCase().includes(search) ||
+    (s.idNumber||'').toLowerCase().includes(search));
+
+  const body = document.getElementById('suppliers-table-container');
+  if (!rows.length) {
+    body.innerHTML = `<div class="text-center py-12">
+      <i class="fa-solid fa-truck text-4xl text-slate-200 block mb-3"></i>
+      <p class="text-slate-400 text-sm">${db.suppliers.length ? 'Sin resultados' : 'Sin proveedores'}</p>
+    </div>`;
+    return;
+  }
+  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
+    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
+      <th class="px-4 py-3 font-semibold">Nombre</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Teléfono</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Email</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">RIF/Cédula</th>
+      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
+    </tr></thead>
+    <tbody class="divide-y divide-slate-50">${rows.map(s => `<tr class="hover:bg-sky-50/40 transition-all">
+      <td class="px-4 py-3">
+        <div class="text-sm font-medium text-slate-800">${escHtml(s.name)}</div>
+        ${s.address ? `<div class="text-[0.6rem] text-slate-400">${escHtml(s.address)}</div>` : ''}
+      </td>
+      <td class="px-4 py-3 hidden lg:table-cell text-sm text-slate-600">${escHtml(s.phone||'—')}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-sm text-slate-600">${escHtml(s.email||'—')}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-sm text-slate-600 font-mono">${escHtml(s.idNumber||'—')}</td>
+      <td class="px-4 py-3 text-center">
+        <div class="flex items-center justify-center gap-1">
+          <button onclick="editSupplier('${s.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+          <button onclick="deleteSupplier('${s.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+        </div>
+      </td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+function openSupplierModal(id) {
+  const s = id ? db.suppliers.find(x => x.id === id) : null;
+  document.getElementById('modal-supplier-title').textContent = s ? 'Editar Proveedor' : 'Nuevo Proveedor';
+  document.getElementById('supplier-id').value = s?.id || '';
+  document.getElementById('supplier-name').value = s?.name || '';
+  document.getElementById('supplier-id-number').value = s?.idNumber || '';
+  document.getElementById('supplier-phone').value = s?.phone || '';
+  document.getElementById('supplier-email').value = s?.email || '';
+  document.getElementById('supplier-address').value = s?.address || '';
+  document.getElementById('supplier-notes').value = s?.notes || '';
+  openModal('modal-supplier');
+}
+
+function editSupplier(id) { openSupplierModal(id); }
+
+function saveSupplier() {
+  try {
+    const id = document.getElementById('supplier-id').value;
+    const name = document.getElementById('supplier-name').value.trim();
+    if (!name) { showToast('El nombre es requerido', 'error'); return; }
+
+    const supplier = {
+      id: id || generateId(), name,
+      idNumber: document.getElementById('supplier-id-number').value.trim(),
+      phone: document.getElementById('supplier-phone').value.trim(),
+      email: document.getElementById('supplier-email').value.trim(),
+      address: document.getElementById('supplier-address').value.trim(),
+      notes: document.getElementById('supplier-notes').value.trim(),
+      active: true
+    };
+
+    if (id) {
+      const idx = db.suppliers.findIndex(s => s.id === id);
+      if (idx !== -1) db.suppliers[idx] = supplier;
+    } else {
+      db.suppliers.push(supplier);
+    }
+    saveDB();
+    if (typeof sb !== 'undefined' && sbReady) {
+      sb.from('suppliers').upsert({
+        id: supplier.id, name: supplier.name, phone: supplier.phone || '',
+        email: supplier.email || '', address: supplier.address || '',
+        id_number: supplier.idNumber || '', notes: supplier.notes || '', active: true
+      }, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync supplier:', e));
+    }
+    closeModal('modal-supplier');
+    renderSuppliersTable();
+    showToast(id ? 'Proveedor actualizado' : 'Proveedor creado', 'success');
+  } catch(e) { console.error('saveSupplier error:', e); showToast('Error al guardar: ' + e.message, 'error'); }
+}
+
+function deleteSupplier(id) {
+  if (!confirm('¿Eliminar este proveedor?')) return;
+  db.suppliers = db.suppliers.filter(s => s.id !== id);
+  saveDB();
+  if (sbReady) sb.from('suppliers').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
+  renderSuppliersTable();
+  showToast('Proveedor eliminado', 'warning');
+}
+
+// ===================================================================
+// NUEVA ORDEN DE COMPRA (TAB)
+// ===================================================================
+let compraProveedor = null;
+let compraItems = [];
+let compraEditIdx = -1;
+
+function initCompraTab() {
+  document.getElementById('compra-fecha').textContent = new Date().toLocaleDateString('es-VE', { year:'numeric', month:'2-digit', day:'2-digit' });
+  compraProveedor = null;
+  compraItems = [];
+  compraEditIdx = -1;
+  compraArtSeleccionado = null;
+  document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
+  document.getElementById('compra-proveedor-info').classList.add('hidden');
+  document.getElementById('compra-proveedor-input').value = '';
+  document.getElementById('compra-moneda').value = 'USD';
+  document.getElementById('compra-tasa').value = db.settings.exchangeRate || '';
+  document.getElementById('compra-rate-wrap').classList.add('hidden');
+  document.getElementById('compra-factura').value = '';
+  document.getElementById('compra-guia').value = '';
+  document.getElementById('compra-fecha-emision').value = '';
+  document.getElementById('compra-fecha-recepcion').value = '';
+  document.getElementById('compra-art-desc').value = '';
+  document.getElementById('compra-art-cant').value = '1';
+  document.getElementById('compra-art-precio').value = '';
+  document.getElementById('compra-iva-input').value = '0';
+  document.getElementById('compra-notas').value = '';
+  compraLockCurrency();
+  renderCompraItems();
+}
+
+function onCompraProveedorSearch(q) {
+  const dd = document.getElementById('compra-proveedor-dropdown');
+  dd.innerHTML = '';
+  if (q.length < 2) { dd.classList.add('hidden'); return; }
+  const hits = db.suppliers.filter(s => s.active !== false && (
+    (s.name||'').toLowerCase().includes(q.toLowerCase()) ||
+    (s.idNumber||'').toLowerCase().includes(q.toLowerCase())
+  ));
+  if (!hits.length) {
+    dd.innerHTML = '<div class="p-3 text-xs text-slate-400">Sin resultados</div>';
+  } else {
+    hits.forEach(s => {
+      const d = document.createElement('div');
+      d.className = 'p-2.5 hover:bg-sky-50 cursor-pointer border-b border-slate-50 last:border-0 transition-all';
+      d.innerHTML = `<div class="text-sm font-medium text-slate-700">${escHtml(s.name)}</div><div class="text-[0.6rem] text-slate-400">RIF: ${escHtml(s.idNumber||'—')}</div>`;
+      d.onclick = () => compraSeleccionarProveedor(s);
+      dd.appendChild(d);
+    });
+  }
+  dd.classList.remove('hidden');
+}
+
+function compraSeleccionarProveedor(s) {
+  compraProveedor = s;
+  document.getElementById('compra-proveedor-buscar').classList.add('hidden');
+  document.getElementById('compra-proveedor-dropdown').classList.add('hidden');
+  document.getElementById('compra-prov-nombre').textContent = s.name;
+  document.getElementById('compra-prov-rif').textContent = 'RIF: ' + (s.idNumber || '—');
+  document.getElementById('compra-prov-contacto').textContent = 'Contacto: ' + (s.phone || s.email || 'N/A');
+  document.getElementById('compra-proveedor-info').classList.remove('hidden');
+}
+
+function compraLimpiarProveedor() {
+  compraProveedor = null;
+  document.getElementById('compra-proveedor-info').classList.add('hidden');
+  document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
+  document.getElementById('compra-proveedor-input').value = '';
+  document.getElementById('compra-proveedor-input').focus();
+}
+
+// --- Búsqueda de artículos del inventario ---
+let compraArtSeleccionado = null;
+
+function onCompraArtSearch(q) {
+  compraArtSeleccionado = null;
+  const dd = document.getElementById('compra-art-dropdown');
+  dd.innerHTML = '';
+  if (q.length < 2) { dd.classList.add('hidden'); return; }
+  const lq = q.toLowerCase();
+  const hits = db.products.filter(p =>
+    (p.name||'').toLowerCase().includes(lq) ||
+    (p.sku||'').toLowerCase().includes(lq)
+  );
+  if (!hits.length) {
+    dd.innerHTML = `<div class="p-3 text-xs text-slate-400">Sin resultados. Puedes escribir manualmente o crear un artículo nuevo.</div>`;
+  } else {
+    hits.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'p-2.5 hover:bg-sky-50 cursor-pointer border-b border-slate-50 last:border-0 transition-all';
+      const priceConv = compraToCur(p.costPrice || 0);
+      d.innerHTML = `<div class="flex items-center justify-between">
+        <div><span class="text-sm font-medium text-slate-700">${escHtml(p.name)}</span>
+        <span class="text-[0.6rem] text-slate-400 ml-2">${escHtml(p.sku)}</span></div>
+        <span class="text-xs font-semibold text-sky-600">${compraSym()}${fmtNum(priceConv)}</span></div>
+        ${p.stock != null ? `<div class="text-[0.55rem] text-slate-400">Stock: ${p.stock}</div>` : ''}`;
+      d.onclick = () => compraSeleccionarArticulo(p);
+      dd.appendChild(d);
+    });
+  }
+  dd.classList.remove('hidden');
+}
+
+function compraSeleccionarArticulo(p) {
+  compraArtSeleccionado = p;
+  document.getElementById('compra-art-desc').value = p.name;
+  document.getElementById('compra-art-precio').value = compraToCur(p.costPrice || 0).toFixed(2);
+  document.getElementById('compra-art-dropdown').classList.add('hidden');
+  document.getElementById('compra-art-cant').focus();
+}
+
+function compraAbrirModalProducto() {
+  compraArtSeleccionado = null;
+  openProductModal();
+}
+
+function compraAgregarArticulo(e) {
+  e.preventDefault();
+  const desc = document.getElementById('compra-art-desc').value.trim();
+  const cant = parseFloat(document.getElementById('compra-art-cant').value);
+  const precioDisplay = parseFloat(document.getElementById('compra-art-precio').value);
+  if (!desc || cant <= 0 || precioDisplay < 0) { showToast('Datos inválidos', 'error'); return; }
+  const precioUsd = compraFromCur(precioDisplay);
+  compraItems.push({ desc, cant, precio: precioUsd, subtotal: cant * precioUsd, productId: compraArtSeleccionado?.id || null });
+  compraLockCurrency();
+  renderCompraItems();
+  compraArtSeleccionado = null;
+  document.getElementById('compra-art-desc').value = '';
+  document.getElementById('compra-art-cant').value = '1';
+  document.getElementById('compra-art-precio').value = '';
+  document.getElementById('compra-art-desc').focus();
+}
+
+function compraEliminarArticulo(i) {
+  compraItems.splice(i, 1);
+  compraLockCurrency();
+  renderCompraItems();
+}
+
+function compraLockCurrency() {
+  const sel = document.getElementById('compra-moneda');
+  if (compraItems.length > 0) {
+    sel.disabled = true;
+    sel.classList.add('opacity-50', 'cursor-not-allowed');
+  } else {
+    sel.disabled = false;
+    sel.classList.remove('opacity-50', 'cursor-not-allowed');
+  }
+}
+
+function compraGetRate() {
+  return parseFloat(document.getElementById('compra-tasa')?.value) || db.settings.exchangeRate || 0;
+}
+
+function compraToCur(usdAmount) {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  const rate = compraGetRate();
+  if (cur === 'VES') return usdAmount * rate;
+  if (cur === 'COP') return usdAmount * rate * COP_FACTOR;
+  return usdAmount;
+}
+
+function compraFromCur(curAmount) {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  const rate = compraGetRate();
+  if (cur === 'VES' && rate) return curAmount / rate;
+  if (cur === 'COP' && rate) return curAmount / (rate * COP_FACTOR);
+  return curAmount;
+}
+
+function compraSym() {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  return { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
+}
+
+function compraMonedaChange() {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  const wrap = document.getElementById('compra-rate-wrap');
+  if (cur === 'VES') {
+    wrap.classList.remove('hidden');
+    const inp = document.getElementById('compra-tasa');
+    if (!inp.value && db.settings.exchangeRate) inp.value = db.settings.exchangeRate;
+  } else {
+    wrap.classList.add('hidden');
+  }
+  renderCompraItems();
+}
+
+function renderCompraItems() {
+  const sym = compraSym();
+  const tbody = document.getElementById('compra-items-body');
+  if (!compraItems.length) {
+    tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="5" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
+  } else {
+    tbody.innerHTML = compraItems.map((it, i) => {
+      const prod = it.productId ? db.products.find(p => p.id === it.productId) : null;
+      const precioConv = compraToCur(it.precio);
+      if (compraEditIdx === i) {
+        return `<tr class="bg-sky-50/60 transition-all">
+          <td class="px-3 py-1.5 text-xs text-slate-500">${i + 1}</td>
+          <td class="px-3 py-1.5"><input type="text" id="ce-desc-${i}" value="${escHtml(it.desc)}" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500"></td>
+          <td class="px-3 py-1.5"><input type="number" id="ce-cant-${i}" value="${it.cant}" min="1" step="1" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
+          <td class="px-3 py-1.5"><input type="number" id="ce-prec-${i}" value="${compraToCur(it.precio).toFixed(2)}" min="0" step="0.01" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
+          <td class="px-3 py-1.5 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button onclick="compraGuardarEdicion(${i})" title="Guardar" class="p-1 rounded-lg hover:bg-emerald-100 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-check text-xs"></i></button>
+              <button onclick="compraCancelarEdicion()" title="Cancelar" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+          </td>
+        </tr>`;
+      }
+      return `<tr class="hover:bg-sky-50/40 transition-all">
+        <td class="px-3 py-2 text-xs text-slate-500">${i + 1}</td>
+        <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}${prod ? `<span class="text-[0.55rem] text-slate-400 ml-1.5">${escHtml(prod.sku)}</span>` : ''}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">${sym}${fmtNum(precioConv)}</td>
+        <td class="px-3 py-2 text-center">
+          <div class="flex items-center justify-center gap-1">
+            <button onclick="compraEditarFila(${i})" title="Editar" class="p-1 rounded-lg hover:bg-sky-100 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+            <button onclick="compraEliminarArticulo(${i})" title="Eliminar" class="p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </td>
+      </tr>`}).join('');
+  }
+  compraRecalcTotal();
+}
+
+function compraEditarFila(i) {
+  compraEditIdx = i;
+  renderCompraItems();
+  const descEl = document.getElementById('ce-desc-' + i);
+  if (descEl) descEl.focus();
+}
+
+function compraCancelarEdicion() {
+  compraEditIdx = -1;
+  renderCompraItems();
+}
+
+function compraGuardarEdicion(i) {
+  const desc = document.getElementById('ce-desc-' + i).value.trim();
+  const cant = parseFloat(document.getElementById('ce-cant-' + i).value);
+  const precioDisplay = parseFloat(document.getElementById('ce-prec-' + i).value);
+  if (!desc || cant <= 0 || precioDisplay < 0) { showToast('Datos inválidos', 'error'); return; }
+  const precioUsd = compraFromCur(precioDisplay);
+  compraItems[i].desc = desc;
+  compraItems[i].cant = cant;
+  compraItems[i].precio = precioUsd;
+  compraItems[i].subtotal = cant * precioUsd;
+  compraEditIdx = -1;
+  renderCompraItems();
+}
+
+function compraCantStep(delta) {
+  const inp = document.getElementById('compra-art-cant');
+  let val = parseInt(inp.value) || 1;
+  val = Math.max(1, val + delta);
+  inp.value = val;
+}
+
+function compraRecalcTotal() {
+  const sym = compraSym();
+  const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
+  const iva = parseFloat(document.getElementById('compra-iva-input')?.value) || 0;
+  document.getElementById('compra-subtotal').textContent = sym + fmtNum(compraToCur(sub));
+  document.getElementById('compra-total').textContent = sym + fmtNum(compraToCur(sub) + compraToCur(iva));
+}
+
+function compraGuardar() {
+  if (!compraProveedor) { showToast('Selecciona un proveedor', 'error'); return; }
+  if (!compraItems.length) { showToast('Agrega al menos un artículo', 'error'); return; }
+
+  const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
+  const iva = parseFloat(document.getElementById('compra-iva-input').value) || 0;
+  const totalUsd = sub + iva;
+  const moneda = document.getElementById('compra-moneda').value;
+  const rate = compraGetRate();
+  const totalConv = compraToCur(totalUsd);
+  const ivaConv = compraToCur(iva);
+  const notas = document.getElementById('compra-notas').value.trim();
+  const factura = document.getElementById('compra-factura').value.trim();
+  const guia = document.getElementById('compra-guia').value.trim();
+  const fechaEmision = document.getElementById('compra-fecha-emision').value;
+  const fechaRecepcion = document.getElementById('compra-fecha-recepcion').value;
+
+  const purchase = {
+    id: generateId(),
+    supplierId: compraProveedor.id,
+    supplierName: compraProveedor.name,
+    description: 'Compra a ' + compraProveedor.name + (factura ? ' - Fct: ' + factura : ''),
+    invoiceNumber: factura,
+    amount: totalConv,
+    amountUsd: totalUsd,
+    currency: moneda,
+    exchangeRate: rate,
+    iva: ivaConv,
+    ivaUsd: iva,
+    category: 'Compra',
+    paymentStatus: 'pending',
+    paymentMethod: '',
+    date: fechaEmision ? new Date(fechaEmision).toISOString() : new Date().toISOString(),
+    dueDate: fechaRecepcion ? new Date(fechaRecepcion).toISOString() : null,
+    notes: JSON.stringify({ items: compraItems, observaciones: notas, guia: guia, fechaRecepcion: fechaRecepcion })
+  };
+
+  db.purchases.push(purchase);
+
+  compraItems.forEach(it => {
+    if (it.productId) {
+      const p = db.products.find(x => x.id === it.productId);
+      if (p && !p.isService) {
+        p.stock = (p.stock || 0) + (it.cant || 0);
+        if (it.precio) {
+          p.costPrice = Math.round(it.precio * 100) / 100;
+          p.price = Math.round(p.costPrice * (1 + (p.profitPercent || 0) / 100) * 100) / 100;
+          const rate = db.settings.exchangeRate || 0;
+          if (rate) {
+            p.priceVES = Math.round(p.price * rate * 100) / 100;
+            const COP_FACTOR = 3.5;
+            p.priceCOP = Math.round(p.price * rate * COP_FACTOR * 100) / 100;
+          }
+        }
+        if (it.desc) p.name = it.desc;
+      }
+    }
+  });
+
+  saveDB();
+  if (typeof sb !== 'undefined' && sbReady) {
+    sb.from('purchases').upsert({
+      id: purchase.id, supplier_id: purchase.supplierId, supplier_name: purchase.supplierName,
+      description: purchase.description, invoice_number: purchase.invoiceNumber,
+      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
+      category: purchase.category, payment_status: purchase.paymentStatus,
+      payment_method: purchase.paymentMethod, date: purchase.date,
+      due_date: purchase.dueDate, notes: purchase.notes
+    }).then(() => {}).catch(e => console.warn('sync purchase:', e));
+
+    const updatedProducts = compraItems.filter(it => it.productId).map(it => {
+      const p = db.products.find(x => x.id === it.productId);
+      return p ? { id: p.id, name: p.name, cost_price: p.costPrice, price: p.price, price_ves: p.priceVES || 0, price_cop: p.priceCOP || 0, stock: p.stock } : null;
+    }).filter(Boolean);
+    if (updatedProducts.length) {
+      sb.from('products').upsert(updatedProducts, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync stock:', e));
+    }
+  }
+
+  showToast('¡Compra guardada exitosamente!', 'success');
+  setTimeout(() => initCompraTab(), 800);
+}
+
+// ===================================================================
+// COMPRAS Y GASTOS
+// ===================================================================
+function renderPurchasesTable() {
+  const from = document.getElementById('gastos-from')?.value || '';
+  const to = document.getElementById('gastos-to')?.value || '';
+  const cat = document.getElementById('gastos-category')?.value || '';
+  const status = document.getElementById('gastos-status')?.value || '';
+  const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
+
+  const supSel = document.getElementById('gastos-supplier');
+  if (supSel && supSel.options.length <= 1) {
+    const supplierIds = [...new Set(db.purchases.map(p => p.supplierId).filter(Boolean))];
+    supSel.innerHTML = '<option value="">Todos proveedores</option>' +
+      supplierIds.map(id => {
+        const name = db.purchases.find(p => p.supplierId === id)?.supplierName || id;
+        return `<option value="${id}">${escHtml(name)}</option>`;
+      }).join('');
+  }
+
+  let rows = [...db.purchases];
+  if (from) rows = rows.filter(p => (p.date||'') >= from);
+  if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
+  if (cat) rows = rows.filter(p => p.category === cat);
+  if (status) rows = rows.filter(p => p.paymentStatus === status);
+  if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
+  rows.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  renderGastosSummary(rows);
+
+  const body = document.getElementById('purchases-table-container');
+  if (!rows.length) {
+    body.innerHTML = `<div class="text-center py-12">
+      <i class="fa-solid fa-receipt text-4xl text-slate-200 block mb-3"></i>
+      <p class="text-slate-400 text-sm">Sin registros</p>
+    </div>`;
+    return;
+  }
+
+  const currencySym = { USD: '$', VES: 'Bs.', COP: '$' };
+  const statusBadge = { paid: 'bg-emerald-100 text-emerald-700', pending: 'bg-amber-100 text-amber-700', partial: 'bg-blue-100 text-blue-700' };
+  const statusLabel = { paid: 'Pagado', pending: 'Pendiente', partial: 'Parcial' };
+  const catBadge = { Compra: 'bg-sky-100 text-sky-700', Gasto: 'bg-orange-100 text-orange-700' };
+
+  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
+    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
+      <th class="px-4 py-3 font-semibold">Fecha</th>
+      <th class="px-4 py-3 font-semibold">Descripción</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Proveedor</th>
+      <th class="px-4 py-3 font-semibold hidden lg:table-cell">N° Factura</th>
+      <th class="px-4 py-3 font-semibold">Monto</th>
+      <th class="px-4 py-3 font-semibold">Estado</th>
+      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
+    </tr></thead>
+    <tbody class="divide-y divide-slate-50">${rows.map(p => {
+      const sym = currencySym[p.currency] || '$';
+      const date = new Date(p.date).toLocaleDateString('es-VE');
+      const due = p.dueDate ? new Date(p.dueDate).toLocaleDateString('es-VE') : '';
+      const ivaText = p.iva ? ` +${p.iva}%` : '';
+      return `<tr class="hover:bg-sky-50/40 transition-all">
+        <td class="px-4 py-3 text-xs text-slate-500">
+          <div>${date}</div>
+          ${due ? `<div class="text-[0.55rem] text-slate-400">Vence: ${due}</div>` : ''}
+        </td>
+        <td class="px-4 py-3">
+          <div class="text-sm font-medium text-slate-800">${escHtml(p.description)}</div>
+          <span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${catBadge[p.category] || catBadge.Compra}">${p.category}</span>
+        </td>
+        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600">${escHtml(p.supplierName || '—')}</td>
+        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600 font-mono">${escHtml(p.invoiceNumber || '—')}</td>
+        <td class="px-4 py-3 text-sm font-bold text-slate-800">${sym} ${fmtNum(p.amount)}${ivaText ? `<span class="text-[0.55rem] text-slate-400 ml-0.5">${ivaText}</span>` : ''}</td>
+        <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[p.paymentStatus] || statusBadge.pending}">${statusLabel[p.paymentStatus] || 'Pendiente'}</span></td>
+        <td class="px-4 py-3 text-center">
+          <div class="flex items-center justify-center gap-1">
+            ${p.paymentStatus !== 'paid' ? `<button onclick="openPaymentModal('${p.id}')" title="Pagar" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-money-bill-wave text-xs"></i></button>` : ''}
+            <button onclick="printPurchasePdf('${p.id}')" title="Imprimir PDF" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-file-pdf text-xs"></i></button>
+            <button onclick="editPurchase('${p.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+            <button onclick="deletePurchase('${p.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function renderGastosSummary(rows) {
+  const el = document.getElementById('gastos-summary');
+  if (!el) return;
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+  const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
+  const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
+  const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
+
+  const pendingRows = rows.filter(p => p.paymentStatus !== 'paid');
+  let pendingUsd = 0, pendingVes = 0, pendingCop = 0;
+  pendingRows.forEach(p => {
+    const pend = getPurchasePendingOriginal(p);
+    const cur = p.currency || 'USD';
+    if (cur === 'USD') pendingUsd += pend;
+    else if (cur === 'VES') pendingVes += pend;
+    else if (cur === 'COP') pendingCop += pend;
+  });
+
+  let pendingLines = '';
+  if (pendingUsd > 0) pendingLines += `$${fmtNum(pendingUsd)} USD`;
+  if (pendingVes > 0) pendingLines += (pendingLines ? '<br>' : '') + `<span class="text-amber-600">Bs.${fmtNum(pendingVes)}</span>`;
+  if (pendingCop > 0) pendingLines += (pendingLines ? '<br>' : '') + `<span class="text-amber-600">$${fmtNum(pendingCop)} COP</span>`;
+  if (!pendingLines) pendingLines = '$0.00';
+
+  el.innerHTML = `
+    <div class="bg-white rounded-xl border border-slate-100 p-3">
+      <div class="text-[0.6rem] text-slate-400 uppercase font-semibold">Total</div>
+      <div class="text-sm font-bold text-slate-800 mt-0.5">$${fmtNum(totalAll)}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-sky-100 p-3">
+      <div class="text-[0.6rem] text-sky-500 uppercase font-semibold">Compras</div>
+      <div class="text-sm font-bold text-sky-700 mt-0.5">$${fmtNum(totalCompras)}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-orange-100 p-3">
+      <div class="text-[0.6rem] text-orange-500 uppercase font-semibold">Gastos</div>
+      <div class="text-sm font-bold text-orange-700 mt-0.5">$${fmtNum(totalGastos)}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-amber-100 p-3">
+      <div class="text-[0.6rem] text-amber-500 uppercase font-semibold">Por pagar</div>
+      <div class="text-sm font-bold text-amber-700 mt-0.5">${pendingLines}</div>
+    </div>`;
+}
+
+function openPurchaseModal(id) {
+  const p = id ? db.purchases.find(x => x.id === id) : null;
+  document.getElementById('modal-purchase-title').textContent = p ? 'Editar Registro' : 'Nuevo Registro';
+  document.getElementById('purchase-id').value = p?.id || '';
+  document.getElementById('purchase-category').value = p?.category || 'Compra';
+  document.getElementById('purchase-description').value = p?.description || '';
+  document.getElementById('purchase-invoice').value = p?.invoiceNumber || '';
+  document.getElementById('purchase-currency').value = p?.currency || 'USD';
+  document.getElementById('purchase-amount').value = p?.amount || '';
+  document.getElementById('purchase-iva').value = p?.iva || '';
+  document.getElementById('purchase-date').value = p ? (p.date||'').slice(0,10) : new Date().toISOString().slice(0,10);
+  document.getElementById('purchase-due-date').value = p?.dueDate ? p.dueDate.slice(0,10) : '';
+  document.getElementById('purchase-status').value = p?.paymentStatus || 'pending';
+  document.getElementById('purchase-method').value = p?.paymentMethod || '';
+  let notesRaw = p?.notes || '';
+  let observaciones = notesRaw;
+  try { const parsed = JSON.parse(notesRaw); observaciones = parsed.observaciones || ''; } catch(e) {}
+  document.getElementById('purchase-notes').value = observaciones;
+  document.getElementById('purchase-notes').setAttribute('data-raw', notesRaw);
+
+  const supSel = document.getElementById('purchase-supplier');
+  supSel.innerHTML = '<option value="">Sin proveedor</option>' +
+    db.suppliers.filter(s => s.active !== false).map(s =>
+      `<option value="${s.id}" ${s.id === (p?.supplierId || '') ? 'selected' : ''}>${escHtml(s.name)}</option>`
+    ).join('');
+
+  openModal('modal-purchase');
+}
+
+function editPurchase(id) { openPurchaseModal(id); }
+
+function savePurchase() {
+  const id = document.getElementById('purchase-id').value;
+  const description = document.getElementById('purchase-description').value.trim();
+  const amount = parseFloat(document.getElementById('purchase-amount').value) || 0;
+  if (!description) { showToast('La descripción es requerida', 'error'); return; }
+  if (amount <= 0) { showToast('El monto debe ser mayor a 0', 'error'); return; }
+
+  const supplierId = document.getElementById('purchase-supplier').value;
+  const supplier = supplierId ? db.suppliers.find(s => s.id === supplierId) : null;
+  const dateVal = document.getElementById('purchase-date').value;
+  const dueVal = document.getElementById('purchase-due-date').value;
+
+  const purchase = {
+    id: id || generateId(), supplierId, supplierName: supplier ? supplier.name : '',
+    description, invoiceNumber: document.getElementById('purchase-invoice').value.trim(),
+    amount, amountUsd: compraFromCur(amount), currency: document.getElementById('purchase-currency').value,
+    iva: parseFloat(document.getElementById('purchase-iva').value) || 0,
+    category: document.getElementById('purchase-category').value,
+    paymentStatus: document.getElementById('purchase-status').value,
+    paymentMethod: document.getElementById('purchase-method').value,
+    date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+    dueDate: dueVal ? new Date(dueVal).toISOString() : null,
+    notes: (() => {
+      let existing = {};
+      try { existing = JSON.parse(document.getElementById('purchase-notes').getAttribute('data-raw') || '{}'); } catch(e) {}
+      return JSON.stringify({ ...existing, observaciones: document.getElementById('purchase-notes').value.trim() });
+    })()
+  };
+
+  if (id) {
+    const idx = db.purchases.findIndex(x => x.id === id);
+    if (idx !== -1) db.purchases[idx] = purchase;
+  } else {
+    db.purchases.push(purchase);
+  }
+  saveDB();
+  if (sbReady) {
+    sb.from('purchases').upsert({
+      id: purchase.id, supplier_id: purchase.supplierId || null, supplier_name: purchase.supplierName || '',
+      description: purchase.description, invoice_number: purchase.invoiceNumber || '',
+      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
+      category: purchase.category, payment_status: purchase.paymentStatus,
+      payment_method: purchase.paymentMethod, date: purchase.date,
+      due_date: purchase.dueDate || null, notes: purchase.notes || ''
+    }).catch(e => console.warn('sync purchase:', e));
+  }
+  closeModal('modal-purchase');
+  renderPurchasesTable();
+  showToast(id ? 'Registro actualizado' : 'Registro creado', 'success');
+}
+
+function deletePurchase(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  db.purchases = db.purchases.filter(p => p.id !== id);
+  db.payments = db.payments.filter(p => p.purchaseId !== id);
+  saveDB();
+  if (sbReady) {
+    sb.from('purchases').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
+    sb.from('payments').delete().eq('purchase_id', id).then(() => {}).catch(e => console.warn(e));
+  }
+  renderPurchasesTable();
+  showToast('Registro eliminado', 'warning');
+}
+
+function paymentToUsd(amount, method) {
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+  if (method.includes('USD')) return amount;
+  if (method.includes('COP') && copRate) return amount / copRate;
+  if ((method.includes('Bs') || method.includes('Transferencia')) && rate) return amount / rate;
+  return amount;
+}
+
+function getPurchasePayments(purchaseId) {
+  return (db.payments || []).filter(p => p.purchaseId === purchaseId);
+}
+
+function getPurchasePendingUsd(p) {
+  const totalUsd = p.amountUsd || p.amount || 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  return Math.max(0, totalUsd - paid);
+}
+
+function getPurchasePendingOriginal(p) {
+  const totalUsd = p.amountUsd || p.amount || 0;
+  if (!totalUsd) return 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const fractionPaid = Math.min(paid / totalUsd, 1);
+  return Math.max(0, (p.amount || 0) * (1 - fractionPaid));
+}
+
+function openPaymentModal(purchaseId) {
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  const totalUsd = p.amountUsd || p.amount || 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const pending = Math.max(0, totalUsd - paid);
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' };
+
+  document.getElementById('payment-purchase-id').value = p.id;
+  document.getElementById('payment-supplier').textContent = p.supplierName || '—';
+  document.getElementById('payment-invoice').textContent = p.invoiceNumber || '—';
+  document.getElementById('payment-total').textContent = `$${fmtNum(totalUsd)} USD`;
+  document.getElementById('payment-paid').textContent = `$${fmtNum(paid)} USD`;
+  document.getElementById('payment-pending').textContent = `$${fmtNum(pending)} USD`;
+  document.getElementById('payment-amount').value = pending > 0 ? pending.toFixed(2) : '';
+  document.getElementById('payment-amount').max = pending;
+  document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('payment-equiv').textContent = '';
+  document.getElementById('payment-method').onchange = function() { updatePaymentEquiv(); };
+  document.getElementById('payment-amount').oninput = function() { updatePaymentEquiv(); };
+  updatePaymentEquiv();
+  openModal('modal-payment');
+}
+
+function updatePaymentEquiv() {
+  const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+  const method = document.getElementById('payment-method').value;
+  const usd = paymentToUsd(amount, method);
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+  let parts = [];
+  if (!method.includes('USD') && usd > 0) parts.push(`≈ $${fmtNum(usd)} USD`);
+  if (method.includes('COP') && usd > 0 && rate) parts.push(`≈ Bs.${fmtNum(usd * rate)} / $${fmtNum(usd * copRate)} COP`);
+  if ((method.includes('Bs')) && usd > 0 && rate) parts.push(`≈ $${fmtNum(usd)} USD / $${fmtNum(usd * copRate)} COP`);
+  document.getElementById('payment-equiv').textContent = parts.join(' | ');
+}
+
+function processPayment() {
+  const purchaseId = document.getElementById('payment-purchase-id').value;
+  const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+  const method = document.getElementById('payment-method').value;
+  const date = document.getElementById('payment-date').value;
+
+  if (amount <= 0) { showToast('Ingresa un monto válido', 'error'); return; }
+
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  const pending = getPurchasePendingUsd(p);
+  const amountUsd = paymentToUsd(amount, method);
+
+  if (amountUsd > pending + 0.01) { showToast('El monto excede el pendiente', 'error'); return; }
+
+  const payment = {
+    id: generateId(),
+    purchaseId,
+    amount,
+    amountUsd,
+    method,
+    date: date ? new Date(date).toISOString() : new Date().toISOString()
+  };
+
+  db.payments.push(payment);
+
+  const totalPaidUsd = getPurchasePayments(purchaseId).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  if (totalPaidUsd >= (p.amountUsd || p.amount || 0) - 0.01) {
+    p.paymentStatus = 'paid';
+  } else {
+    p.paymentStatus = 'partial';
+  }
+
+  saveDB();
+  if (sbReady) {
+    sb.from('payments').upsert({
+      id: payment.id, purchase_id: payment.purchaseId,
+      amount: payment.amount, amount_usd: payment.amountUsd,
+      method: payment.method, date: payment.date
+    }).then(() => {}).catch(e => console.warn('sync payment:', e));
+    sb.from('purchases').upsert({
+      id: p.id, payment_status: p.paymentStatus
+    }, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync purchase status:', e));
+  }
+
+  closeModal('modal-payment');
+  renderPurchasesTable();
+  showToast('Pago registrado', 'success');
+}
+
+function printPurchasePdf(purchaseId) {
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  let items = [];
+  try {
+    const parsed = JSON.parse(p.notes || '{}');
+    items = parsed.items || [];
+  } catch(e) {}
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+
+  if (logoBase64) {
+    doc.addImage(logoBase64, 'PNG', 15, 10, 25, 20);
+  }
+
+  doc.setFontSize(16);
+  doc.setTextColor(4, 21, 75);
+  doc.text('RefrigiHerrera', logoBase64 ? 45 : 15, 18);
+
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text(`RIF: ${db.settings.rif || 'N/A'}`, logoBase64 ? 45 : 15, 24);
+  doc.text(`Tel: ${db.settings.whatsapp || 'N/A'}`, logoBase64 ? 45 : 15, 29);
+
+  doc.setFontSize(14);
+  doc.setTextColor(4, 21, 75);
+  doc.text('FACTURA / COMPRA', 105, 18, { align: 'center' });
+
+  doc.setDrawColor(4, 21, 75);
+  doc.setLineWidth(0.5);
+  doc.line(15, 35, 195, 35);
+
+  let y = 42;
+  doc.setFontSize(9);
+  doc.setTextColor(60);
+  const currencySym = { USD: 'USD', VES: 'Bs.', COP: 'COP' };
+  const sym = currencySym[p.currency] || 'USD';
+
+  doc.text(`Fecha: ${new Date(p.date).toLocaleDateString('es-VE')}`, 15, y);
+  doc.text(`Proveedor: ${p.supplierName || '—'}`, 105, y);
+  y += 6;
+  doc.text(`Factura N°: ${p.invoiceNumber || '—'}`, 15, y);
+  doc.text(`Estado: ${p.paymentStatus === 'paid' ? 'Pagado' : p.paymentStatus === 'partial' ? 'Parcial' : 'Pendiente'}`, 105, y);
+  y += 6;
+  doc.text(`Categoría: ${p.category || 'Compra'}`, 15, y);
+  doc.text(`Moneda: ${sym}`, 105, y);
+  y += 8;
+
+  if (p.dueDate) {
+    doc.text(`Fecha recepción: ${new Date(p.dueDate).toLocaleDateString('es-VE')}`, 15, y);
+    y += 8;
+  }
+
+  if (items.length) {
+    doc.setFillColor(4, 21, 75);
+    doc.rect(15, y, 180, 8, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(255);
+    doc.text('Artículo', 17, y + 5.5);
+    doc.text('Cant.', 115, y + 5.5);
+    doc.text('P. Unit.', 135, y + 5.5);
+    doc.text('Subtotal', 165, y + 5.5);
+    y += 10;
+
+    doc.setTextColor(60);
+    doc.setFontSize(8);
+    let subtotalItems = 0;
+    items.forEach((it, i) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      const bgColor = i % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      doc.setFillColor(...bgColor);
+      doc.rect(15, y - 3, 180, 7, 'F');
+      const itemSub = it.subtotal || (it.cant * it.precio);
+      subtotalItems += itemSub;
+      doc.text(it.desc || '—', 17, y + 2);
+      doc.text(String(it.cant || 0), 118, y + 2);
+      doc.text(`$${fmtNum(it.precio)}`, 135, y + 2);
+      doc.text(`$${fmtNum(itemSub)}`, 165, y + 2);
+      y += 7;
+    });
+
+    y += 3;
+    doc.setDrawColor(200);
+    doc.line(15, y, 195, y);
+    y += 6;
+
+    doc.setFontSize(9);
+    doc.text('Subtotal:', 140, y);
+    doc.text(`$${fmtNum(subtotalItems)}`, 165, y);
+    y += 6;
+
+    if (p.ivaUsd || p.iva) {
+      const iva = p.ivaUsd || 0;
+      doc.text(`IVA:`, 140, y);
+      doc.text(`$${fmtNum(iva)}`, 165, y);
+      y += 6;
+    }
+
+    y += 2;
+    doc.setFontSize(11);
+    doc.setTextColor(4, 21, 75);
+    doc.setFont(undefined, 'bold');
+    const total = p.amountUsd || subtotalItems;
+    doc.text('TOTAL USD:', 130, y);
+    doc.text(`$${fmtNum(total)}`, 165, y);
+    y += 7;
+
+    if (rate) {
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.setFont(undefined, 'normal');
+      doc.text(`VES: Bs.${fmtNum(total * rate)}  |  COP: $${fmtNum(total * copRate)}`, 130, y);
+      y += 7;
+    }
+
+    const payments = getPurchasePayments(p.id);
+    if (payments.length) {
+      y += 4;
+      doc.setFontSize(10);
+      doc.setTextColor(4, 21, 75);
+      doc.setFont(undefined, 'bold');
+      doc.text('Pagos realizados:', 15, y);
+      y += 7;
+      doc.setFontSize(8);
+      doc.setTextColor(60);
+      doc.setFont(undefined, 'normal');
+      payments.forEach(pay => {
+        doc.text(`${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  $${fmtNum(pay.amountUsd)} USD (de $${fmtNum(pay.amount)} ${pay.method.includes('USD') ? 'USD' : pay.method.includes('COP') ? 'COP' : 'Bs.'})`, 17, y);
+        y += 5;
+      });
+    }
+  } else {
+    doc.setFontSize(10);
+    doc.setTextColor(60);
+    doc.text(`Monto total: ${sym} ${fmtNum(p.amount)}`, 15, y);
+    y += 8;
+    if (rate && p.currency === 'VES') {
+      doc.text(`Equivalente: $${fmtNum(p.amount / rate)} USD`, 15, y);
+      y += 6;
+    }
+  }
+
+  y += 10;
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text(`Documento generado el ${new Date().toLocaleDateString('es-VE')} ${new Date().toLocaleTimeString('es-VE')}`, 105, y, { align: 'center' });
+
+  doc.save(`factura_${p.invoiceNumber || p.id.slice(0,8)}.pdf`);
+  showToast('PDF generado', 'success');
+}
+
+function exportPurchasesCSV() {
+  const from = document.getElementById('gastos-from')?.value || '';
+  const to = document.getElementById('gastos-to')?.value || '';
+  const cat = document.getElementById('gastos-category')?.value || '';
+  const status = document.getElementById('gastos-status')?.value || '';
+  const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
+  let rows = [...db.purchases];
+  if (from) rows = rows.filter(p => (p.date||'') >= from);
+  if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
+  if (cat) rows = rows.filter(p => p.category === cat);
+  if (status) rows = rows.filter(p => p.paymentStatus === status);
+  if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
+
+  if (!rows.length) { showToast('Sin datos para exportar', 'warning'); return; }
+  const header = 'Fecha,Descripción,Proveedor,N° Factura,Monto,Moneda,IVA %,Categoría,Estado,Método Pago,Fecha Vencimiento,Notas';
+  const body = rows.map(p => {
+    const d = new Date(p.date).toLocaleDateString('es-VE');
+    const due = p.dueDate ? new Date(p.dueDate).toLocaleDateString('es-VE') : '';
+    return `"${d}","${(p.description||'').replace(/"/g,'""')}","${(p.supplierName||'').replace(/"/g,'""')}","${p.invoiceNumber||''}","${p.amount}","${p.currency}","${p.iva||0}","${p.category}","${p.paymentStatus}","${p.paymentMethod||''}","${due}","${(p.notes||'').replace(/"/g,'""')}"`;
+  }).join('\n');
+  const blob = new Blob(['\uFEFF' + header + '\n' + body], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `compras_gastos_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('CSV exportado', 'success');
+}
+
+function generarReporteGastos() {
+  const from = document.getElementById('gastos-from')?.value || '';
+  const to = document.getElementById('gastos-to')?.value || '';
+  const cat = document.getElementById('gastos-category')?.value || '';
+  const status = document.getElementById('gastos-status')?.value || '';
+  const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
+  let rows = [...db.purchases];
+  if (from) rows = rows.filter(p => (p.date||'') >= from);
+  if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
+  if (cat) rows = rows.filter(p => p.category === cat);
+  if (status) rows = rows.filter(p => p.paymentStatus === status);
+  if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
+  rows.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!rows.length) { showToast('Sin datos para generar reporte', 'warning'); return; }
+
+  const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
+  const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
+  const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
+  const pending = rows.filter(p => p.paymentStatus === 'pending' || p.paymentStatus === 'partial').reduce((s, p) => s + (p.amount || 0), 0);
+
+  const byCurrency = {};
+  rows.forEach(p => {
+    const c = p.currency || 'USD';
+    byCurrency[c] = (byCurrency[c] || 0) + (p.amount || 0);
+  });
+
+  const statusLabel = { paid: 'Pagado', pending: 'Pendiente', partial: 'Parcial' };
+  const catLabel = { Compra: 'Compra', Gasto: 'Gasto' };
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' };
+
+  const fromStr = from ? new Date(from).toLocaleDateString('es-VE') : 'Inicio';
+  const toStr = to ? new Date(to).toLocaleDateString('es-VE') : 'Hoy';
+
+  const reportHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte de Gastos</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; font-size: 11px; color: #333; padding: 20px; }
+      .header { text-align: center; border-bottom: 2px solid #04154B; padding-bottom: 10px; margin-bottom: 15px; }
+      .header h1 { font-size: 18px; color: #04154B; }
+      .header p { font-size: 11px; color: #666; }
+      .summary { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
+      .summary-card { flex: 1; min-width: 120px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+      .summary-card .label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
+      .summary-card .value { font-size: 16px; font-weight: bold; color: #1e293b; margin-top: 2px; }
+      .summary-card .value.usd { color: #0ea5e9; }
+      .summary-card .value.ves { color: #f59e0b; }
+      .summary-card .value.cop { color: #10b981; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+      th { background: #f1f5f9; font-size: 9px; text-transform: uppercase; padding: 6px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569; }
+      td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10px; }
+      tr:nth-child(even) { background: #f8fafc; }
+      .badge { font-size: 8px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+      .badge-paid { background: #dcfce7; color: #166534; }
+      .badge-pending { background: #fef3c7; color: #92400e; }
+      .badge-partial { background: #dbeafe; color: #1e40af; }
+      .footer { text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 15px; }
+      @media print { body { padding: 10px; } }
+    </style></head><body>
+    <div class="header">
+      <h1>Reporte de Compras y Gastos</h1>
+      <p>RefrigiHerrera &mdash; Periodo: ${fromStr} al ${toStr}</p>
+    </div>
+    <div class="summary">
+      <div class="summary-card"><div class="label">Total General</div><div class="value usd">$${fmtNum(totalAll)}</div></div>
+      <div class="summary-card"><div class="label">Compras</div><div class="value usd">$${fmtNum(totalCompras)}</div></div>
+      <div class="summary-card"><div class="label">Gastos</div><div class="value usd">$${fmtNum(totalGastos)}</div></div>
+      <div class="summary-card"><div class="label">Por Pagar</div><div class="value" style="color:#f59e0b">$${fmtNum(pending)}</div></div>
+      ${Object.keys(byCurrency).map(c => `<div class="summary-card"><div class="label">Total ${c}</div><div class="value ${c.toLowerCase()}">${sym[c]||''}${fmtNum(byCurrency[c])}</div></div>`).join('')}
+    </div>
+    <table>
+      <thead><tr>
+        <th>Fecha</th><th>Descripción</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>Moneda</th><th>IVA</th><th>Categoría</th><th>Estado</th>
+      </tr></thead>
+      <tbody>${rows.map(p => {
+        const d = new Date(p.date).toLocaleDateString('es-VE');
+        const badgeCls = p.paymentStatus === 'paid' ? 'badge-paid' : p.paymentStatus === 'partial' ? 'badge-partial' : 'badge-pending';
+        return `<tr>
+          <td>${d}</td>
+          <td><strong>${escHtml(p.description||'')}</strong></td>
+          <td>${escHtml(p.supplierName||'—')}</td>
+          <td>${escHtml(p.invoiceNumber||'—')}</td>
+          <td style="text-align:right;font-weight:bold">${sym[p.currency]||'$'}${fmtNum(p.amount||0)}</td>
+          <td>${p.currency||'USD'}</td>
+          <td>${p.iva ? '$'+fmtNum(p.iva) : '—'}</td>
+          <td>${catLabel[p.category]||p.category}</td>
+          <td><span class="badge ${badgeCls}">${statusLabel[p.paymentStatus]||p.paymentStatus}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div class="footer">
+      Generado el ${new Date().toLocaleDateString('es-VE')} a las ${new Date().toLocaleTimeString('es-VE')} &mdash; RefrigiHerrera
+    </div>
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(reportHtml);
+  win.document.close();
+  win.print();
+}
+
+// ===================================================================
 // USUARIOS
 // ===================================================================
 function renderUsersTable() {
@@ -3828,7 +5597,7 @@ function cleanupOldQuotes() {
   db.quotes = db.quotes.filter(q => !ids.includes(q.id));
   saveDB();
   if (sbReady) {
-    ids.forEach(id => sb.from('quotes').delete().eq('id', id).catch(() => {}));
+    ids.forEach(id => sb.from('quotes').delete().eq('id', id).then(() => {}).catch(() => {}));
     if (pdfPaths.length) sb.storage.from('cotizaciones').remove(pdfPaths).then(() => console.log('PDFs viejos borrados:', pdfPaths.length)).catch(() => {});
   }
 }
