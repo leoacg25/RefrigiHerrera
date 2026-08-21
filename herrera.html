@@ -4720,7 +4720,11 @@ function openPurchaseModal(id) {
   document.getElementById('purchase-due-date').value = p?.dueDate ? p.dueDate.slice(0,10) : '';
   document.getElementById('purchase-status').value = p?.paymentStatus || 'pending';
   document.getElementById('purchase-method').value = p?.paymentMethod || '';
-  document.getElementById('purchase-notes').value = p?.notes || '';
+  let notesRaw = p?.notes || '';
+  let observaciones = notesRaw;
+  try { const parsed = JSON.parse(notesRaw); observaciones = parsed.observaciones || ''; } catch(e) {}
+  document.getElementById('purchase-notes').value = observaciones;
+  document.getElementById('purchase-notes').setAttribute('data-raw', notesRaw);
 
   const supSel = document.getElementById('purchase-supplier');
   supSel.innerHTML = '<option value="">Sin proveedor</option>' +
@@ -4755,7 +4759,11 @@ function savePurchase() {
     paymentMethod: document.getElementById('purchase-method').value,
     date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
     dueDate: dueVal ? new Date(dueVal).toISOString() : null,
-    notes: document.getElementById('purchase-notes').value.trim()
+    notes: (() => {
+      let existing = {};
+      try { existing = JSON.parse(document.getElementById('purchase-notes').getAttribute('data-raw') || '{}'); } catch(e) {}
+      return JSON.stringify({ ...existing, observaciones: document.getElementById('purchase-notes').value.trim() });
+    })()
   };
 
   if (id) {
