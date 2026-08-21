@@ -937,6 +937,9 @@
           <option value="pending">Pendiente</option>
           <option value="partial">Parcial</option>
         </select>
+        <select id="gastos-supplier" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+          <option value="">Todos proveedores</option>
+        </select>
       </div>
       <!-- Resumen -->
       <div id="gastos-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3"></div>
@@ -1726,6 +1729,58 @@
   </div>
 </div>
 
+<!-- ======== MODAL: PAGAR FACTURA ======== -->
+<div id="modal-payment" class="fixed inset-0 z-[100] hidden">
+  <div class="modal-backdrop absolute inset-0 bg-black/40" onclick="closeModal('modal-payment')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 class="font-bold text-base text-slate-800"><i class="fa-solid fa-money-bill-wave mr-2 text-emerald-500"></i>Pagar Factura</h3>
+        <button onclick="closeModal('modal-payment')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-slate-500 text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input type="hidden" id="payment-purchase-id">
+        <div class="bg-slate-50 rounded-xl p-3 space-y-1">
+          <div class="text-xs text-slate-500">Proveedor: <span id="payment-supplier" class="font-medium text-slate-700">—</span></div>
+          <div class="text-xs text-slate-500">Factura: <span id="payment-invoice" class="font-medium text-slate-700">—</span></div>
+          <div class="text-xs text-slate-500">Monto total: <span id="payment-total" class="font-bold text-slate-800">—</span></div>
+          <div class="text-xs text-slate-500">Ya pagado: <span id="payment-paid" class="font-bold text-emerald-600">$0.00</span></div>
+          <div class="text-xs text-slate-500">Pendiente: <span id="payment-pending" class="font-bold text-amber-600">$0.00</span></div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Método de pago *</label>
+          <select id="payment-method" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+            <option value="Efectivo USD">Efectivo USD</option>
+            <option value="Efectivo COP">Efectivo COP</option>
+            <option value="Efectivo Bs">Efectivo Bs</option>
+            <option value="Transferencia Bs">Transferencia Bs</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Monto a pagar *</label>
+          <input type="number" id="payment-amount" min="0" step="0.01" placeholder="0.00"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none text-right font-bold text-lg">
+        </div>
+        <div class="text-[0.65rem] text-slate-400 text-right" id="payment-equiv"></div>
+        <div>
+          <label class="text-xs font-medium text-slate-500 mb-1 block">Fecha de pago</label>
+          <input type="date" id="payment-date"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
+        </div>
+        <div class="text-xs text-slate-400">El pago se registra en la moneda seleccionada. El sistema convertirá automáticamente al USD.</div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <button onclick="closeModal('modal-payment')" class="px-4 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancelar</button>
+        <button onclick="processPayment()" class="px-5 py-2 text-sm text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#059669,#047857)">
+          <i class="fa-solid fa-check mr-1.5"></i>Pagar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container" class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
 
@@ -1750,6 +1805,7 @@ let db = {
   quotes: [],
   suppliers: [],
   purchases: [],
+  payments: [],
   settings: {
     whatsapp: '',
     storeName: 'RefrigiHerrera',
@@ -1797,7 +1853,7 @@ async function initSupabase() {
 async function loadFromSupabase() {
   if (!sbReady) return;
   try {
-    const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes, supplierRes, purchaseRes] = await Promise.all([
+    const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes, supplierRes, purchaseRes, paymentRes] = await Promise.all([
       sb.from('products').select('*'),
       sb.from('sales').select('*').order('date', { ascending: false }),
       sb.from('combos').select('*'),
@@ -1806,7 +1862,8 @@ async function loadFromSupabase() {
       sb.from('clients').select('*').order('created_at', { ascending: false }),
       sb.from('quotes').select('*').order('date', { ascending: false }),
       sb.from('suppliers').select('*').order('created_at', { ascending: false }),
-      sb.from('purchases').select('*').order('date', { ascending: false })
+      sb.from('purchases').select('*').order('date', { ascending: false }),
+      sb.from('payments').select('*').order('date', { ascending: true })
     ]);
     if (prodRes.data) db.products = prodRes.data.map(p => ({
       id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
@@ -1847,10 +1904,15 @@ async function loadFromSupabase() {
     if (purchaseRes.data) db.purchases = purchaseRes.data.map(p => ({
       id: p.id, supplierId: p.supplier_id, supplierName: p.supplier_name || '',
       description: p.description || '', invoiceNumber: p.invoice_number || '',
-      amount: p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+      amount: p.amount || 0, amountUsd: p.amount_usd || p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
       category: p.category || 'Compra', paymentStatus: p.payment_status || 'pending',
       paymentMethod: p.payment_method || '', date: p.date,
       dueDate: p.due_date || null, notes: p.notes || ''
+    }));
+    if (paymentRes.data) db.payments = paymentRes.data.map(p => ({
+      id: p.id, purchaseId: p.purchase_id,
+      amount: p.amount || 0, amountUsd: p.amount_usd || 0,
+      method: p.method || '', date: p.date
     }));
     saveDB();
   } catch (e) { console.warn('loadFromSupabase:', e); }
@@ -1869,6 +1931,7 @@ function loadDB() {
       db.quotes = parsed.quotes || [];
       db.suppliers = parsed.suppliers || [];
       db.purchases = parsed.purchases || [];
+      db.payments = parsed.payments || [];
       db.settings = Object.assign({}, db.settings, parsed.settings || {});
     }
   } catch (e) { console.error('loadDB:', e); }
@@ -1943,12 +2006,20 @@ async function syncToSupabase() {
     const purchases = db.purchases.map(p => ({
       id: p.id, supplier_id: p.supplierId || null, supplier_name: p.supplierName || '',
       description: p.description || '', invoice_number: p.invoiceNumber || '',
-      amount: p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+      amount: p.amount || 0, amount_usd: p.amountUsd || p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
       category: p.category || 'Compra', payment_status: p.paymentStatus || 'pending',
       payment_method: p.paymentMethod || '', date: p.date,
       due_date: p.dueDate || null, notes: p.notes || ''
     }));
     if (purchases.length) await sb.from('purchases').upsert(purchases, { onConflict: 'id' });
+
+    const payments = (db.payments || []).map(p => ({
+      id: p.id, purchase_id: p.purchaseId,
+      amount: p.amount || 0, amount_usd: p.amountUsd || 0,
+      method: p.method || '', date: p.date
+    }));
+    if (payments.length) await sb.from('payments').upsert(payments, { onConflict: 'id' });
+
     const localPurchaseIds = db.purchases.map(p => p.id);
     const serverPurchases = await sb.from('purchases').select('id');
     if (serverPurchases.data) {
@@ -4591,7 +4662,8 @@ function compraGuardar() {
     sb.from('purchases').upsert({
       id: purchase.id, supplier_id: purchase.supplierId, supplier_name: purchase.supplierName,
       description: purchase.description, invoice_number: purchase.invoiceNumber,
-      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
+      amount: purchase.amount, amount_usd: purchase.amountUsd, currency: purchase.currency, iva: purchase.iva,
+      iva_usd: purchase.ivaUsd || 0, exchange_rate: purchase.exchangeRate || 0,
       category: purchase.category, payment_status: purchase.paymentStatus,
       payment_method: purchase.paymentMethod, date: purchase.date,
       due_date: purchase.dueDate, notes: purchase.notes
@@ -4618,12 +4690,24 @@ function renderPurchasesTable() {
   const to = document.getElementById('gastos-to')?.value || '';
   const cat = document.getElementById('gastos-category')?.value || '';
   const status = document.getElementById('gastos-status')?.value || '';
+  const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
+
+  const supSel = document.getElementById('gastos-supplier');
+  if (supSel && supSel.options.length <= 1) {
+    const supplierIds = [...new Set(db.purchases.map(p => p.supplierId).filter(Boolean))];
+    supSel.innerHTML = '<option value="">Todos proveedores</option>' +
+      supplierIds.map(id => {
+        const name = db.purchases.find(p => p.supplierId === id)?.supplierName || id;
+        return `<option value="${id}">${escHtml(name)}</option>`;
+      }).join('');
+  }
 
   let rows = [...db.purchases];
   if (from) rows = rows.filter(p => (p.date||'') >= from);
   if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
   if (cat) rows = rows.filter(p => p.category === cat);
   if (status) rows = rows.filter(p => p.paymentStatus === status);
+  if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
   rows.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   renderGastosSummary(rows);
@@ -4672,6 +4756,8 @@ function renderPurchasesTable() {
         <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[p.paymentStatus] || statusBadge.pending}">${statusLabel[p.paymentStatus] || 'Pendiente'}</span></td>
         <td class="px-4 py-3 text-center">
           <div class="flex items-center justify-center gap-1">
+            ${p.paymentStatus !== 'paid' ? `<button onclick="openPaymentModal('${p.id}')" title="Pagar" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-money-bill-wave text-xs"></i></button>` : ''}
+            <button onclick="printPurchasePdf('${p.id}')" title="Imprimir PDF" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-file-pdf text-xs"></i></button>
             <button onclick="editPurchase('${p.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
             <button onclick="deletePurchase('${p.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
           </div>
@@ -4683,10 +4769,19 @@ function renderPurchasesTable() {
 function renderGastosSummary(rows) {
   const el = document.getElementById('gastos-summary');
   if (!el) return;
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
   const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
   const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
   const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
-  const pending = rows.filter(p => p.paymentStatus === 'pending' || p.paymentStatus === 'partial').reduce((s, p) => s + (p.amount || 0), 0);
+  const pendingUsd = rows.filter(p => p.paymentStatus !== 'paid').reduce((s, p) => s + getPurchasePendingUsd(p), 0);
+  const pendingVes = pendingUsd * rate;
+  const pendingCop = pendingUsd * copRate;
+
+  let pendingLines = `$${fmtNum(pendingUsd)} USD`;
+  if (rate && pendingVes > 0) pendingLines += `<br><span class="text-amber-600">Bs.${fmtNum(pendingVes)}</span>`;
+  if (copRate && pendingCop > 0) pendingLines += `<br><span class="text-amber-600">$${fmtNum(pendingCop)} COP</span>`;
+
   el.innerHTML = `
     <div class="bg-white rounded-xl border border-slate-100 p-3">
       <div class="text-[0.6rem] text-slate-400 uppercase font-semibold">Total</div>
@@ -4702,7 +4797,7 @@ function renderGastosSummary(rows) {
     </div>
     <div class="bg-white rounded-xl border border-amber-100 p-3">
       <div class="text-[0.6rem] text-amber-500 uppercase font-semibold">Por pagar</div>
-      <div class="text-sm font-bold text-amber-700 mt-0.5">$${fmtNum(pending)}</div>
+      <div class="text-sm font-bold text-amber-700 mt-0.5">${pendingLines}</div>
     </div>`;
 }
 
@@ -4752,7 +4847,7 @@ function savePurchase() {
   const purchase = {
     id: id || generateId(), supplierId, supplierName: supplier ? supplier.name : '',
     description, invoiceNumber: document.getElementById('purchase-invoice').value.trim(),
-    amount, currency: document.getElementById('purchase-currency').value,
+    amount, amountUsd: compraFromCur(amount), currency: document.getElementById('purchase-currency').value,
     iva: parseFloat(document.getElementById('purchase-iva').value) || 0,
     category: document.getElementById('purchase-category').value,
     paymentStatus: document.getElementById('purchase-status').value,
@@ -4777,7 +4872,7 @@ function savePurchase() {
     sb.from('purchases').upsert({
       id: purchase.id, supplier_id: purchase.supplierId || null, supplier_name: purchase.supplierName || '',
       description: purchase.description, invoice_number: purchase.invoiceNumber || '',
-      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
+      amount: purchase.amount, amount_usd: purchase.amountUsd || purchase.amount || 0, currency: purchase.currency, iva: purchase.iva,
       category: purchase.category, payment_status: purchase.paymentStatus,
       payment_method: purchase.paymentMethod, date: purchase.date,
       due_date: purchase.dueDate || null, notes: purchase.notes || ''
@@ -4791,10 +4886,277 @@ function savePurchase() {
 function deletePurchase(id) {
   if (!confirm('¿Eliminar este registro?')) return;
   db.purchases = db.purchases.filter(p => p.id !== id);
+  db.payments = db.payments.filter(p => p.purchaseId !== id);
   saveDB();
-  if (sbReady) sb.from('purchases').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
+  if (sbReady) {
+    sb.from('purchases').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
+    sb.from('payments').delete().eq('purchase_id', id).then(() => {}).catch(e => console.warn(e));
+  }
   renderPurchasesTable();
   showToast('Registro eliminado', 'warning');
+}
+
+function paymentToUsd(amount, method) {
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+  if (method.includes('USD')) return amount;
+  if (method.includes('COP') && copRate) return amount / copRate;
+  if ((method.includes('Bs') || method.includes('Transferencia')) && rate) return amount / rate;
+  return amount;
+}
+
+function getPurchasePayments(purchaseId) {
+  return (db.payments || []).filter(p => p.purchaseId === purchaseId);
+}
+
+function getPurchasePendingUsd(p) {
+  const totalUsd = p.amountUsd || p.amount || 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  return Math.max(0, totalUsd - paid);
+}
+
+function openPaymentModal(purchaseId) {
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  const totalUsd = p.amountUsd || p.amount || 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const pending = Math.max(0, totalUsd - paid);
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' };
+
+  document.getElementById('payment-purchase-id').value = p.id;
+  document.getElementById('payment-supplier').textContent = p.supplierName || '—';
+  document.getElementById('payment-invoice').textContent = p.invoiceNumber || '—';
+  document.getElementById('payment-total').textContent = `$${fmtNum(totalUsd)} USD`;
+  document.getElementById('payment-paid').textContent = `$${fmtNum(paid)} USD`;
+  document.getElementById('payment-pending').textContent = `$${fmtNum(pending)} USD`;
+  document.getElementById('payment-amount').value = pending > 0 ? pending.toFixed(2) : '';
+  document.getElementById('payment-amount').max = pending;
+  document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('payment-equiv').textContent = '';
+  document.getElementById('payment-method').onchange = function() { updatePaymentEquiv(); };
+  document.getElementById('payment-amount').oninput = function() { updatePaymentEquiv(); };
+  updatePaymentEquiv();
+  openModal('modal-payment');
+}
+
+function updatePaymentEquiv() {
+  const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+  const method = document.getElementById('payment-method').value;
+  const usd = paymentToUsd(amount, method);
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+  let parts = [];
+  if (!method.includes('USD') && usd > 0) parts.push(`≈ $${fmtNum(usd)} USD`);
+  if (method.includes('COP') && usd > 0 && rate) parts.push(`≈ Bs.${fmtNum(usd * rate)} / $${fmtNum(usd * copRate)} COP`);
+  if ((method.includes('Bs')) && usd > 0 && rate) parts.push(`≈ $${fmtNum(usd)} USD / $${fmtNum(usd * copRate)} COP`);
+  document.getElementById('payment-equiv').textContent = parts.join(' | ');
+}
+
+function processPayment() {
+  const purchaseId = document.getElementById('payment-purchase-id').value;
+  const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+  const method = document.getElementById('payment-method').value;
+  const date = document.getElementById('payment-date').value;
+
+  if (amount <= 0) { showToast('Ingresa un monto válido', 'error'); return; }
+
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  const pending = getPurchasePendingUsd(p);
+  const amountUsd = paymentToUsd(amount, method);
+
+  if (amountUsd > pending + 0.01) { showToast('El monto excede el pendiente', 'error'); return; }
+
+  const payment = {
+    id: generateId(),
+    purchaseId,
+    amount,
+    amountUsd,
+    method,
+    date: date ? new Date(date).toISOString() : new Date().toISOString()
+  };
+
+  db.payments.push(payment);
+
+  const totalPaidUsd = getPurchasePayments(purchaseId).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  if (totalPaidUsd >= (p.amountUsd || p.amount || 0) - 0.01) {
+    p.paymentStatus = 'paid';
+  } else {
+    p.paymentStatus = 'partial';
+  }
+
+  saveDB();
+  if (sbReady) {
+    sb.from('payments').upsert({
+      id: payment.id, purchase_id: payment.purchaseId,
+      amount: payment.amount, amount_usd: payment.amountUsd,
+      method: payment.method, date: payment.date
+    }).then(() => {}).catch(e => console.warn('sync payment:', e));
+    sb.from('purchases').upsert({
+      id: p.id, payment_status: p.paymentStatus
+    }, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync purchase status:', e));
+  }
+
+  closeModal('modal-payment');
+  renderPurchasesTable();
+  showToast('Pago registrado', 'success');
+}
+
+function printPurchasePdf(purchaseId) {
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  let items = [];
+  try {
+    const parsed = JSON.parse(p.notes || '{}');
+    items = parsed.items || [];
+  } catch(e) {}
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+
+  if (logoBase64) {
+    doc.addImage(logoBase64, 'PNG', 15, 10, 25, 20);
+  }
+
+  doc.setFontSize(16);
+  doc.setTextColor(4, 21, 75);
+  doc.text('RefrigiHerrera', logoBase64 ? 45 : 15, 18);
+
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text(`RIF: ${db.settings.rif || 'N/A'}`, logoBase64 ? 45 : 15, 24);
+  doc.text(`Tel: ${db.settings.whatsapp || 'N/A'}`, logoBase64 ? 45 : 15, 29);
+
+  doc.setFontSize(14);
+  doc.setTextColor(4, 21, 75);
+  doc.text('FACTURA / COMPRA', 105, 18, { align: 'center' });
+
+  doc.setDrawColor(4, 21, 75);
+  doc.setLineWidth(0.5);
+  doc.line(15, 35, 195, 35);
+
+  let y = 42;
+  doc.setFontSize(9);
+  doc.setTextColor(60);
+  const currencySym = { USD: 'USD', VES: 'Bs.', COP: 'COP' };
+  const sym = currencySym[p.currency] || 'USD';
+
+  doc.text(`Fecha: ${new Date(p.date).toLocaleDateString('es-VE')}`, 15, y);
+  doc.text(`Proveedor: ${p.supplierName || '—'}`, 105, y);
+  y += 6;
+  doc.text(`Factura N°: ${p.invoiceNumber || '—'}`, 15, y);
+  doc.text(`Estado: ${p.paymentStatus === 'paid' ? 'Pagado' : p.paymentStatus === 'partial' ? 'Parcial' : 'Pendiente'}`, 105, y);
+  y += 6;
+  doc.text(`Categoría: ${p.category || 'Compra'}`, 15, y);
+  doc.text(`Moneda: ${sym}`, 105, y);
+  y += 8;
+
+  if (p.dueDate) {
+    doc.text(`Fecha recepción: ${new Date(p.dueDate).toLocaleDateString('es-VE')}`, 15, y);
+    y += 8;
+  }
+
+  if (items.length) {
+    doc.setFillColor(4, 21, 75);
+    doc.rect(15, y, 180, 8, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(255);
+    doc.text('Artículo', 17, y + 5.5);
+    doc.text('Cant.', 115, y + 5.5);
+    doc.text('P. Unit.', 135, y + 5.5);
+    doc.text('Subtotal', 165, y + 5.5);
+    y += 10;
+
+    doc.setTextColor(60);
+    doc.setFontSize(8);
+    let subtotalItems = 0;
+    items.forEach((it, i) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      const bgColor = i % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      doc.setFillColor(...bgColor);
+      doc.rect(15, y - 3, 180, 7, 'F');
+      const itemSub = it.subtotal || (it.cant * it.precio);
+      subtotalItems += itemSub;
+      doc.text(it.desc || '—', 17, y + 2);
+      doc.text(String(it.cant || 0), 118, y + 2);
+      doc.text(`$${fmtNum(it.precio)}`, 135, y + 2);
+      doc.text(`$${fmtNum(itemSub)}`, 165, y + 2);
+      y += 7;
+    });
+
+    y += 3;
+    doc.setDrawColor(200);
+    doc.line(15, y, 195, y);
+    y += 6;
+
+    doc.setFontSize(9);
+    doc.text('Subtotal:', 140, y);
+    doc.text(`$${fmtNum(subtotalItems)}`, 165, y);
+    y += 6;
+
+    if (p.ivaUsd || p.iva) {
+      const iva = p.ivaUsd || 0;
+      doc.text(`IVA:`, 140, y);
+      doc.text(`$${fmtNum(iva)}`, 165, y);
+      y += 6;
+    }
+
+    y += 2;
+    doc.setFontSize(11);
+    doc.setTextColor(4, 21, 75);
+    doc.setFont(undefined, 'bold');
+    const total = p.amountUsd || subtotalItems;
+    doc.text('TOTAL USD:', 130, y);
+    doc.text(`$${fmtNum(total)}`, 165, y);
+    y += 7;
+
+    if (rate) {
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.setFont(undefined, 'normal');
+      doc.text(`VES: Bs.${fmtNum(total * rate)}  |  COP: $${fmtNum(total * copRate)}`, 130, y);
+      y += 7;
+    }
+
+    const payments = getPurchasePayments(p.id);
+    if (payments.length) {
+      y += 4;
+      doc.setFontSize(10);
+      doc.setTextColor(4, 21, 75);
+      doc.setFont(undefined, 'bold');
+      doc.text('Pagos realizados:', 15, y);
+      y += 7;
+      doc.setFontSize(8);
+      doc.setTextColor(60);
+      doc.setFont(undefined, 'normal');
+      payments.forEach(pay => {
+        doc.text(`${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  $${fmtNum(pay.amountUsd)} USD (de $${fmtNum(pay.amount)} ${pay.method.includes('USD') ? 'USD' : pay.method.includes('COP') ? 'COP' : 'Bs.'})`, 17, y);
+        y += 5;
+      });
+    }
+  } else {
+    doc.setFontSize(10);
+    doc.setTextColor(60);
+    doc.text(`Monto total: ${sym} ${fmtNum(p.amount)}`, 15, y);
+    y += 8;
+    if (rate && p.currency === 'VES') {
+      doc.text(`Equivalente: $${fmtNum(p.amount / rate)} USD`, 15, y);
+      y += 6;
+    }
+  }
+
+  y += 10;
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text(`Documento generado el ${new Date().toLocaleDateString('es-VE')} ${new Date().toLocaleTimeString('es-VE')}`, 105, y, { align: 'center' });
+
+  doc.save(`factura_${p.invoiceNumber || p.id.slice(0,8)}.pdf`);
+  showToast('PDF generado', 'success');
 }
 
 function exportPurchasesCSV() {
@@ -4802,11 +5164,13 @@ function exportPurchasesCSV() {
   const to = document.getElementById('gastos-to')?.value || '';
   const cat = document.getElementById('gastos-category')?.value || '';
   const status = document.getElementById('gastos-status')?.value || '';
+  const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
   let rows = [...db.purchases];
   if (from) rows = rows.filter(p => (p.date||'') >= from);
   if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
   if (cat) rows = rows.filter(p => p.category === cat);
   if (status) rows = rows.filter(p => p.paymentStatus === status);
+  if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
 
   if (!rows.length) { showToast('Sin datos para exportar', 'warning'); return; }
   const header = 'Fecha,Descripción,Proveedor,N° Factura,Monto,Moneda,IVA %,Categoría,Estado,Método Pago,Fecha Vencimiento,Notas';
@@ -4828,11 +5192,13 @@ function generarReporteGastos() {
   const to = document.getElementById('gastos-to')?.value || '';
   const cat = document.getElementById('gastos-category')?.value || '';
   const status = document.getElementById('gastos-status')?.value || '';
+  const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
   let rows = [...db.purchases];
   if (from) rows = rows.filter(p => (p.date||'') >= from);
   if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
   if (cat) rows = rows.filter(p => p.category === cat);
   if (status) rows = rows.filter(p => p.paymentStatus === status);
+  if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
   rows.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (!rows.length) { showToast('Sin datos para generar reporte', 'warning'); return; }
