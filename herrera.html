@@ -1248,10 +1248,6 @@ let comboItemsData = [];
 let sbReady = false;
 
 async function initSupabase() {
-  if (!navigator.onLine) {
-    sbReady = false;
-    return;
-  }
   try {
     sbReady = true;
     await loadFromSupabase();
@@ -1263,49 +1259,52 @@ async function initSupabase() {
 
 async function loadFromSupabase() {
   if (!sbReady) return;
-  try {
-    const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes] = await Promise.all([
-      sb.from('products').select('*'),
-      sb.from('sales').select('*').order('date', { ascending: false }),
-      sb.from('combos').select('*'),
-      sb.from('settings').select('*').eq('key', 'app').single(),
-      sb.from('users').select('*').order('created_at', { ascending: true }),
-      sb.from('clients').select('*').order('created_at', { ascending: false }),
-      sb.from('quotes').select('*').order('date', { ascending: false })
-    ]);
-    if (prodRes.data) db.products = prodRes.data.map(p => ({
-      id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
-      costPrice: p.cost_price, profitPercent: p.profit_percent,
-      price: p.price, stock: p.stock, minStock: p.min_stock,
-      priceVES: p.price_ves || 0, priceCOP: p.price_cop || 0
-    }));
-    if (salesRes.data) db.sales = salesRes.data.map(s => ({
-      id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
-      total: s.total, method: s.method, cashAmount: s.cash_amount,
-      transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate, clientId: s.client_id,
-      copAmount: s.cop_amount || 0, copRate: s.cop_rate || 0
-    }));
-    if (comboRes.data) db.combos = comboRes.data.map(c => ({
-      id: c.id, code: c.code, name: c.name, price: c.price, items: c.items
-    }));
-    if (setRes.data) db.settings = Object.assign(db.settings, setRes.data.value || {});
-    if (userRes.data) db.users = userRes.data.map(u => ({
-      id: u.id, username: u.username, passwordHash: u.password_hash,
-      fullName: u.full_name, role: u.role, active: u.active
-    }));
-    if (clientRes.data) db.clients = clientRes.data.map(c => ({
-      id: c.id, name: c.name, phone: c.phone, email: c.email,
-      address: c.address, idNumber: c.id_number, notes: c.notes, active: c.active
-    }));
-    if (quoteRes.data) db.quotes = quoteRes.data.map(q => ({
-      id: q.id, clientId: q.client_id, clientName: q.client_name || '',
-      items: q.items || [], currency: q.currency || 'USD',
-      subtotal: q.subtotal || 0, total: q.total || 0,
-      status: q.status || 'pending', notes: q.notes || '',
-      date: q.date
-    }));
-    saveDB();
-  } catch (e) { console.warn('loadFromSupabase:', e); }
+  const results = await Promise.allSettled([
+    sb.from('products').select('*'),
+    sb.from('sales').select('*').order('date', { ascending: false }),
+    sb.from('combos').select('*'),
+    sb.from('settings').select('*').eq('key', 'app').limit(1),
+    sb.from('users').select('*').order('created_at', { ascending: true }),
+    sb.from('clients').select('*').order('created_at', { ascending: false }),
+    sb.from('quotes').select('*').order('date', { ascending: false })
+  ]);
+  const [prodRes, salesRes, comboRes, setRes, userRes, clientRes, quoteRes] = results;
+  if (prodRes.status === 'fulfilled' && prodRes.value.data) db.products = prodRes.value.data.map(p => ({
+    id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
+    costPrice: p.cost_price, profitPercent: p.profit_percent,
+    price: p.price, stock: p.stock, minStock: p.min_stock,
+    priceVES: p.price_ves || 0, priceCOP: p.price_cop || 0
+  }));
+  if (salesRes.status === 'fulfilled' && salesRes.value.data) db.sales = salesRes.value.data.map(s => ({
+    id: s.id, date: s.date, items: s.items, subtotal: s.subtotal,
+    total: s.total, method: s.method, cashAmount: s.cash_amount,
+    transferAmount: s.transfer_amount, exchangeRate: s.exchange_rate, clientId: s.client_id,
+    copAmount: s.cop_amount || 0, copRate: s.cop_rate || 0
+  }));
+  if (comboRes.status === 'fulfilled' && comboRes.value.data) db.combos = comboRes.value.data.map(c => ({
+    id: c.id, code: c.code, name: c.name, price: c.price, items: c.items
+  }));
+  if (setRes.status === 'fulfilled' && setRes.value.data && setRes.value.data.length) {
+    db.settings = Object.assign(db.settings, setRes.value.data[0].value || {});
+  }
+  if (userRes.status === 'fulfilled' && userRes.value.data) db.users = userRes.value.data.map(u => ({
+    id: u.id, username: u.username, passwordHash: u.password_hash,
+    fullName: u.full_name, role: u.role, active: u.active
+  }));
+  if (clientRes.status === 'fulfilled' && clientRes.value.data) db.clients = clientRes.value.data.map(c => ({
+    id: c.id, name: c.name, phone: c.phone, email: c.email,
+    address: c.address, idNumber: c.id_number, notes: c.notes, active: c.active
+  }));
+  if (quoteRes.status === 'fulfilled' && quoteRes.value.data) db.quotes = quoteRes.value.data.map(q => ({
+    id: q.id, clientId: q.client_id, clientName: q.client_name || '',
+    items: q.items || [], currency: q.currency || 'USD',
+    subtotal: q.subtotal || 0, total: q.total || 0,
+    status: q.status || 'pending', notes: q.notes || '',
+    date: q.date
+  }));
+  const failed = results.filter(r => r.status === 'rejected');
+  if (failed.length) console.warn('Supabase queries with errors:', failed.map(r => r.reason?.message || r.reason));
+  saveDB();
 }
 
 function loadDB() {
@@ -1340,24 +1339,25 @@ async function syncToSupabase() {
       price: p.price || 0, stock: p.stock || 0, min_stock: p.minStock || 5,
       price_ves: p.priceVES || 0, price_cop: p.priceCOP || 0
     }));
-    if (products.length) await sb.from('products').upsert(products, { onConflict: 'id' });
+    const syncOps = [];
+    if (products.length) syncOps.push(sb.from('products').upsert(products, { onConflict: 'id' }).catch(e => console.warn('sync products:', e)));
 
     const combos = db.combos.map(c => ({
       id: c.id, code: c.code, name: c.name, price: c.price || 0, items: c.items || []
     }));
-    if (combos.length) await sb.from('combos').upsert(combos, { onConflict: 'id' });
+    if (combos.length) syncOps.push(sb.from('combos').upsert(combos, { onConflict: 'id' }).catch(e => console.warn('sync combos:', e)));
 
     const users = db.users.map(u => ({
       id: u.id, username: u.username, password_hash: u.passwordHash,
       full_name: u.fullName || '', role: u.role || 'operator', active: u.active !== false
     }));
-    if (users.length) await sb.from('users').upsert(users, { onConflict: 'id' });
+    if (users.length) syncOps.push(sb.from('users').upsert(users, { onConflict: 'id' }).catch(e => console.warn('sync users:', e)));
 
     const clients = db.clients.map(c => ({
       id: c.id, name: c.name, phone: c.phone || '', email: c.email || '',
       address: c.address || '', id_number: c.idNumber || '', notes: c.notes || '', active: c.active !== false
     }));
-    if (clients.length) await sb.from('clients').upsert(clients, { onConflict: 'id' });
+    if (clients.length) syncOps.push(sb.from('clients').upsert(clients, { onConflict: 'id' }).catch(e => console.warn('sync clients:', e)));
 
     const quotes = db.quotes.map(q => ({
       id: q.id, client_id: q.clientId || null, client_name: q.clientName || '',
@@ -1366,17 +1366,18 @@ async function syncToSupabase() {
       status: q.status || 'pending', notes: q.notes || '',
       date: q.date, updated_at: new Date().toISOString()
     }));
-    if (quotes.length) await sb.from('quotes').upsert(quotes, { onConflict: 'id' });
+    if (quotes.length) syncOps.push(sb.from('quotes').upsert(quotes, { onConflict: 'id' }).catch(e => console.warn('sync quotes:', e)));
+    syncOps.push(sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' }).catch(e => console.warn('sync settings:', e)));
+    await Promise.allSettled(syncOps);
+
     const localQuoteIds = db.quotes.map(q => q.id);
     const serverQuotes = await sb.from('quotes').select('id');
     if (serverQuotes.data) {
       const toDelete = serverQuotes.data.filter(sq => !localQuoteIds.includes(sq.id));
       for (const sq of toDelete) {
-        await sb.from('quotes').delete().eq('id', sq.id);
+        await sb.from('quotes').delete().eq('id', sq.id).catch(() => {});
       }
     }
-
-    await sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' });
   } catch (e) { console.warn('syncToSupabase:', e); }
 }
 
@@ -2760,9 +2761,10 @@ function updateConnectionStatus() {
   const dotM = document.getElementById('conn-dot-mobile');
   const textM = document.getElementById('conn-text-mobile');
 
-  const color = isOnline ? 'bg-emerald-400' : 'bg-red-400';
-  const textColor = isOnline ? 'text-emerald-300' : 'text-red-300';
-  const label = isOnline ? 'Online' : 'Offline';
+  let color, textColor, label;
+  if (!isOnline) { color = 'bg-red-400'; textColor = 'text-red-300'; label = 'Offline'; }
+  else if (sbReady) { color = 'bg-emerald-400'; textColor = 'text-emerald-300'; label = 'Sync OK'; }
+  else { color = 'bg-amber-400'; textColor = 'text-amber-300'; label = 'Sin Sync'; }
 
   [dot, dotM].forEach(el => { if (el) { el.className = el.className.replace(/bg-\w+-400/, color); }});
   [text, textM].forEach(el => { if (el) { el.textContent = label; el.className = el.className.replace(/text-\w+-300/, textColor); }});
@@ -3865,6 +3867,16 @@ if (db.settings.exchangeRate) {
 
 showTab('dashboard');
 fetchExchangeRate();
+
+// Retry Supabase after 5s if it failed
+if (!sbReady && navigator.onLine) {
+  setTimeout(() => {
+    initSupabase().catch(()=>{}).finally(() => {
+      updateConnectionStatus();
+      showTab(currentTab);
+    });
+  }, 5000);
+}
 });
 </script>
 </body>
