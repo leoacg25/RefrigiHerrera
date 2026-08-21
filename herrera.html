@@ -4565,6 +4565,14 @@ function compraGuardar() {
   };
 
   db.purchases.push(purchase);
+
+  compraItems.forEach(it => {
+    if (it.productId) {
+      const p = db.products.find(x => x.id === it.productId);
+      if (p && !p.isService) p.stock = (p.stock || 0) + (it.cant || 0);
+    }
+  });
+
   saveDB();
   if (typeof sb !== 'undefined' && sbReady) {
     sb.from('purchases').upsert({
@@ -4575,6 +4583,14 @@ function compraGuardar() {
       payment_method: purchase.paymentMethod, date: purchase.date,
       due_date: purchase.dueDate, notes: purchase.notes
     }).then(() => {}).catch(e => console.warn('sync purchase:', e));
+
+    const updatedProducts = compraItems.filter(it => it.productId).map(it => {
+      const p = db.products.find(x => x.id === it.productId);
+      return p ? { id: p.id, stock: p.stock } : null;
+    }).filter(Boolean);
+    if (updatedProducts.length) {
+      sb.from('products').upsert(updatedProducts, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync stock:', e));
+    }
   }
 
   showToast('¡Compra guardada exitosamente!', 'success');
