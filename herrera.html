@@ -1863,7 +1863,7 @@ async function loadFromSupabase() {
       sb.from('quotes').select('*').order('date', { ascending: false }),
       sb.from('suppliers').select('*').order('created_at', { ascending: false }),
       sb.from('purchases').select('*').order('date', { ascending: false }),
-      sb.from('payments').select('*').order('date', { ascending: true })
+      sb.from('payments').select('*').order('date', { ascending: true }).catch(() => ({ data: null }))
     ]);
     if (prodRes.data) db.products = prodRes.data.map(p => ({
       id: p.id, sku: p.sku, name: p.name, category: p.category, isService: p.is_service || false,
@@ -2006,7 +2006,7 @@ async function syncToSupabase() {
     const purchases = db.purchases.map(p => ({
       id: p.id, supplier_id: p.supplierId || null, supplier_name: p.supplierName || '',
       description: p.description || '', invoice_number: p.invoiceNumber || '',
-      amount: p.amount || 0, amount_usd: p.amountUsd || p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
+      amount: p.amount || 0, currency: p.currency || 'USD', iva: p.iva || 0,
       category: p.category || 'Compra', payment_status: p.paymentStatus || 'pending',
       payment_method: p.paymentMethod || '', date: p.date,
       due_date: p.dueDate || null, notes: p.notes || ''
@@ -2018,7 +2018,7 @@ async function syncToSupabase() {
       amount: p.amount || 0, amount_usd: p.amountUsd || 0,
       method: p.method || '', date: p.date
     }));
-    if (payments.length) await sb.from('payments').upsert(payments, { onConflict: 'id' });
+    if (payments.length) await sb.from('payments').upsert(payments, { onConflict: 'id' }).catch(() => {});
 
     const localPurchaseIds = db.purchases.map(p => p.id);
     const serverPurchases = await sb.from('purchases').select('id');
@@ -4662,8 +4662,7 @@ function compraGuardar() {
     sb.from('purchases').upsert({
       id: purchase.id, supplier_id: purchase.supplierId, supplier_name: purchase.supplierName,
       description: purchase.description, invoice_number: purchase.invoiceNumber,
-      amount: purchase.amount, amount_usd: purchase.amountUsd, currency: purchase.currency, iva: purchase.iva,
-      iva_usd: purchase.ivaUsd || 0, exchange_rate: purchase.exchangeRate || 0,
+      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
       category: purchase.category, payment_status: purchase.paymentStatus,
       payment_method: purchase.paymentMethod, date: purchase.date,
       due_date: purchase.dueDate, notes: purchase.notes
@@ -4671,7 +4670,7 @@ function compraGuardar() {
 
     const updatedProducts = compraItems.filter(it => it.productId).map(it => {
       const p = db.products.find(x => x.id === it.productId);
-      return p ? { id: p.id, name: p.name, costPrice: p.costPrice, price: p.price, priceVES: p.priceVES || 0, priceCOP: p.priceCOP || 0, stock: p.stock } : null;
+      return p ? { id: p.id, name: p.name, cost_price: p.costPrice, price: p.price, price_ves: p.priceVES || 0, price_cop: p.priceCOP || 0, stock: p.stock } : null;
     }).filter(Boolean);
     if (updatedProducts.length) {
       sb.from('products').upsert(updatedProducts, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync stock:', e));
@@ -4881,7 +4880,7 @@ function savePurchase() {
     sb.from('purchases').upsert({
       id: purchase.id, supplier_id: purchase.supplierId || null, supplier_name: purchase.supplierName || '',
       description: purchase.description, invoice_number: purchase.invoiceNumber || '',
-      amount: purchase.amount, amount_usd: purchase.amountUsd || purchase.amount || 0, currency: purchase.currency, iva: purchase.iva,
+      amount: purchase.amount, currency: purchase.currency, iva: purchase.iva,
       category: purchase.category, payment_status: purchase.paymentStatus,
       payment_method: purchase.paymentMethod, date: purchase.date,
       due_date: purchase.dueDate || null, notes: purchase.notes || ''
