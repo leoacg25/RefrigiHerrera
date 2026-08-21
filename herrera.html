@@ -298,7 +298,7 @@
       </div>
 
       <!-- KPIs -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-sky-100 hover:shadow-md transition-all">
           <div class="flex items-center justify-between mb-2">
             <div class="w-9 h-9 bg-sky-100 rounded-xl flex items-center justify-center">
@@ -337,7 +337,37 @@
             <span class="text-[0.65rem] text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full font-medium">Ingresos</span>
           </div>
           <div id="kpi-revenue" class="kpi-value text-2xl font-bold text-slate-800">$0.00</div>
-          <div class="text-slate-500 text-xs mt-0.5">Ingresos totales USD</div>
+          <div class="text-slate-500 text-xs mt-0.5">Ventas totales USD</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-truck text-amber-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">Compras</span>
+          </div>
+          <div id="kpi-purchases-usd" class="kpi-value text-2xl font-bold text-slate-800">$0.00</div>
+          <div class="text-slate-500 text-xs mt-0.5">Compras USD</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-truck text-orange-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-medium">Compras</span>
+          </div>
+          <div id="kpi-purchases-ves" class="kpi-value text-2xl font-bold text-slate-800">Bs.0.00</div>
+          <div class="text-slate-500 text-xs mt-0.5">Compras VES</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-rose-100 hover:shadow-md transition-all">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-9 h-9 bg-rose-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-truck text-rose-600 text-sm"></i>
+            </div>
+            <span class="text-[0.65rem] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full font-medium">Compras</span>
+          </div>
+          <div id="kpi-purchases-cop" class="kpi-value text-2xl font-bold text-slate-800">$0 COP</div>
+          <div class="text-slate-500 text-xs mt-0.5">Compras COP</div>
         </div>
       </div>
 
@@ -765,10 +795,48 @@
         </div>
       </section>
 
-      <!-- 2. Detalle -->
+      <!-- 1b. Datos de la factura -->
       <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
         <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
           <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">2</span>
+          Datos de la Factura
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Moneda *</label>
+            <select id="compra-moneda" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+              <option value="USD">$ USD Dólares</option>
+              <option value="VES">Bs. VES Bolívares</option>
+              <option value="COP">$ COP Pesos</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">N° Factura</label>
+            <input type="text" id="compra-factura" placeholder="000-000000"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">N° Guía</label>
+            <input type="text" id="compra-guia" placeholder="N° de guía / remisión"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Fecha Emisión</label>
+            <input type="date" id="compra-fecha-emision"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Fecha Recepción</label>
+            <input type="date" id="compra-fecha-recepcion"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all">
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Detalle -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-3">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-[0.6rem] flex items-center justify-center font-bold">3</span>
           Detalle de Compra
         </h3>
         <form id="compra-articulo-form" onsubmit="compraAgregarArticulo(event)" class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-3">
@@ -789,12 +857,16 @@
             </div>
           </div>
           <div class="md:col-span-2">
-            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Cantidad</label>
-            <input type="number" id="compra-art-cant" required min="0.01" step="0.01" value="1"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all text-right">
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Cantidad (Unid.)</label>
+            <div class="flex items-center">
+              <button type="button" onclick="compraCantStep(-0.25)" class="w-8 h-9 flex items-center justify-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all text-sm font-bold">−</button>
+              <input type="number" id="compra-art-cant" required min="0.25" step="0.25" value="1"
+                class="flex-1 min-w-0 px-2 py-2 text-sm border border-slate-200 bg-white focus:border-sky-400 outline-none transition-all text-center font-semibold">
+              <button type="button" onclick="compraCantStep(0.25)" class="w-8 h-9 flex items-center justify-center rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all text-sm font-bold">+</button>
+            </div>
           </div>
           <div class="md:col-span-3">
-            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Precio Unit. ($)</label>
+            <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Precio Unit.</label>
             <input type="number" id="compra-art-precio" required min="0" step="0.01" placeholder="0.00"
               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none transition-all text-right">
           </div>
@@ -830,7 +902,7 @@
         </div>
       </section>
 
-      <!-- 3. Totales y Acciones -->
+      <!-- 4. Totales y Acciones -->
       <section class="flex flex-col md:flex-row gap-3">
         <div class="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
           <label class="text-[0.65rem] text-slate-400 mb-1 block font-medium">Observaciones</label>
@@ -840,16 +912,18 @@
         <div class="w-full md:w-72 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
           <div class="flex justify-between items-center mb-2 text-sm">
             <span class="text-slate-500">Subtotal:</span>
-            <span class="font-medium text-slate-700">$<span id="compra-subtotal">0.00</span></span>
+            <span class="font-medium text-slate-700"><span id="compra-subtotal">0.00</span></span>
           </div>
-          <div class="flex justify-between items-center mb-2 text-sm">
-            <span class="text-slate-500">IVA (16%):</span>
-            <span class="font-medium text-slate-700">$<span id="compra-iva">0.00</span></span>
+          <div class="flex items-center justify-between mb-2 text-sm">
+            <span class="text-slate-500">IVA:</span>
+            <input type="number" id="compra-iva-input" min="0" step="0.01" value="0" placeholder="0.00"
+              oninput="compraRecalcTotal()"
+              class="w-28 px-2 py-1 text-sm border border-slate-200 rounded-lg bg-white focus:border-sky-400 outline-none transition-all text-right font-medium">
           </div>
           <hr class="my-2 border-slate-200">
           <div class="flex justify-between items-center text-lg font-bold text-sky-700">
             <span>Total:</span>
-            <span>$<span id="compra-total">0.00</span></span>
+            <span><span id="compra-total">0.00</span></span>
           </div>
           <button onclick="compraGuardar()"
             class="mt-4 w-full px-4 py-2.5 text-sm text-white rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2"
@@ -2059,6 +2133,13 @@ function renderDashboard() {
   document.getElementById('kpi-stock').textContent = db.products.reduce((s, p) => s + (p.stock || 0), 0);
   document.getElementById('kpi-sales').textContent = db.sales.length;
   document.getElementById('kpi-revenue').textContent = fmt(db.sales.reduce((s, v) => s + (v.total || 0), 0));
+
+  const purchUSD = db.purchases.filter(p => p.currency === 'USD').reduce((s, p) => s + (p.amount || 0), 0);
+  const purchVES = db.purchases.filter(p => p.currency === 'VES').reduce((s, p) => s + (p.amount || 0), 0);
+  const purchCOP = db.purchases.filter(p => p.currency === 'COP').reduce((s, p) => s + (p.amount || 0), 0);
+  document.getElementById('kpi-purchases-usd').textContent = '$' + fmtNum(purchUSD);
+  document.getElementById('kpi-purchases-ves').textContent = 'Bs.' + fmtNum(purchVES);
+  document.getElementById('kpi-purchases-cop').textContent = '$' + fmtNum(purchCOP) + ' COP';
 
   // Alertas stock
   const alertsEl = document.getElementById('stock-alerts');
@@ -4221,9 +4302,15 @@ function initCompraTab() {
   document.getElementById('compra-proveedor-buscar').classList.remove('hidden');
   document.getElementById('compra-proveedor-info').classList.add('hidden');
   document.getElementById('compra-proveedor-input').value = '';
+  document.getElementById('compra-moneda').value = 'USD';
+  document.getElementById('compra-factura').value = '';
+  document.getElementById('compra-guia').value = '';
+  document.getElementById('compra-fecha-emision').value = '';
+  document.getElementById('compra-fecha-recepcion').value = '';
   document.getElementById('compra-art-desc').value = '';
   document.getElementById('compra-art-cant').value = '1';
   document.getElementById('compra-art-precio').value = '';
+  document.getElementById('compra-iva-input').value = '0';
   document.getElementById('compra-notas').value = '';
   renderCompraItems();
 }
@@ -4333,6 +4420,8 @@ function compraEliminarArticulo(i) {
 }
 
 function renderCompraItems() {
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
   const tbody = document.getElementById('compra-items-body');
   if (!compraItems.length) {
     tbody.innerHTML = `<tr id="compra-items-empty"><td colspan="5" class="px-3 py-8 text-center text-slate-300"><i class="fa-solid fa-box-open text-2xl block mb-1"></i><span class="text-xs">Sin artículos</span></td></tr>`;
@@ -4343,7 +4432,7 @@ function renderCompraItems() {
         return `<tr class="bg-sky-50/60 transition-all">
           <td class="px-3 py-1.5 text-xs text-slate-500">${i + 1}</td>
           <td class="px-3 py-1.5"><input type="text" id="ce-desc-${i}" value="${escHtml(it.desc)}" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500"></td>
-          <td class="px-3 py-1.5"><input type="number" id="ce-cant-${i}" value="${it.cant}" min="0.01" step="0.01" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
+          <td class="px-3 py-1.5"><input type="number" id="ce-cant-${i}" value="${it.cant}" min="0.25" step="0.25" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
           <td class="px-3 py-1.5"><input type="number" id="ce-prec-${i}" value="${it.precio}" min="0" step="0.01" class="w-full px-2 py-1 text-sm border border-sky-300 rounded-lg outline-none focus:border-sky-500 text-right"></td>
           <td class="px-3 py-1.5 text-center">
             <div class="flex items-center justify-center gap-1">
@@ -4357,7 +4446,7 @@ function renderCompraItems() {
         <td class="px-3 py-2 text-xs text-slate-500">${i + 1}</td>
         <td class="px-3 py-2 text-sm font-medium text-slate-700">${escHtml(it.desc)}${prod ? `<span class="text-[0.55rem] text-slate-400 ml-1.5">${escHtml(prod.sku)}</span>` : ''}</td>
         <td class="px-3 py-2 text-xs text-slate-600 text-right">${it.cant.toFixed(2)}</td>
-        <td class="px-3 py-2 text-xs text-slate-600 text-right">$${fmtNum(it.precio)}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 text-right">${sym}${fmtNum(it.precio)}</td>
         <td class="px-3 py-2 text-center">
           <div class="flex items-center justify-center gap-1">
             <button onclick="compraEditarFila(${i})" title="Editar" class="p-1 rounded-lg hover:bg-sky-100 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
@@ -4366,11 +4455,7 @@ function renderCompraItems() {
         </td>
       </tr>`}).join('');
   }
-  const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
-  const iva = sub * 0.16;
-  document.getElementById('compra-subtotal').textContent = fmtNum(sub);
-  document.getElementById('compra-iva').textContent = fmtNum(iva);
-  document.getElementById('compra-total').textContent = fmtNum(sub + iva);
+  compraRecalcTotal();
 }
 
 function compraEditarFila(i) {
@@ -4398,30 +4483,51 @@ function compraGuardarEdicion(i) {
   renderCompraItems();
 }
 
+function compraCantStep(delta) {
+  const inp = document.getElementById('compra-art-cant');
+  let val = parseFloat(inp.value) || 1;
+  val = Math.max(0.25, Math.round((val + delta) * 100) / 100);
+  inp.value = val.toFixed(2);
+}
+
+function compraRecalcTotal() {
+  const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
+  const iva = parseFloat(document.getElementById('compra-iva-input')?.value) || 0;
+  const cur = document.getElementById('compra-moneda')?.value || 'USD';
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
+  document.getElementById('compra-subtotal').textContent = sym + fmtNum(sub);
+  document.getElementById('compra-total').textContent = sym + fmtNum(sub + iva);
+}
+
 function compraGuardar() {
   if (!compraProveedor) { showToast('Selecciona un proveedor', 'error'); return; }
   if (!compraItems.length) { showToast('Agrega al menos un artículo', 'error'); return; }
 
   const sub = compraItems.reduce((s, it) => s + it.subtotal, 0);
-  const iva = sub * 0.16;
+  const iva = parseFloat(document.getElementById('compra-iva-input').value) || 0;
   const total = sub + iva;
   const notas = document.getElementById('compra-notas').value.trim();
+  const moneda = document.getElementById('compra-moneda').value;
+  const factura = document.getElementById('compra-factura').value.trim();
+  const guia = document.getElementById('compra-guia').value.trim();
+  const fechaEmision = document.getElementById('compra-fecha-emision').value;
+  const fechaRecepcion = document.getElementById('compra-fecha-recepcion').value;
 
   const purchase = {
     id: generateId(),
     supplierId: compraProveedor.id,
     supplierName: compraProveedor.name,
-    description: 'Compra a ' + compraProveedor.name,
-    invoiceNumber: '',
+    description: 'Compra a ' + compraProveedor.name + (factura ? ' - Fct: ' + factura : ''),
+    invoiceNumber: factura,
     amount: total,
-    currency: 'USD',
-    iva: 16,
+    currency: moneda,
+    iva: iva,
     category: 'Compra',
     paymentStatus: 'pending',
     paymentMethod: '',
-    date: new Date().toISOString(),
-    dueDate: null,
-    notes: JSON.stringify({ items: compraItems, observaciones: notas })
+    date: fechaEmision ? new Date(fechaEmision).toISOString() : new Date().toISOString(),
+    dueDate: fechaRecepcion ? new Date(fechaRecepcion).toISOString() : null,
+    notes: JSON.stringify({ items: compraItems, observaciones: notas, guia: guia, fechaRecepcion: fechaRecepcion })
   };
 
   db.purchases.push(purchase);
