@@ -5279,7 +5279,7 @@ function getMethodCurrency(method) {
   if (method.includes('COP')) return 'COP';
   if (method.includes('Bs')) return 'VES';
   if (method.includes('Transferencia')) return 'VES';
-  return '';
+  return 'USD';
 }
 
 function convertBetween(amount, fromCur, toCur) {
@@ -5548,7 +5548,6 @@ function printPurchasePdf(purchaseId) {
       doc.setFont(undefined, 'normal');
       payments.forEach(pay => {
         let payCur = getMethodCurrency(pay.method);
-        if (!payCur) payCur = cur;
         const paySymMap = { USD: '$', VES: 'Bs.', COP: '$' };
         const paySym = paySymMap[payCur] || '$';
         let line = `${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  ${paySym}${fmtNum(pay.amount)} ${payCur}`;
