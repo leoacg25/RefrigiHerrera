@@ -5272,19 +5272,20 @@ function openPaymentModal(purchaseId) {
   const curLabel = { USD: 'USD', VES: 'VES', COP: 'COP' };
 
   const totalOrig = p.amount || 0;
-  const totalUsd = p.amountUsd || convertBetween(totalOrig, cur, 'USD');
-  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  const pendingUsd = Math.max(0, totalUsd - paid);
+  const totalUsd = convertBetween(totalOrig, cur, 'USD');
+  const paidUsd = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const pendingUsd = Math.max(0, totalUsd - paidUsd);
   const pendingOrig = convertBetween(pendingUsd, 'USD', cur);
+  const paidOrig = Math.max(0, totalOrig - pendingOrig);
   const pendingMethod = convertBetween(pendingUsd, 'USD', mCur);
 
   document.getElementById('payment-purchase-id').value = p.id;
   document.getElementById('payment-supplier').textContent = p.supplierName || '—';
   document.getElementById('payment-invoice').textContent = p.invoiceNumber || '—';
   document.getElementById('payment-total').textContent = `${sym[cur]}${fmtNum(totalOrig)} ${curLabel[cur]}`;
-  document.getElementById('payment-paid').textContent = `${sym[cur]}${fmtNum(totalOrig - pendingOrig)} ${curLabel[cur]}`;
+  document.getElementById('payment-paid').textContent = `${sym[cur]}${fmtNum(paidOrig)} ${curLabel[cur]}`;
   document.getElementById('payment-pending').textContent = `${sym[cur]}${fmtNum(pendingOrig)} ${curLabel[cur]}`;
-  document.getElementById('payment-amount').value = pendingMethod > 0 ? pendingMethod.toFixed(2) : '';
+  document.getElementById('payment-amount').value = '0.00';
   document.getElementById('payment-amount').max = pendingMethod;
   document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('payment-equiv').textContent = '';
@@ -5303,9 +5304,9 @@ function updatePaymentEquiv() {
   const sym = { USD: '$', VES: 'Bs.', COP: '$' };
   const curLabel = { USD: 'USD', VES: 'VES', COP: 'COP' };
 
-  const totalUsd = p.amountUsd || convertBetween(p.amount || 0, cur, 'USD');
-  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  const pendingUsd = Math.max(0, totalUsd - paid);
+  const totalUsd = convertBetween(p.amount || 0, cur, 'USD');
+  const paidUsd = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const pendingUsd = Math.max(0, totalUsd - paidUsd);
 
   const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
   const method = document.getElementById('payment-method').value;
@@ -5313,7 +5314,7 @@ function updatePaymentEquiv() {
   const amountUsd = paymentToUsd(amount, method);
 
   let parts = [];
-  if (amountUsd > pendingUsd + 0.01) {
+  if (amount > 0 && amountUsd > pendingUsd + 0.01) {
     parts.push('Excede el pendiente');
   } else if (amount > 0 && mCur !== cur) {
     const equivOrig = convertBetween(amountUsd, 'USD', cur);
@@ -5336,7 +5337,10 @@ function processPayment() {
   const p = db.purchases.find(x => x.id === purchaseId);
   if (!p) return;
 
-  const pending = getPurchasePendingUsd(p);
+  const cur = p.currency || 'USD';
+  const totalUsd = convertBetween(p.amount || 0, cur, 'USD');
+  const paidUsd = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const pending = Math.max(0, totalUsd - paidUsd);
   const amountUsd = paymentToUsd(amount, method);
 
   if (amountUsd > pending + 0.01) { showToast('El monto excede el pendiente', 'error'); return; }
@@ -5353,7 +5357,7 @@ function processPayment() {
   db.payments.push(payment);
 
   const totalPaidUsd = getPurchasePayments(purchaseId).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  if (totalPaidUsd >= (p.amountUsd || p.amount || 0) - 0.01) {
+  if (totalPaidUsd >= convertBetween(p.amount || 0, p.currency || 'USD', 'USD') - 0.01) {
     p.paymentStatus = 'paid';
   } else {
     p.paymentStatus = 'partial';
