@@ -5242,18 +5242,41 @@ function getPurchasePendingOriginal(p) {
   return Math.max(0, (p.amount || 0) * (1 - fractionPaid));
 }
 
+function getMethodCurrency(method) {
+  if (method.includes('USD')) return 'USD';
+  if (method.includes('COP')) return 'COP';
+  if (method.includes('Bs') || method.includes('Transferencia')) return 'VES';
+  return 'USD';
+}
+
+function convertBetween(amount, fromCur, toCur) {
+  if (fromCur === toCur) return amount;
+  const rate = db.settings.exchangeRate || 0;
+  const copRate = rate * COP_FACTOR;
+  let usd = amount;
+  if (fromCur === 'VES' && rate) usd = amount / rate;
+  else if (fromCur === 'COP' && copRate) usd = amount / copRate;
+  if (toCur === 'VES' && rate) return usd * rate;
+  if (toCur === 'COP' && copRate) return usd * copRate;
+  return usd;
+}
+
 function openPaymentModal(purchaseId) {
   const p = db.purchases.find(x => x.id === purchaseId);
   if (!p) return;
 
   const cur = p.currency || 'USD';
+  const method = document.getElementById('payment-method').value;
+  const mCur = getMethodCurrency(method);
   const sym = { USD: '$', VES: 'Bs.', COP: '$' };
   const curLabel = { USD: 'USD', VES: 'VES', COP: 'COP' };
 
   const totalOrig = p.amount || 0;
+  const totalUsd = p.amountUsd || convertBetween(totalOrig, cur, 'USD');
   const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  const fractionPaid = totalOrig > 0 ? Math.min((p.amountUsd ? paid / p.amountUsd : 0), 1) : 0;
-  const pendingOrig = totalOrig * (1 - fractionPaid);
+  const pendingUsd = Math.max(0, totalUsd - paid);
+  const pendingOrig = convertBetween(pendingUsd, 'USD', cur);
+  const pendingMethod = convertBetween(pendingUsd, 'USD', mCur);
 
   document.getElementById('payment-purchase-id').value = p.id;
   document.getElementById('payment-supplier').textContent = p.supplierName || '—';
@@ -5261,8 +5284,8 @@ function openPaymentModal(purchaseId) {
   document.getElementById('payment-total').textContent = `${sym[cur]}${fmtNum(totalOrig)} ${curLabel[cur]}`;
   document.getElementById('payment-paid').textContent = `${sym[cur]}${fmtNum(totalOrig - pendingOrig)} ${curLabel[cur]}`;
   document.getElementById('payment-pending').textContent = `${sym[cur]}${fmtNum(pendingOrig)} ${curLabel[cur]}`;
-  document.getElementById('payment-amount').value = pendingOrig > 0 ? pendingOrig.toFixed(2) : '';
-  document.getElementById('payment-amount').max = pendingOrig;
+  document.getElementById('payment-amount').value = pendingMethod > 0 ? pendingMethod.toFixed(2) : '';
+  document.getElementById('payment-amount').max = pendingMethod;
   document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('payment-equiv').textContent = '';
   document.getElementById('payment-method').onchange = function() { updatePaymentEquiv(); };
@@ -5280,41 +5303,26 @@ function updatePaymentEquiv() {
   const sym = { USD: '$', VES: 'Bs.', COP: '$' };
   const curLabel = { USD: 'USD', VES: 'VES', COP: 'COP' };
 
-  const totalOrig = p.amount || 0;
+  const totalUsd = p.amountUsd || convertBetween(p.amount || 0, cur, 'USD');
   const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  const fractionPaid = totalOrig > 0 ? Math.min((p.amountUsd ? paid / p.amountUsd : 0), 1) : 0;
-  const pendingOrig = totalOrig * (1 - fractionPaid);
+  const pendingUsd = Math.max(0, totalUsd - paid);
 
   const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
   const method = document.getElementById('payment-method').value;
-  const usd = paymentToUsd(amount, method);
+  const mCur = getMethodCurrency(method);
+  const amountUsd = paymentToUsd(amount, method);
 
   let parts = [];
-  if (usd > 0) parts.push(`≈ $${fmtNum(usd)} USD`);
-  if (cur !== 'USD' && usd > 0) {
-    const rate = db.settings.exchangeRate || 0;
-    const copRate = rate * COP_FACTOR;
-    let converted = usd;
-    if (cur === 'VES' && rate) converted = usd * rate;
-    else if (cur === 'COP' && copRate) converted = usd * copRate;
-    parts.push(`≈ ${sym[cur]}${fmtNum(converted)} ${curLabel[cur]}`);
+  if (amountUsd > pendingUsd + 0.01) {
+    parts.push('Excede el pendiente');
+  } else if (amount > 0 && mCur !== cur) {
+    const equivOrig = convertBetween(amountUsd, 'USD', cur);
+    parts.push(`≈ ${sym[cur]}${fmtNum(equivOrig)} ${curLabel[cur]}`);
   }
   document.getElementById('payment-equiv').textContent = parts.join(' | ');
 
-  const rate = db.settings.exchangeRate || 0;
-  const copRate = rate * COP_FACTOR;
-  let pendingForMethod = pendingOrig;
-  if (method.includes('USD') && cur !== 'USD') {
-    if (cur === 'VES' && rate) pendingForMethod = pendingOrig / rate;
-    else if (cur === 'COP' && copRate) pendingForMethod = pendingOrig / copRate;
-  } else if (method.includes('COP') && cur !== 'COP') {
-    if (cur === 'USD' && copRate) pendingForMethod = pendingOrig * copRate;
-    else if (cur === 'VES' && rate) pendingForMethod = pendingOrig * (copRate / rate);
-  } else if ((method.includes('Bs') || method.includes('Transferencia')) && cur !== 'VES') {
-    if (cur === 'USD' && rate) pendingForMethod = pendingOrig * rate;
-    else if (cur === 'COP' && copRate) pendingForMethod = pendingOrig * (rate / copRate);
-  }
-  document.getElementById('payment-amount').max = pendingForMethod;
+  const pendingMethod = convertBetween(pendingUsd, 'USD', mCur);
+  document.getElementById('payment-amount').max = pendingMethod;
 }
 
 function processPayment() {
