@@ -1757,27 +1757,6 @@
               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-medium text-slate-500 mb-1 block">Estado de pago</label>
-            <select id="purchase-status"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
-              <option value="pending">Pendiente</option>
-              <option value="partial">Parcial</option>
-              <option value="paid">Pagado</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-500 mb-1 block">Método de pago</label>
-            <select id="purchase-method"
-              class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
-              <option value="">--</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Tarjeta">Tarjeta</option>
-            </select>
-          </div>
-        </div>
         <div>
           <label class="text-xs font-medium text-slate-500 mb-1 block">Notas</label>
           <textarea id="purchase-notes" rows="2" placeholder="Observaciones..."
@@ -5129,8 +5108,6 @@ function openPurchaseModal(id, defaultCategory) {
   document.getElementById('purchase-iva').value = p?.iva || '';
   document.getElementById('purchase-date').value = p ? (p.date||'').slice(0,10) : new Date().toISOString().slice(0,10);
   document.getElementById('purchase-due-date').value = p?.dueDate ? p.dueDate.slice(0,10) : '';
-  document.getElementById('purchase-status').value = p?.paymentStatus || 'pending';
-  document.getElementById('purchase-method').value = p?.paymentMethod || '';
   let notesRaw = p?.notes || '';
   let observaciones = notesRaw;
   try { const parsed = JSON.parse(notesRaw); observaciones = parsed.observaciones || ''; } catch(e) {}
@@ -5166,8 +5143,8 @@ function savePurchase() {
     amount, amountUsd: compraFromCur(amount), currency: document.getElementById('purchase-currency').value,
     iva: parseFloat(document.getElementById('purchase-iva').value) || 0,
     category: document.getElementById('purchase-category').value,
-    paymentStatus: document.getElementById('purchase-status').value,
-    paymentMethod: document.getElementById('purchase-method').value,
+    paymentStatus: 'pending',
+    paymentMethod: '',
     date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
     dueDate: dueVal ? new Date(dueVal).toISOString() : null,
     notes: (() => {
