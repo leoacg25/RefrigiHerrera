@@ -924,9 +924,9 @@
           <h2 class="text-xl lg:text-2xl font-bold text-slate-800">Compras y Gastos</h2>
           <p class="text-slate-500 text-xs mt-0.5">Registro de compras y gastos del negocio</p>
         </div>
-        <button onclick="openPurchaseModal()"
+        <button onclick="openPurchaseModal(null, 'Gasto')"
           class="px-4 py-2 text-xs text-white rounded-xl font-medium transition-all shadow-sm" style="background:linear-gradient(135deg,#0D7BC1,#04154B)">
-          <i class="fa-solid fa-plus mr-1.5"></i>Nuevo
+          <i class="fa-solid fa-plus mr-1.5"></i>Factura de Gastos
         </button>
       </div>
       <!-- Filtros -->
@@ -5117,11 +5117,11 @@ function renderGastosSummary(rows) {
     </div>`;
 }
 
-function openPurchaseModal(id) {
+function openPurchaseModal(id, defaultCategory) {
   const p = id ? db.purchases.find(x => x.id === id) : null;
-  document.getElementById('modal-purchase-title').textContent = p ? 'Editar Registro' : 'Nuevo Registro';
+  document.getElementById('modal-purchase-title').textContent = p ? 'Editar Registro' : (defaultCategory === 'Gasto' ? 'Factura de Gastos' : 'Nuevo Registro');
   document.getElementById('purchase-id').value = p?.id || '';
-  document.getElementById('purchase-category').value = p?.category || 'Compra';
+  document.getElementById('purchase-category').value = p?.category || defaultCategory || 'Compra';
   document.getElementById('purchase-description').value = p?.description || '';
   document.getElementById('purchase-invoice').value = p?.invoiceNumber || '';
   document.getElementById('purchase-currency').value = p?.currency || 'USD';
