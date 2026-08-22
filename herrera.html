@@ -933,11 +933,6 @@
       <div class="mb-3 flex flex-wrap gap-2">
         <input type="date" id="gastos-from" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
         <input type="date" id="gastos-to" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
-        <select id="gastos-category" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
-          <option value="">Todas</option>
-          <option value="Compra">Compras</option>
-          <option value="Gasto">Gastos</option>
-        </select>
         <select id="gastos-status" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
           <option value="">Todos</option>
           <option value="paid">Pagado</option>
@@ -958,8 +953,23 @@
           <i class="fa-solid fa-download mr-1"></i>Exportar CSV
         </button>
       </div>
-      <div id="purchases-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <p class="text-slate-400 text-xs text-center py-10">Sin registros</p>
+      <div id="compras-section" class="mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-cart-shopping text-sky-500 text-sm"></i>
+          <h3 class="font-bold text-sm text-sky-700">Compras</h3>
+        </div>
+        <div id="compras-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <p class="text-slate-400 text-xs text-center py-10">Sin compras registradas</p>
+        </div>
+      </div>
+      <div id="gastos-section">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-receipt text-orange-500 text-sm"></i>
+          <h3 class="font-bold text-sm text-orange-700">Gastos</h3>
+        </div>
+        <div id="gastos-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <p class="text-slate-400 text-xs text-center py-10">Sin gastos registrados</p>
+        </div>
       </div>
     </div>
 
@@ -4982,7 +4992,6 @@ function compraGuardar() {
 function renderPurchasesTable() {
   const from = document.getElementById('gastos-from')?.value || '';
   const to = document.getElementById('gastos-to')?.value || '';
-  const cat = document.getElementById('gastos-category')?.value || '';
   const status = document.getElementById('gastos-status')?.value || '';
   const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
 
@@ -4999,100 +5008,117 @@ function renderPurchasesTable() {
   let rows = [...db.purchases];
   if (from) rows = rows.filter(p => (p.date||'') >= from);
   if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
-  if (cat) rows = rows.filter(p => p.category === cat);
   if (status) rows = rows.filter(p => p.paymentStatus === status);
   if (supplierFilter) rows = rows.filter(p => p.supplierId === supplierFilter);
   rows.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  renderGastosSummary(rows);
+  const comprasRows = rows.filter(p => p.category === 'Compra');
+  const gastosRows = rows.filter(p => p.category === 'Gasto');
 
-  const body = document.getElementById('purchases-table-container');
-  if (!rows.length) {
-    body.innerHTML = `<div class="text-center py-12">
-      <i class="fa-solid fa-receipt text-4xl text-slate-200 block mb-3"></i>
-      <p class="text-slate-400 text-sm">Sin registros</p>
-    </div>`;
-    return;
-  }
+  renderGastosSummary(comprasRows, gastosRows);
 
   const currencySym = { USD: '$', VES: 'Bs.', COP: '$' };
   const statusBadge = { paid: 'bg-emerald-100 text-emerald-700', pending: 'bg-amber-100 text-amber-700', partial: 'bg-blue-100 text-blue-700' };
   const statusLabel = { paid: 'Pagado', pending: 'Pendiente', partial: 'Parcial' };
-  const catBadge = { Compra: 'bg-sky-100 text-sky-700', Gasto: 'bg-orange-100 text-orange-700' };
 
-  body.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">
-    <thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
-      <th class="px-4 py-3 font-semibold">Fecha</th>
-      <th class="px-4 py-3 font-semibold">Descripción</th>
-      <th class="px-4 py-3 font-semibold hidden lg:table-cell">Proveedor</th>
-      <th class="px-4 py-3 font-semibold hidden lg:table-cell">N° Factura</th>
-      <th class="px-4 py-3 font-semibold">Monto</th>
-      <th class="px-4 py-3 font-semibold">Estado</th>
-      <th class="px-4 py-3 font-semibold text-center">Acciones</th>
-    </tr></thead>
-    <tbody class="divide-y divide-slate-50">${rows.map(p => {
-      const sym = currencySym[p.currency] || '$';
-      const date = new Date(p.date).toLocaleDateString('es-VE');
-      const due = p.dueDate ? new Date(p.dueDate).toLocaleDateString('es-VE') : '';
-      const ivaText = p.iva ? ` +${p.iva}%` : '';
-      return `<tr class="hover:bg-sky-50/40 transition-all">
-        <td class="px-4 py-3 text-xs text-slate-500">
-          <div>${date}</div>
-          ${due ? `<div class="text-[0.55rem] text-slate-400">Vence: ${due}</div>` : ''}
-        </td>
-        <td class="px-4 py-3">
-          <div class="text-sm font-medium text-slate-800">${escHtml(p.description)}</div>
-          <span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${catBadge[p.category] || catBadge.Compra}">${p.category}</span>
-        </td>
-        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600">${escHtml(p.supplierName || '—')}</td>
-        <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600 font-mono">${escHtml(p.invoiceNumber || '—')}</td>
-        <td class="px-4 py-3 text-sm font-bold text-slate-800">${sym} ${fmtNum(p.amount)}${ivaText ? `<span class="text-[0.55rem] text-slate-400 ml-0.5">${ivaText}</span>` : ''}</td>
-        <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[p.paymentStatus] || statusBadge.pending}">${statusLabel[p.paymentStatus] || 'Pendiente'}</span></td>
-        <td class="px-4 py-3 text-center">
-          <div class="flex items-center justify-center gap-1">
-            ${p.paymentStatus !== 'paid' ? `<button onclick="openPaymentModal('${p.id}')" title="Pagar" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-money-bill-wave text-xs"></i></button>` : ''}
-            <button onclick="printPurchasePdf('${p.id}')" title="Imprimir PDF" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-file-pdf text-xs"></i></button>
-            <button onclick="editPurchase('${p.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
-            <button onclick="deletePurchase('${p.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
+  function buildRow(p, hoverColor) {
+    const sym = currencySym[p.currency] || '$';
+    const date = new Date(p.date).toLocaleDateString('es-VE');
+    const due = p.dueDate ? new Date(p.dueDate).toLocaleDateString('es-VE') : '';
+    const ivaText = p.iva ? ` +${p.iva}%` : '';
+    return `<tr class="hover:${hoverColor} transition-all">
+      <td class="px-4 py-3 text-xs text-slate-500">
+        <div>${date}</div>
+        ${due ? `<div class="text-[0.55rem] text-slate-400">Vence: ${due}</div>` : ''}
+      </td>
+      <td class="px-4 py-3">
+        <div class="text-sm font-medium text-slate-800">${escHtml(p.description)}</div>
+      </td>
+      <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600">${escHtml(p.supplierName || '—')}</td>
+      <td class="px-4 py-3 hidden lg:table-cell text-xs text-slate-600 font-mono">${escHtml(p.invoiceNumber || '—')}</td>
+      <td class="px-4 py-3 text-sm font-bold text-slate-800">${sym} ${fmtNum(p.amount)}${ivaText ? `<span class="text-[0.55rem] text-slate-400 ml-0.5">${ivaText}</span>` : ''}</td>
+      <td class="px-4 py-3"><span class="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold ${statusBadge[p.paymentStatus] || statusBadge.pending}">${statusLabel[p.paymentStatus] || 'Pendiente'}</span></td>
+      <td class="px-4 py-3 text-center">
+        <div class="flex items-center justify-center gap-1">
+          ${p.paymentStatus !== 'paid' ? `<button onclick="openPaymentModal('${p.id}')" title="Pagar" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700 transition-all"><i class="fa-solid fa-money-bill-wave text-xs"></i></button>` : ''}
+          <button onclick="printPurchasePdf('${p.id}')" title="Imprimir PDF" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-file-pdf text-xs"></i></button>
+          <button onclick="editPurchase('${p.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-sky-50 text-sky-500 hover:text-sky-700 transition-all"><i class="fa-solid fa-pencil text-xs"></i></button>
+          <button onclick="deletePurchase('${p.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }
+
+  const thead = `<thead><tr class="border-b border-slate-100 text-[0.65rem] text-slate-400 uppercase">
+    <th class="px-4 py-3 font-semibold">Fecha</th>
+    <th class="px-4 py-3 font-semibold">Descripci&oacute;n</th>
+    <th class="px-4 py-3 font-semibold hidden lg:table-cell">Proveedor</th>
+    <th class="px-4 py-3 font-semibold hidden lg:table-cell">N&deg; Factura</th>
+    <th class="px-4 py-3 font-semibold">Monto</th>
+    <th class="px-4 py-3 font-semibold">Estado</th>
+    <th class="px-4 py-3 font-semibold text-center">Acciones</th>
+  </tr></thead>`;
+
+  const emptyHtml = '<div class="text-center py-10"><i class="fa-solid fa-receipt text-3xl text-slate-200 block mb-2"></i><p class="text-slate-400 text-xs">Sin registros</p></div>';
+
+  const comprasContainer = document.getElementById('compras-table-container');
+  const gastosContainer = document.getElementById('gastos-table-container');
+
+  if (comprasRows.length) {
+    comprasContainer.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">${thead}<tbody class="divide-y divide-slate-50">${comprasRows.map(p => buildRow(p, 'sky-50/40')).join('')}</tbody></table></div>`;
+  } else {
+    comprasContainer.innerHTML = emptyHtml;
+  }
+
+  if (gastosRows.length) {
+    gastosContainer.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-left">${thead}<tbody class="divide-y divide-slate-50">${gastosRows.map(p => buildRow(p, 'orange-50/40')).join('')}</tbody></table></div>`;
+  } else {
+    gastosContainer.innerHTML = emptyHtml;
+  }
 }
 
-function renderGastosSummary(rows) {
+function renderGastosSummary(comprasRows, gastosRows) {
   const el = document.getElementById('gastos-summary');
   if (!el) return;
-  const rate = db.settings.exchangeRate || 0;
-  const copRate = rate * COP_FACTOR;
-  const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
-  const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
-  const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
 
-  const pendingRows = rows.filter(p => p.paymentStatus !== 'paid');
-  let pendingUsd = 0, pendingVes = 0, pendingCop = 0;
-  pendingRows.forEach(p => {
+  const pendingCompras = comprasRows.filter(p => p.paymentStatus !== 'paid');
+  let compUsd = 0, compVes = 0, compCop = 0;
+  pendingCompras.forEach(p => {
     const pend = getPurchasePendingOriginal(p);
     const cur = p.currency || 'USD';
-    if (cur === 'USD') pendingUsd += pend;
-    else if (cur === 'VES') pendingVes += pend;
-    else if (cur === 'COP') pendingCop += pend;
+    if (cur === 'USD') compUsd += pend;
+    else if (cur === 'VES') compVes += pend;
+    else if (cur === 'COP') compCop += pend;
   });
+  let compLines = '';
+  if (compUsd > 0) compLines += `$${fmtNum(compUsd)} USD`;
+  if (compVes > 0) compLines += (compLines ? '<br>' : '') + `<span class="text-sky-600">Bs.${fmtNum(compVes)}</span>`;
+  if (compCop > 0) compLines += (compLines ? '<br>' : '') + `<span class="text-sky-600">$${fmtNum(compCop)} COP</span>`;
+  if (!compLines) compLines = '$0.00';
 
-  let pendingLines = '';
-  if (pendingUsd > 0) pendingLines += `$${fmtNum(pendingUsd)} USD`;
-  if (pendingVes > 0) pendingLines += (pendingLines ? '<br>' : '') + `<span class="text-amber-600">Bs.${fmtNum(pendingVes)}</span>`;
-  if (pendingCop > 0) pendingLines += (pendingLines ? '<br>' : '') + `<span class="text-amber-600">$${fmtNum(pendingCop)} COP</span>`;
-  if (!pendingLines) pendingLines = '$0.00';
+  const pendingGastos = gastosRows.filter(p => p.paymentStatus !== 'paid');
+  let gastUsd = 0, gastVes = 0, gastCop = 0;
+  pendingGastos.forEach(p => {
+    const pend = getPurchasePendingOriginal(p);
+    const cur = p.currency || 'USD';
+    if (cur === 'USD') gastUsd += pend;
+    else if (cur === 'VES') gastVes += pend;
+    else if (cur === 'COP') gastCop += pend;
+  });
+  let gastLines = '';
+  if (gastUsd > 0) gastLines += `$${fmtNum(gastUsd)} USD`;
+  if (gastVes > 0) gastLines += (gastLines ? '<br>' : '') + `<span class="text-orange-600">Bs.${fmtNum(gastVes)}</span>`;
+  if (gastCop > 0) gastLines += (gastLines ? '<br>' : '') + `<span class="text-orange-600">$${fmtNum(gastCop)} COP</span>`;
+  if (!gastLines) gastLines = '$0.00';
 
   el.innerHTML = `
-    <div class="bg-white rounded-xl border border-orange-100 p-3">
-      <div class="text-[0.6rem] text-orange-500 uppercase font-semibold">Gastos</div>
-      <div class="text-sm font-bold text-orange-700 mt-0.5">$${fmtNum(totalGastos)}</div>
+    <div class="bg-white rounded-xl border border-sky-100 p-3">
+      <div class="text-[0.6rem] text-sky-500 uppercase font-semibold">Compras (pendientes)</div>
+      <div class="text-sm font-bold text-sky-700 mt-0.5">${compLines}</div>
     </div>
-    <div class="bg-white rounded-xl border border-amber-100 p-3">
-      <div class="text-[0.6rem] text-amber-500 uppercase font-semibold">Compras</div>
-      <div class="text-sm font-bold text-amber-700 mt-0.5">${pendingLines}</div>
+    <div class="bg-white rounded-xl border border-orange-100 p-3">
+      <div class="text-[0.6rem] text-orange-500 uppercase font-semibold">Gastos (pendientes)</div>
+      <div class="text-sm font-bold text-orange-700 mt-0.5">${gastLines}</div>
     </div>`;
 }
 
