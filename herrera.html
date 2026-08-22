@@ -5246,19 +5246,23 @@ function openPaymentModal(purchaseId) {
   const p = db.purchases.find(x => x.id === purchaseId);
   if (!p) return;
 
-  const totalUsd = p.amountUsd || p.amount || 0;
-  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  const pending = Math.max(0, totalUsd - paid);
+  const cur = p.currency || 'USD';
   const sym = { USD: '$', VES: 'Bs.', COP: '$' };
+  const curLabel = { USD: 'USD', VES: 'VES', COP: 'COP' };
+
+  const totalOrig = p.amount || 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const fractionPaid = totalOrig > 0 ? Math.min((p.amountUsd ? paid / p.amountUsd : 0), 1) : 0;
+  const pendingOrig = totalOrig * (1 - fractionPaid);
 
   document.getElementById('payment-purchase-id').value = p.id;
   document.getElementById('payment-supplier').textContent = p.supplierName || '—';
   document.getElementById('payment-invoice').textContent = p.invoiceNumber || '—';
-  document.getElementById('payment-total').textContent = `$${fmtNum(totalUsd)} USD`;
-  document.getElementById('payment-paid').textContent = `$${fmtNum(paid)} USD`;
-  document.getElementById('payment-pending').textContent = `$${fmtNum(pending)} USD`;
-  document.getElementById('payment-amount').value = pending > 0 ? pending.toFixed(2) : '';
-  document.getElementById('payment-amount').max = pending;
+  document.getElementById('payment-total').textContent = `${sym[cur]}${fmtNum(totalOrig)} ${curLabel[cur]}`;
+  document.getElementById('payment-paid').textContent = `${sym[cur]}${fmtNum(totalOrig - pendingOrig)} ${curLabel[cur]}`;
+  document.getElementById('payment-pending').textContent = `${sym[cur]}${fmtNum(pendingOrig)} ${curLabel[cur]}`;
+  document.getElementById('payment-amount').value = pendingOrig > 0 ? pendingOrig.toFixed(2) : '';
+  document.getElementById('payment-amount').max = pendingOrig;
   document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('payment-equiv').textContent = '';
   document.getElementById('payment-method').onchange = function() { updatePaymentEquiv(); };
@@ -5268,16 +5272,49 @@ function openPaymentModal(purchaseId) {
 }
 
 function updatePaymentEquiv() {
+  const purchaseId = document.getElementById('payment-purchase-id').value;
+  const p = db.purchases.find(x => x.id === purchaseId);
+  if (!p) return;
+
+  const cur = p.currency || 'USD';
+  const sym = { USD: '$', VES: 'Bs.', COP: '$' };
+  const curLabel = { USD: 'USD', VES: 'VES', COP: 'COP' };
+
+  const totalOrig = p.amount || 0;
+  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const fractionPaid = totalOrig > 0 ? Math.min((p.amountUsd ? paid / p.amountUsd : 0), 1) : 0;
+  const pendingOrig = totalOrig * (1 - fractionPaid);
+
   const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
   const method = document.getElementById('payment-method').value;
   const usd = paymentToUsd(amount, method);
+
+  let parts = [];
+  if (usd > 0) parts.push(`≈ $${fmtNum(usd)} USD`);
+  if (cur !== 'USD' && usd > 0) {
+    const rate = db.settings.exchangeRate || 0;
+    const copRate = rate * COP_FACTOR;
+    let converted = usd;
+    if (cur === 'VES' && rate) converted = usd * rate;
+    else if (cur === 'COP' && copRate) converted = usd * copRate;
+    parts.push(`≈ ${sym[cur]}${fmtNum(converted)} ${curLabel[cur]}`);
+  }
+  document.getElementById('payment-equiv').textContent = parts.join(' | ');
+
   const rate = db.settings.exchangeRate || 0;
   const copRate = rate * COP_FACTOR;
-  let parts = [];
-  if (!method.includes('USD') && usd > 0) parts.push(`≈ $${fmtNum(usd)} USD`);
-  if (method.includes('COP') && usd > 0 && rate) parts.push(`≈ Bs.${fmtNum(usd * rate)} / $${fmtNum(usd * copRate)} COP`);
-  if ((method.includes('Bs')) && usd > 0 && rate) parts.push(`≈ $${fmtNum(usd)} USD / $${fmtNum(usd * copRate)} COP`);
-  document.getElementById('payment-equiv').textContent = parts.join(' | ');
+  let pendingForMethod = pendingOrig;
+  if (method.includes('USD') && cur !== 'USD') {
+    if (cur === 'VES' && rate) pendingForMethod = pendingOrig / rate;
+    else if (cur === 'COP' && copRate) pendingForMethod = pendingOrig / copRate;
+  } else if (method.includes('COP') && cur !== 'COP') {
+    if (cur === 'USD' && copRate) pendingForMethod = pendingOrig * copRate;
+    else if (cur === 'VES' && rate) pendingForMethod = pendingOrig * (copRate / rate);
+  } else if ((method.includes('Bs') || method.includes('Transferencia')) && cur !== 'VES') {
+    if (cur === 'USD' && rate) pendingForMethod = pendingOrig * rate;
+    else if (cur === 'COP' && copRate) pendingForMethod = pendingOrig * (rate / copRate);
+  }
+  document.getElementById('payment-amount').max = pendingForMethod;
 }
 
 function processPayment() {
@@ -5530,11 +5567,6 @@ function generarReporteGastos() {
 
   if (!rows.length) { showToast('Sin datos para generar reporte', 'warning'); return; }
 
-  const totalAll = rows.reduce((s, p) => s + (p.amount || 0), 0);
-  const totalCompras = rows.filter(p => p.category === 'Compra').reduce((s, p) => s + (p.amount || 0), 0);
-  const totalGastos = rows.filter(p => p.category === 'Gasto').reduce((s, p) => s + (p.amount || 0), 0);
-  const pending = rows.filter(p => p.paymentStatus === 'pending' || p.paymentStatus === 'partial').reduce((s, p) => s + (p.amount || 0), 0);
-
   const byCurrency = {};
   rows.forEach(p => {
     const c = p.currency || 'USD';
@@ -5577,12 +5609,8 @@ function generarReporteGastos() {
       <h1>Reporte de Compras y Gastos</h1>
       <p>RefrigiHerrera &mdash; Periodo: ${fromStr} al ${toStr}</p>
     </div>
-    <div class="summary">
-      <div class="summary-card"><div class="label">Total General</div><div class="value usd">$${fmtNum(totalAll)}</div></div>
-      <div class="summary-card"><div class="label">Compras</div><div class="value usd">$${fmtNum(totalCompras)}</div></div>
-      <div class="summary-card"><div class="label">Gastos</div><div class="value usd">$${fmtNum(totalGastos)}</div></div>
-      <div class="summary-card"><div class="label">Por Pagar</div><div class="value" style="color:#f59e0b">$${fmtNum(pending)}</div></div>
-      ${Object.keys(byCurrency).map(c => `<div class="summary-card"><div class="label">Total ${c}</div><div class="value ${c.toLowerCase()}">${sym[c]||''}${fmtNum(byCurrency[c])}</div></div>`).join('')}
+    <div class="summary" style="justify-content:center">
+      ${Object.keys(byCurrency).map(c => `<div class="summary-card" style="text-align:center"><div class="label">Total ${c}</div><div class="value ${c.toLowerCase()}">${sym[c]||''}${fmtNum(byCurrency[c])}</div></div>`).join('')}
     </div>
     <table>
       <thead><tr>
