@@ -5552,10 +5552,10 @@ function printPurchasePdf(purchaseId) {
         const paySym = paySymMap[payCur] || '$';
         let line = `${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  ${paySym}${fmtNum(pay.amount)} ${payCur}`;
         const payUsd = pay.amountUsd || convertBetween(pay.amount || 0, payCur, 'USD');
-        if (payCur !== cur && rate) {
-          const curSym = { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
-          const equiv = convertBetween(payUsd, 'USD', cur);
-          line += ` (≈ ${curSym}${fmtNum(equiv)} ${currencySym[cur] || cur})`;
+        if (payCur !== pCur && rate) {
+          const curSym = { USD: '$', VES: 'Bs.', COP: '$' }[pCur] || '$';
+          const equiv = convertBetween(payUsd, 'USD', pCur);
+          line += ` (≈ ${curSym}${fmtNum(equiv)} ${currencySym[pCur] || pCur})`;
         }
         doc.text(line, 17, y);
         y += 5;
