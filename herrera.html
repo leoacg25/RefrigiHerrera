@@ -1820,6 +1820,7 @@
           <label class="text-xs font-medium text-slate-500 mb-1 block">Monto a pagar *</label>
           <input type="number" id="payment-amount" min="0" step="0.01" placeholder="0.00"
             class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none text-right font-bold text-lg">
+          <div id="payment-limit-msg" class="text-[0.6rem] text-amber-500 mt-1 hidden"></div>
         </div>
         <div class="text-[0.65rem] text-slate-400 text-right" id="payment-equiv"></div>
         <div>
@@ -5319,7 +5320,6 @@ function openPaymentModal(purchaseId) {
   document.getElementById('payment-paid').textContent = `${sym[cur]}${fmtNum(paidOrig)} ${curLabel[cur]}`;
   document.getElementById('payment-pending').textContent = `${sym[cur]}${fmtNum(pendingOrig)} ${curLabel[cur]}`;
   document.getElementById('payment-amount').value = '0.00';
-  document.getElementById('payment-amount').max = pendingMethod;
   document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('payment-equiv').textContent = '';
   document.getElementById('payment-method').onchange = function() { updatePaymentEquiv(); };
@@ -5356,7 +5356,15 @@ function updatePaymentEquiv() {
   document.getElementById('payment-equiv').textContent = parts.join(' | ');
 
   const pendingMethod = convertBetween(pendingUsd, 'USD', mCur);
-  document.getElementById('payment-amount').max = pendingMethod;
+  const limitMsg = document.getElementById('payment-limit-msg');
+  if (limitMsg) {
+    if (mCur !== cur && pendingMethod > 0) {
+      limitMsg.textContent = `Máximo: ${fmtNum(pendingMethod)} ${mCur}`;
+      limitMsg.classList.remove('hidden');
+    } else {
+      limitMsg.classList.add('hidden');
+    }
+  }
 }
 
 function processPayment() {
@@ -5376,7 +5384,12 @@ function processPayment() {
   const pending = Math.max(0, totalUsd - paidUsd);
   const amountUsd = paymentToUsd(amount, method);
 
-  if (amountUsd > pending + 0.01) { showToast('El monto excede el pendiente', 'error'); return; }
+  if (amountUsd > pending + 0.01) {
+    const mCur = getMethodCurrency(method);
+    const equivUsd = amountUsd;
+    showToast(`Excede el pendiente ($${fmtNum(pending)} USD = ${fmtNum(convertBetween(pending, 'USD', mCur))} ${mCur})`, 'error');
+    return;
+  }
 
   const payment = {
     id: generateId(),
@@ -5672,11 +5685,23 @@ function generarReporteGastos() {
     </div>
     <table>
       <thead><tr>
-        <th>Fecha</th><th>Descripción</th><th>Proveedor</th><th>N° Factura</th><th>Monto</th><th>Moneda</th><th>IVA</th><th>Categoría</th><th>Estado</th>
+        <th>Fecha</th><th>Descripci&oacute;n</th><th>Proveedor</th><th>N&deg; Factura</th><th>Monto</th><th>Moneda</th><th>Pagado</th><th>Categor&iacute;a</th><th>Estado</th>
       </tr></thead>
       <tbody>${rows.map(p => {
         const d = new Date(p.date).toLocaleDateString('es-VE');
         const badgeCls = p.paymentStatus === 'paid' ? 'badge-paid' : p.paymentStatus === 'partial' ? 'badge-partial' : 'badge-pending';
+        const payCur = p.currency || 'USD';
+        const paySym = { USD: '$', VES: 'Bs.', COP: '$' }[payCur] || '$';
+        const payments = getPurchasePayments(p.id);
+        let paidText = '—';
+        if (payments.length) {
+          const paidOrig = payments.map(pay => {
+            const payUsd = pay.amountUsd || 0;
+            return convertBetween(payUsd, 'USD', payCur);
+          }).reduce((a, b) => a + b, 0);
+          paidText = `${paySym}${fmtNum(paidOrig)} ${payCur}`;
+          if (payments.length > 1) paidText += ` (${payments.length} abonos)`;
+        }
         return `<tr>
           <td>${d}</td>
           <td><strong>${escHtml(p.description||'')}</strong></td>
@@ -5684,7 +5709,7 @@ function generarReporteGastos() {
           <td>${escHtml(p.invoiceNumber||'—')}</td>
           <td style="text-align:right;font-weight:bold">${sym[p.currency]||'$'}${fmtNum(p.amount||0)}</td>
           <td>${p.currency||'USD'}</td>
-          <td>${p.iva ? '$'+fmtNum(p.iva) : '—'}</td>
+          <td style="text-align:right">${paidText}</td>
           <td>${catLabel[p.category]||p.category}</td>
           <td><span class="badge ${badgeCls}">${statusLabel[p.paymentStatus]||p.paymentStatus}</span></td>
         </tr>`;

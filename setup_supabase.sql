@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS clients (
   name TEXT NOT NULL,
   phone TEXT DEFAULT '',
   email TEXT DEFAULT '',
+  password TEXT,
   address TEXT DEFAULT '',
   id_number TEXT DEFAULT '',
   notes TEXT DEFAULT '',

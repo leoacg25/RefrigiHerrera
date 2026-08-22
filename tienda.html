@@ -678,7 +678,12 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SB_URL = 'https://muwthhwoxpooliatnmhk.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11d3RoaHdveHBvb2xpYXRubWhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5OTExNDYsImV4cCI6MjEwMjU2NzE0Nn0.CIo8-o5eJnNrYubYSmB-g0-2ZQoDlQ4947v_espCGsM';
+    const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
     // Data
     const PRODUCTS = [
       { id: "1", name: "Compresor 1/3 HP", category: "Compresores", price: 85.0, image: "https://placehold.co/400x300/0B1F5C/4FB6E6?text=Compresor", stock: 12, description: "Compresor hermético para refrigeración doméstica y comercial." },
@@ -899,7 +904,7 @@
       updateAuthUI();
     }
 
-    function handleAuth(e) {
+    async function handleAuth(e) {
       e.preventDefault();
       const form = e.target;
       const email = form.email.value.trim();
@@ -907,17 +912,30 @@
       const msg = document.getElementById("auth-message");
 
       if (authMode === "login") {
-        const users = getUsers();
-        const user = users.find(u => u.email === email && u.password === password);
-        if (user) {
-          const newSession = { email: user.email, name: user.name };
+        try {
+          const { data: clients, error } = await sb.from('clients')
+            .select('*')
+            .eq('email', email)
+            .limit(1);
+          
+          if (error) throw error;
+          
+          if (!clients || clients.length === 0 || clients[0].password !== password) {
+            msg.textContent = "Correo o contraseña incorrectos.";
+            msg.classList.remove("hidden");
+            return;
+          }
+          
+          const user = clients[0];
+          const newSession = { email: user.email, name: user.name, id: user.id };
           saveSession(newSession);
           session = newSession;
           renderSession();
           closeAuth();
           msg.classList.add("hidden");
-        } else {
-          msg.textContent = "Correo o contraseña incorrectos.";
+        } catch (err) {
+          console.error(err);
+          msg.textContent = "Error de conexión con la base de datos.";
           msg.classList.remove("hidden");
         }
       } else {
@@ -929,21 +947,37 @@
           msg.classList.remove("hidden");
           return;
         }
-        const users = getUsers();
-        if (users.some(u => u.email === email)) {
-          msg.textContent = "Este correo ya está registrado.";
+        
+        try {
+          const { data: existing } = await sb.from('clients').select('id').eq('email', email).limit(1);
+          if (existing && existing.length > 0) {
+            msg.textContent = "Este correo ya está registrado.";
+            msg.classList.remove("hidden");
+            return;
+          }
+          
+          const newClientId = 'cli_' + Date.now();
+          const { error } = await sb.from('clients').insert([{
+            id: newClientId,
+            name: name,
+            email: email,
+            phone: phone,
+            password: password
+          }]);
+          
+          if (error) throw error;
+          
+          const newSession = { email, name, id: newClientId };
+          saveSession(newSession);
+          session = newSession;
+          renderSession();
+          closeAuth();
+          form.reset();
+        } catch (err) {
+          console.error(err);
+          msg.textContent = "Error al crear cuenta.";
           msg.classList.remove("hidden");
-          return;
         }
-        const newUser = { name, email, phone, password, createdAt: new Date().toISOString() };
-        users.push(newUser);
-        saveUsers(users);
-        const newSession = { email, name };
-        saveSession(newSession);
-        session = newSession;
-        renderSession();
-        closeAuth();
-        form.reset();
       }
     }
 
