@@ -2030,24 +2030,24 @@ async function syncToSupabase() {
       price_ves: p.priceVES || 0, price_cop: p.priceCOP || 0
     }));
     const syncOps = [];
-    if (products.length) syncOps.push(sb.from('products').upsert(products, { onConflict: 'id' }).catch(e => console.warn('sync products:', e)));
+    if (products.length) syncOps.push(sb.from('products').upsert(products, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync products:', e)));
 
     const combos = db.combos.map(c => ({
       id: c.id, code: c.code, name: c.name, price: c.price || 0, items: c.items || []
     }));
-    if (combos.length) syncOps.push(sb.from('combos').upsert(combos, { onConflict: 'id' }).catch(e => console.warn('sync combos:', e)));
+    if (combos.length) syncOps.push(sb.from('combos').upsert(combos, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync combos:', e)));
 
     const users = db.users.map(u => ({
       id: u.id, username: u.username, password_hash: u.passwordHash,
       full_name: u.fullName || '', role: u.role || 'operator', active: u.active !== false
     }));
-    if (users.length) syncOps.push(sb.from('users').upsert(users, { onConflict: 'id' }).catch(e => console.warn('sync users:', e)));
+    if (users.length) syncOps.push(sb.from('users').upsert(users, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync users:', e)));
 
     const clients = db.clients.map(c => ({
       id: c.id, name: c.name, phone: c.phone || '', email: c.email || '',
       address: c.address || '', id_number: c.idNumber || '', notes: c.notes || '', active: c.active !== false
     }));
-    if (clients.length) syncOps.push(sb.from('clients').upsert(clients, { onConflict: 'id' }).catch(e => console.warn('sync clients:', e)));
+    if (clients.length) syncOps.push(sb.from('clients').upsert(clients, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync clients:', e)));
 
     const quotes = db.quotes.map(q => ({
       id: q.id, client_id: q.clientId || null, client_name: q.clientName || '',
@@ -2056,14 +2056,14 @@ async function syncToSupabase() {
       status: q.status || 'pending', notes: q.notes || '',
       date: q.date, updated_at: new Date().toISOString()
     }));
-    if (quotes.length) syncOps.push(sb.from('quotes').upsert(quotes, { onConflict: 'id' }).catch(e => console.warn('sync quotes:', e)));
+    if (quotes.length) syncOps.push(sb.from('quotes').upsert(quotes, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync quotes:', e)));
 
     const suppliers = (db.suppliers || []).map(s => ({
       id: s.id, name: s.name, phone: s.phone || '', email: s.email || '',
       address: s.address || '', id_number: s.idNumber || '', notes: s.notes || '',
       active: s.active !== false
     }));
-    if (suppliers.length) syncOps.push(sb.from('suppliers').upsert(suppliers, { onConflict: 'id' }).catch(e => console.warn('sync suppliers:', e)));
+    if (suppliers.length) syncOps.push(sb.from('suppliers').upsert(suppliers, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync suppliers:', e)));
 
     const purchases = (db.purchases || []).map(p => ({
       id: p.id, supplier_id: p.supplierId || null, supplier_name: p.supplierName || '',
@@ -2073,7 +2073,7 @@ async function syncToSupabase() {
       payment_method: p.paymentMethod || '', date: p.date,
       due_date: p.dueDate || null, notes: p.notes || ''
     }));
-    if (purchases.length) syncOps.push(sb.from('purchases').upsert(purchases, { onConflict: 'id' }).catch(e => console.warn('sync purchases:', e)));
+    if (purchases.length) syncOps.push(sb.from('purchases').upsert(purchases, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync purchases:', e)));
 
     const payments = (db.payments || []).map(p => ({
       id: p.id, purchase_id: p.purchaseId,
@@ -2088,16 +2088,16 @@ async function syncToSupabase() {
       date_from: o.dateFrom, date_to: o.dateTo,
       active: o.active !== false
     }));
-    if (offers.length) syncOps.push(sb.from('offers').upsert(offers, { onConflict: 'id' }).catch(e => console.warn('sync offers:', e)));
+    if (offers.length) syncOps.push(sb.from('offers').upsert(offers, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync offers:', e)));
 
-    syncOps.push(sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' }).catch(e => console.warn('sync settings:', e)));
+    syncOps.push(sb.from('settings').upsert({ key: 'app', value: db.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' }).then(() => {}).catch(e => console.warn('sync settings:', e)));
     await Promise.allSettled(syncOps);
 
     const localQuoteIds = db.quotes.map(q => q.id);
     const serverQuotes = await sb.from('quotes').select('id');
     if (serverQuotes.data) {
       for (const sq of serverQuotes.data.filter(x => !localQuoteIds.includes(x.id))) {
-        await sb.from('quotes').delete().eq('id', sq.id).catch(() => {});
+        await sb.from('quotes').delete().eq('id', sq.id).then(() => {}).catch(() => {});
       }
     }
     if (db.suppliers) {
@@ -2105,7 +2105,7 @@ async function syncToSupabase() {
       const serverSuppliers = await sb.from('suppliers').select('id');
       if (serverSuppliers.data) {
         for (const ss of serverSuppliers.data.filter(x => !localSupplierIds.includes(x.id))) {
-          await sb.from('suppliers').delete().eq('id', ss.id).catch(() => {});
+          await sb.from('suppliers').delete().eq('id', ss.id).then(() => {}).catch(() => {});
         }
       }
     }
@@ -2114,7 +2114,7 @@ async function syncToSupabase() {
       const serverPurchases = await sb.from('purchases').select('id');
       if (serverPurchases.data) {
         for (const sp of serverPurchases.data.filter(x => !localPurchaseIds.includes(x.id))) {
-          await sb.from('purchases').delete().eq('id', sp.id).catch(() => {});
+          await sb.from('purchases').delete().eq('id', sp.id).then(() => {}).catch(() => {});
         }
       }
     }
@@ -2123,7 +2123,7 @@ async function syncToSupabase() {
       const serverOffers = await sb.from('offers').select('id');
       if (serverOffers.data) {
         for (const so of serverOffers.data.filter(x => !localOfferIds.includes(x.id))) {
-          await sb.from('offers').delete().eq('id', so.id).catch(() => {});
+          await sb.from('offers').delete().eq('id', so.id).then(() => {}).catch(() => {});
         }
       }
     }
@@ -2375,7 +2375,7 @@ function deleteOffer(id) {
   if (!confirm('¿Eliminar esta oferta? (las ventas ya realizadas conservan su precio)')) return;
   db.offers = db.offers.filter(o => o.id !== id);
   saveDB();
-  if (sbReady) sb.from('offers').delete().eq('id', id).catch(e => console.warn('sync oferta:', e));
+  if (sbReady) sb.from('offers').delete().eq('id', id).then(() => {}).catch(e => console.warn('sync oferta:', e));
   const saveBtn = document.getElementById('offer-save-btn');
   if (saveBtn && saveBtn.dataset.editing === id) resetOfferForm();
   renderOffers();
