@@ -2080,7 +2080,7 @@ async function syncToSupabase() {
       amount: p.amount || 0, amount_usd: p.amountUsd || 0,
       method: p.method || '', date: p.date
     }));
-    if (payments.length) syncOps.push(sb.from('payments').upsert(payments, { onConflict: 'id' }).catch(e => console.warn('sync payments:', e)));
+    if (payments.length) syncOps.push(sb.from('payments').upsert(payments, { onConflict: 'id' }).then(() => {}).catch(e => console.warn('sync payments:', e)));
 
     const offers = (db.offers || []).map(o => ({
       id: o.id, product_id: o.productId, name: o.name || '',
