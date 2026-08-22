@@ -2328,7 +2328,7 @@ function saveOffer() {
       id: offer.id, product_id: offer.productId, name: offer.name,
       discount_percent: offer.discountPercent,
       date_from: offer.dateFrom, date_to: offer.dateTo, active: offer.active
-    }).catch(e => console.warn('sync oferta:', e));
+    }).then(() => {}).catch(e => console.warn('sync oferta:', e));
   }
   showToast(editingId ? 'Oferta actualizada' : 'Oferta creada', 'success');
   resetOfferForm();
@@ -5192,7 +5192,7 @@ function savePurchase() {
       category: purchase.category, payment_status: purchase.paymentStatus,
       payment_method: purchase.paymentMethod, date: purchase.date,
       due_date: purchase.dueDate || null, notes: purchase.notes || ''
-    }).catch(e => console.warn('sync purchase:', e));
+    }).then(() => {}).catch(e => console.warn('sync purchase:', e));
   }
   closeModal('modal-purchase');
   renderPurchasesTable();
