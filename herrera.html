@@ -5277,8 +5277,9 @@ function getPurchasePendingOriginal(p) {
 function getMethodCurrency(method) {
   if (method.includes('USD')) return 'USD';
   if (method.includes('COP')) return 'COP';
-  if (method.includes('Bs') || method.includes('Transferencia')) return 'VES';
-  return 'USD';
+  if (method.includes('Bs')) return 'VES';
+  if (method.includes('Transferencia')) return 'VES';
+  return '';
 }
 
 function convertBetween(amount, fromCur, toCur) {
@@ -5546,14 +5547,16 @@ function printPurchasePdf(purchaseId) {
       doc.setTextColor(60);
       doc.setFont(undefined, 'normal');
       payments.forEach(pay => {
-        const payCur = pay.method.includes('USD') ? 'USD' : pay.method.includes('COP') ? 'COP' : 'VES';
-        let line = `${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  ${payCur === 'USD' ? '$' : payCur === 'COP' ? '$' : 'Bs.'}${fmtNum(pay.amount)} ${payCur}`;
-        if (payCur === 'USD' && rate) {
-          line += ` (≈ Bs.${fmtNum(pay.amount * rate)}) tasa: ${fmtNum(rate)}`;
-        } else if (payCur === 'COP' && copRate) {
-          line += ` (≈ Bs.${fmtNum(pay.amount * copRate)}) tasa: ${fmtNum(copRate)}`;
-        } else if (payCur === 'VES' && rate) {
-          line += ` (≈ $${fmtNum(pay.amount / rate)} USD)`;
+        let payCur = getMethodCurrency(pay.method);
+        if (!payCur) payCur = cur;
+        const paySymMap = { USD: '$', VES: 'Bs.', COP: '$' };
+        const paySym = paySymMap[payCur] || '$';
+        let line = `${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  ${paySym}${fmtNum(pay.amount)} ${payCur}`;
+        const payUsd = pay.amountUsd || convertBetween(pay.amount || 0, payCur, 'USD');
+        if (payCur !== cur && rate) {
+          const curSym = { USD: '$', VES: 'Bs.', COP: '$' }[cur] || '$';
+          const equiv = convertBetween(payUsd, 'USD', cur);
+          line += ` (≈ ${curSym}${fmtNum(equiv)} ${currencySym[cur] || cur})`;
         }
         doc.text(line, 17, y);
         y += 5;
