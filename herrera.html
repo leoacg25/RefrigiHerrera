@@ -939,9 +939,11 @@
           <option value="pending">Pendiente</option>
           <option value="partial">Parcial</option>
         </select>
-        <select id="gastos-supplier" onchange="renderPurchasesTable()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none">
-          <option value="">Todos proveedores</option>
-        </select>
+        <div class="relative">
+          <input type="text" id="gastos-supplier-search" placeholder="Buscar proveedor..." oninput="filterSupplierSearch()" onfocus="filterSupplierSearch()" class="px-2 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:border-sky-400 outline-none w-48">
+          <input type="hidden" id="gastos-supplier" value="">
+          <div id="gastos-supplier-dropdown" class="hidden absolute z-30 top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-40 overflow-y-auto"></div>
+        </div>
       </div>
       <!-- Resumen -->
       <div id="gastos-summary" class="grid grid-cols-2 gap-2 mb-3"></div>
@@ -4531,6 +4533,46 @@ function toggleComprasSubmenuMobile() {
 }
 
 // ===================================================================
+// PROVEEDOR SEARCH (Compras/Gastos filter)
+// ===================================================================
+function filterSupplierSearch() {
+  const q = (document.getElementById('gastos-supplier-search')?.value || '').toLowerCase();
+  const dd = document.getElementById('gastos-supplier-dropdown');
+  if (!dd) return;
+  if (!q) {
+    dd.classList.add('hidden');
+    return;
+  }
+  const matches = (db.suppliers || []).filter(s => {
+    const name = (s.name || '').toLowerCase();
+    const ci = (s.ci || s.rif || '').toLowerCase();
+    return name.includes(q) || ci.includes(q);
+  }).slice(0, 10);
+
+  if (!matches.length) {
+    dd.innerHTML = '<div class="px-3 py-2 text-xs text-slate-400">Sin resultados</div>';
+    dd.classList.remove('hidden');
+    return;
+  }
+  dd.innerHTML = `<div class="px-3 py-1.5 text-xs text-slate-400 cursor-pointer hover:bg-sky-50" onclick="selectGastosSupplier('', 'Todos proveedores')">Todos proveedores</div>` +
+    matches.map(s => `<div class="px-3 py-2 text-xs cursor-pointer hover:bg-sky-50 border-t border-slate-100" onclick="selectGastosSupplier('${s.id}', '${escHtml(s.name).replace(/'/g,"\\'")}')">${escHtml(s.name)} <span class="text-slate-400">${escHtml(s.ci || s.rif || '')}</span></div>`).join('');
+  dd.classList.remove('hidden');
+}
+
+function selectGastosSupplier(id, name) {
+  document.getElementById('gastos-supplier').value = id;
+  document.getElementById('gastos-supplier-search').value = id ? name : '';
+  document.getElementById('gastos-supplier-dropdown').classList.add('hidden');
+  renderPurchasesTable();
+}
+
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('gastos-supplier-dropdown');
+  const search = document.getElementById('gastos-supplier-search');
+  if (dd && !dd.contains(e.target) && e.target !== search) dd.classList.add('hidden');
+});
+
+// ===================================================================
 // PROVEEDORES
 // ===================================================================
 function renderSuppliersTable() {
@@ -4995,16 +5037,6 @@ function renderPurchasesTable() {
   const status = document.getElementById('gastos-status')?.value || '';
   const supplierFilter = document.getElementById('gastos-supplier')?.value || '';
 
-  const supSel = document.getElementById('gastos-supplier');
-  if (supSel && supSel.options.length <= 1) {
-    const supplierIds = [...new Set(db.purchases.map(p => p.supplierId).filter(Boolean))];
-    supSel.innerHTML = '<option value="">Todos proveedores</option>' +
-      supplierIds.map(id => {
-        const name = db.purchases.find(p => p.supplierId === id)?.supplierName || id;
-        return `<option value="${id}">${escHtml(name)}</option>`;
-      }).join('');
-  }
-
   let rows = [...db.purchases];
   if (from) rows = rows.filter(p => (p.date||'') >= from);
   if (to) rows = rows.filter(p => (p.date||'') <= to + 'T23:59:59');
@@ -5235,11 +5267,11 @@ function getPurchasePendingUsd(p) {
 }
 
 function getPurchasePendingOriginal(p) {
-  const totalUsd = p.amountUsd || p.amount || 0;
-  if (!totalUsd) return 0;
-  const paid = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
-  const fractionPaid = Math.min(paid / totalUsd, 1);
-  return Math.max(0, (p.amount || 0) * (1 - fractionPaid));
+  const cur = p.currency || 'USD';
+  const totalUsd = convertBetween(p.amount || 0, cur, 'USD');
+  const paidUsd = getPurchasePayments(p.id).reduce((s, pay) => s + (pay.amountUsd || 0), 0);
+  const pendingUsd = Math.max(0, totalUsd - paidUsd);
+  return convertBetween(pendingUsd, 'USD', cur);
 }
 
 function getMethodCurrency(method) {
@@ -5486,16 +5518,19 @@ function printPurchasePdf(purchaseId) {
     doc.setFontSize(11);
     doc.setTextColor(4, 21, 75);
     doc.setFont(undefined, 'bold');
-    const total = p.amountUsd || subtotalItems;
-    doc.text('TOTAL USD:', 130, y);
-    doc.text(`$${fmtNum(total)}`, 165, y);
+    const pCur = p.currency || 'USD';
+    const pSym = { USD: '$', VES: 'Bs.', COP: '$' }[pCur] || '$';
+    const totalOrig = p.amount || subtotalItems;
+    doc.text(`TOTAL ${pCur}:`, 130, y);
+    doc.text(`${pSym}${fmtNum(totalOrig)}`, 165, y);
     y += 7;
 
     if (rate) {
       doc.setFontSize(8);
       doc.setTextColor(100);
       doc.setFont(undefined, 'normal');
-      doc.text(`VES: Bs.${fmtNum(total * rate)}  |  COP: $${fmtNum(total * copRate)}`, 130, y);
+      const totalUsd = convertBetween(totalOrig, pCur, 'USD');
+      doc.text(`USD: $${fmtNum(totalUsd)}  |  VES: Bs.${fmtNum(totalUsd * rate)}  |  COP: $${fmtNum(totalUsd * copRate)}`, 130, y);
       y += 7;
     }
 
@@ -5511,7 +5546,16 @@ function printPurchasePdf(purchaseId) {
       doc.setTextColor(60);
       doc.setFont(undefined, 'normal');
       payments.forEach(pay => {
-        doc.text(`${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  $${fmtNum(pay.amountUsd)} USD (de $${fmtNum(pay.amount)} ${pay.method.includes('USD') ? 'USD' : pay.method.includes('COP') ? 'COP' : 'Bs.'})`, 17, y);
+        const payCur = pay.method.includes('USD') ? 'USD' : pay.method.includes('COP') ? 'COP' : 'VES';
+        let line = `${new Date(pay.date).toLocaleDateString('es-VE')}  ${pay.method}  ${payCur === 'USD' ? '$' : payCur === 'COP' ? '$' : 'Bs.'}${fmtNum(pay.amount)} ${payCur}`;
+        if (payCur === 'USD' && rate) {
+          line += ` (≈ Bs.${fmtNum(pay.amount * rate)}) tasa: ${fmtNum(rate)}`;
+        } else if (payCur === 'COP' && copRate) {
+          line += ` (≈ Bs.${fmtNum(pay.amount * copRate)}) tasa: ${fmtNum(copRate)}`;
+        } else if (payCur === 'VES' && rate) {
+          line += ` (≈ $${fmtNum(pay.amount / rate)} USD)`;
+        }
+        doc.text(line, 17, y);
         y += 5;
       });
     }
